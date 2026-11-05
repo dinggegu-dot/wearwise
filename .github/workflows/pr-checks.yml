@@ -25,8 +25,8 @@ jobs:
         run: npm ci --legacy-peer-deps
       - name: Typecheck
         run: npm run typecheck
-      # 当前没有 Vitest 文件；仅在零测试时退出成功，已有测试失败仍使任务失败。
-      - name: Unit tests (none exist yet)
+      # 仅在零测试时允许成功；已有测试失败仍使任务失败。
+      - name: Unit tests (empty suite allowed)
         run: npm run test -- --passWithNoTests
       - name: Build
         run: npm run build
