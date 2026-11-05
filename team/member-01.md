@@ -6,7 +6,7 @@
 
 ## 你的当前任务
 
-- **[查看 [M01] 任务与工作卡](https://github.com/dinggegu-dot/wearwise/issues?q=is%3Aissue+is%3Aopen+M01+in%3Atitle)**：此列表包含长期工作卡 #1 和1号发布的对应编号任务；如果只有工作卡，表示尚无其他公开的未关闭任务。工作卡不代表已有已批准的开发任务。
+- **[查看 [M01] 任务与工作卡](https://github.com/dinggegu-dot/wearwise/issues?q=is%3Aissue+is%3Aopen+M01+in%3Atitle)**：按标题搜索未关闭的 [M01] Issue，结果可能包含长期工作卡 #1。漏写编号或搜索索引延迟可能导致任务未显示；找不到任务请联系1号。工作卡不代表已有已批准的开发任务。
 - **[从 Fork 提交代码与由 1 号合并](%E6%8F%90%E4%BA%A4%E4%B8%8E%E5%90%88%E5%B9%B6%E6%8C%87%E5%8D%97.md)**：第一次交代码请按这里的步骤操作。
 
 ## 你的常用入口
