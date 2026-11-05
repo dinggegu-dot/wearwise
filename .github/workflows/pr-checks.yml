@@ -34,3 +34,7 @@ jobs:
         run: google-chrome --version
       - name: Chrome end-to-end tests
         run: npm run test:e2e
+      - name: Verify GitHub Pages export
+        run: |
+          mv src/app/api "$RUNNER_TEMP/wearwise-api"
+          PAGES_EXPORT=1 npm run build
