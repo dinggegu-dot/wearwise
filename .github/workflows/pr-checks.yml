@@ -25,6 +25,8 @@ jobs:
         run: npm ci --legacy-peer-deps
       - name: Typecheck
         run: npm run typecheck
+      - name: Team progress collector tests
+        run: node --test .github/scripts/progress.test.mjs
       # 仅在零测试时允许成功；已有测试失败仍使任务失败。
       - name: Unit tests (empty suite allowed)
         run: npm run test -- --passWithNoTests

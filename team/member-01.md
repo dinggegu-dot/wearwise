@@ -1,38 +1,24 @@
-# 1号 主控与集成
+# 01 号｜主控与集成
 
-[返回团队目录](README.md)
+[统一 PR 提交](https://github.com/dinggegu-dot/wearwise/compare) · [查看提交与证据 #20](https://github.com/dinggegu-dot/wearwise/issues/20) · [填写与返修方法](工作流说明.md)。已有 PR 继续更新原分支，不另传 zip。
 
-工作范围：任务、接口、公共底座与成果集成。具体任务以获批 PRD 和任务单为准，不因分工自动获准开发。
+## 你的当前任务：完善 Demo
 
-## 你的当前任务
+**[打开你的具体任务 #11](https://github.com/dinggegu-dot/wearwise/issues/11)**
 
-- **[查看 [M01] 任务与工作卡](https://github.com/dinggegu-dot/wearwise/issues?q=is%3Aissue+is%3Aopen+M01+in%3Atitle)**：按标题搜索未关闭的 [M01] Issue，结果可能包含长期工作卡 #1。漏写编号或搜索索引延迟可能导致任务未显示；找不到任务请联系1号。工作卡不代表已有已批准的开发任务。
-- **[从 Fork 提交代码与由 1 号合并](%E6%8F%90%E4%BA%A4%E4%B8%8E%E5%90%88%E5%B9%B6%E6%8C%87%E5%8D%97.md)**：第一次交代码请按这里的步骤操作。
+你负责当前段的排期、阻塞和基于验收结果的合并。A/B 段候选版本由 03 提供，C 段由 06 提供，07 给出验收结果；普通界面和接口设计不等你审批。
+
+任务卡已经列明你的操作顺序、直接合作的人、输入输出、自测和交付要求。请在那里评论“已领取”、记录进度和放 PR 链接，不另外维护一套任务。
 
 ## 你的常用入口
 
-- **[更新进度与查看历史](https://github.com/dinggegu-dot/wearwise/issues/1)**：进入工作卡，在底部追加评论即可。
-- **[登记本轮小任务](https://github.com/dinggegu-dot/wearwise/issues/new?title=%5BM01%5D+%E4%BB%BB%E5%8A%A1%EF%BC%9A%E8%AF%B7%E5%A1%AB%E5%86%99%E7%9B%AE%E6%A0%87&body=%E8%A7%92%E8%89%B2%EF%BC%9A1%E5%8F%B7+%E4%B8%BB%E6%8E%A7%E4%B8%8E%E9%9B%86%E6%88%90%0A%E5%85%B3%E8%81%94%E8%A7%92%E8%89%B2%E5%8D%A1%EF%BC%9A%231%0APRD%E7%89%88%E6%9C%AC%EF%BC%9A%0A%E7%9B%AE%E6%A0%87%EF%BC%9A%0A%E9%AA%8C%E6%94%B6%E8%A1%8C%E4%B8%BA%EF%BC%9A%0A%E4%BE%9D%E8%B5%96%E6%8E%A5%E5%8F%A3%2F%E6%88%90%E5%91%98%EF%BC%9A%0A%E5%85%81%E8%AE%B8%E4%BF%AE%E6%94%B9%E8%8C%83%E5%9B%B4%EF%BC%9A%0APR%E9%93%BE%E6%8E%A5%EF%BC%9A%0A%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C%E5%8F%8A%E6%9C%AA%E9%AA%8C%E8%AF%81%E9%A1%B9%EF%BC%9A)**：已预填角色，检查内容并提交后才会建立。
-- **[查看本角色提交的 PR](https://github.com/dinggegu-dot/wearwise/pulls?q=is%3Apr+M01+in%3Atitle)**：PR 标题使用 `[M01] 一句话说明结果`。
-- **[提交代码合并申请](https://github.com/dinggegu-dot/wearwise/compare)**：先推送自己的任务分支，核对来源分支与目标 main；没有写权限用自己的 Fork。
-- **[向1号报告集成问题](https://github.com/dinggegu-dot/wearwise/issues/1)**：贴问题、证据、依赖和需要的帮助。
+- **[团队 AI 协作与交接指南](AI协作与交接指南.md)**：了解完整流程、需要对接谁和怎样确认联调。
 
-## 每次如何工作
+- [共同目标和阶段顺序](https://github.com/dinggegu-dot/wearwise/issues/10)
+- [如何 Fork、提交代码和发起 PR](提交与合并指南.md)
+- [仓库所有 PR](https://github.com/dinggegu-dot/wearwise/pulls)
+- [岗位入口 #1](https://github.com/dinggegu-dot/wearwise/issues/1)
 
-1. 阅读仓库 README、team/README.md、最新获批需求及任务；检查基线、远程地址、分支与未提交内容。
-2. 先与协作方确认输入输出，只完成本轮可集成的小任务。保护已有工作，不能随意修改公共配置和其他人的代码。
-3. 实际运行相关检查，记录真实结果。测试缺失、未运行或真实服务无凭证时明确说明。
-4. 经相应授权提交推送任务分支，用 `[M01]` 开头创建 PR，附任务、改动、使用方法、测试与未验证项。
-5. 在个人工作卡更新状态、PR 和下一步；评审提出修改后继续更新原分支与原 PR，集成后复测。
+## 可以直接交给你的 AI
 
-## 发给你的 AI
-
-```text
-我是 WearWise 第1号，负责主控与集成。先读仓库README、team/README.md、本页及最新获批需求。
-先检查实际基线、分支、未提交改动、任务和依赖，报告目标、接口、可修改范围及验收方式。
-按已确认范围完成一个小任务并真实验证。进度写到角色Issue #1，PR标题以[M01]开头。
-提交推送、外部调用和部署按用户实际授权执行。缺权限就报告，不伪造完成，不扩大权限。
-```
-
-状态格式：日期／任务与PRD版本／状态／已完成／PR／实际测试／阻塞／下一步。
-这张卡是角色入口，尚未绑定具体GitHub账号。公开位置不要贴密钥、私人照片和用户数据。
+> 我负责 WearWise 的 01 号岗位。请先阅读上面的具体任务卡、总计划和团队 AI 协作与交接指南，检查最新 main 和已有工作。按卡中的阶段、依赖和交接要求协调；记录进度、07 的验收、阻塞、合并及发布结果。有实际代码或配置变更时再说明提交与测试；不要为凑交付创建分支。不要把准备、模拟或单独模块通过当作完整功能完成。

@@ -1,0 +1,41 @@
+name: Team progress
+
+on:
+  workflow_run:
+    workflows: [Pull request checks, Publish GitHub Pages, Submission events]
+    types: [requested, completed]
+  issues:
+    types: [opened, edited, closed, reopened]
+  issue_comment:
+    types: [created, edited, deleted]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: read
+  actions: read
+  statuses: read
+  issues: write
+
+concurrency:
+  group: team-progress
+  cancel-in-progress: false
+
+jobs:
+  summarize:
+    if: github.repository == 'dinggegu-dot/wearwise' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      # 有写 Issue 权限的任务只能执行 main 脚本；绝不执行 PR/Fork 代码及其产物。
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Collect evidence and update the single dashboard
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node .github/scripts/progress.mjs --publish

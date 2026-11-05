@@ -1,0 +1,18 @@
+name: Submission events
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, edited, synchronize, closed, ready_for_review, converted_to_draft]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+
+permissions: {}
+
+jobs:
+  notify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      # 不检出代码、不接收 PR 文本参数、无令牌写权限；仅让 main 上的汇总工作流收到事件。
+      - run: echo "Submission metadata changed; trusted main workflow will refresh the dashboard."
