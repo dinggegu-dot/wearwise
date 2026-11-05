@@ -1,0 +1,40 @@
+name: Pull request checks
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    name: Typecheck, build and Chrome
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      DASHSCOPE_API_KEY: ''
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+      - name: Typecheck
+        run: npm run typecheck
+      # 仅在零测试时允许成功；已有测试失败仍使任务失败。
+      - name: Unit tests (empty suite allowed)
+        run: npm run test -- --passWithNoTests
+      - name: Build
+        run: npm run build
+      - name: Verify Chrome installation
+        run: google-chrome --version
+      - name: Chrome end-to-end tests
+        run: npm run test:e2e
+      - name: Verify GitHub Pages export
+        run: |
+          mv src/app/api "$RUNNER_TEMP/wearwise-api"
+          PAGES_EXPORT=1 npm run build

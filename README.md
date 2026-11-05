@@ -16,6 +16,10 @@
 
 Next.js App Router、React、TypeScript、Tailwind CSS、Lucide；计划使用 Dexie、Zod、Vitest 和 Playwright 完善后续功能。
 
+## 团队协作
+
+七位成员从 [团队工作台](team/README.md) 进入各自的任务、进度和 PR；首次提交请看 [从任务到合并](team/%E6%8F%90%E4%BA%A4%E4%B8%8E%E5%90%88%E5%B9%B6%E6%8C%87%E5%8D%97.md)。
+
 ## 本地开发
 
 需要 Node.js 22.12 或更高版本。
