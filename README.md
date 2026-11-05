@@ -8,6 +8,8 @@
 
 先看 [完整目标、顺序和验收 #10](https://github.com/dinggegu-dot/wearwise/issues/10)，再打开自己的卡；每张卡只讲你要做什么、等谁的输入、交给谁、怎样自测。
 
+**每位成员和自己的 AI 先读：[团队 AI 协作与交接指南](team/AI协作与交接指南.md)**。指南说明每一阶段的完整流程、人与人的对接、真实联调及可复制给 AI 的提示词。
+
 | 岗位（职责不变） | 本轮具体任务 |
 |---|---|
 | 01 主控与集成 | [打开任务 #11](https://github.com/dinggegu-dot/wearwise/issues/11) |
