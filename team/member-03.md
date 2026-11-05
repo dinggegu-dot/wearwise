@@ -1,5 +1,7 @@
 # 03 号｜衣橱与录入体验
 
+[统一 PR 提交](https://github.com/dinggegu-dot/wearwise/compare) · [查看提交与证据 #20](https://github.com/dinggegu-dot/wearwise/issues/20) · [填写与返修方法](工作流说明.md)。已有 PR 继续更新原分支，不另传 zip。
+
 ## 你的当前任务：完善 Demo
 
 **[打开你的具体任务 #13](https://github.com/dinggegu-dot/wearwise/issues/13)**

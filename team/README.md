@@ -1,5 +1,7 @@
 # WearWise 团队工作台
 
+**统一交付入口：[提交/查看 PR](https://github.com/dinggegu-dot/wearwise/pulls) · [团队提交总览 #20](https://github.com/dinggegu-dot/wearwise/issues/20) · [工作流说明](工作流说明.md)。** 代码、测试和交付文档统一进 PR；返修更新原 PR，进度总览自动化须在配置获准合并后生效。
+
 ## 当前只有一项共同任务：完善 Demo
 
 每个人职责不变，但按完整功能分段完成：**A 手动衣橱 → B 本地照片 → C 首页天气**。上一段验收、合并后再从最新 main 做下一段；后续成员可先准备，不要求七人同时改页面。

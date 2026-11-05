@@ -1,5 +1,7 @@
 # WearWise · 智能衣橱
 
+**统一交付入口：[提交/查看 PR](https://github.com/dinggegu-dot/wearwise/pulls) · [团队提交总览 #20](https://github.com/dinggegu-dot/wearwise/issues/20) · [工作流说明](team/工作流说明.md)。** 代码、测试和交付文档统一进 PR；返修更新原 PR，进度总览自动化须在配置获准合并后生效。
+
 一个面向日常穿搭的智能衣橱项目。当前发布的是 **V0.2 产品框架**：展示首页、我的衣橱和穿搭推荐三个页面，以及未来功能的布局。
 
 ## 第一项共同任务：完善 Demo
