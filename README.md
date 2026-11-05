@@ -1,3 +1,9 @@
+# 本地基础测试版
+
+Node 22.12+。安装锁定依赖后运行 `npm run preview`，等待 Ready 后在 Chrome 打开 http://127.0.0.1:3000。开发运行 `npm run dev`。操作：体验示例衣橱→我的衣橱8件→穿搭推荐→使用示例天气→生成→反馈；也可在真实模式录入自己的衣物。图片和数据只在当前浏览器保存。
+
+说明见 [本地使用指南](docs/testing/LOCAL-GUIDE.md)。真实模型识别默认关闭；团队后续优化沿用原 PR 流程。
+
 # WearWise · 智能衣橱
 
 **统一交付入口：[提交/查看 PR](https://github.com/dinggegu-dot/wearwise/pulls) · [团队提交总览 #20](https://github.com/dinggegu-dot/wearwise/issues/20) · [工作流说明](team/工作流说明.md)。** 代码、测试和交付文档统一进 PR；返修更新原 PR，进度总览自动化须在配置获准合并后生效。
