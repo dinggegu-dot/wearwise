@@ -31,3 +31,7 @@ npm run typecheck；npm test；npm run build；npm run test:e2e；npm run build:
 ## 团队接手
 
 后续优化通过原仓库PR流程，沿本分支合并后的基线继续；保留数据模型、来源许可证、dev/生产/静态三类检查。备份、云同步、更多素材、AI品质和视觉优化另列需求，不作为此基础版的隐含完成项。本次只上传分支供审查，不自动合并或触发main部署。
+
+## 云端环境补验
+
+首轮GitHub Linux Chrome故障注入测试因宽泛的role=alert选择器同时匹配Next路由播报而失败；现将断言限定在添加衣物弹窗内，保留草稿/回滚/重试断言。定向正式Chrome复测通过，完整云端检查随PR更新重新执行。

@@ -181,7 +181,7 @@ test('衣橱写入故障时保留草稿，无孤立图且可重试',async({page}
   await page.getByLabel('名称').fill('故障后恢复');await page.getByLabel('颜色').fill('白');
   await page.evaluate(()=>{(window as unknown as {failNextGarmentWrite:boolean}).failNextGarmentWrite=true;});
   await page.getByRole('button',{name:'确认保存'}).click();
-  await expect(page.getByRole('dialog',{name:'添加衣物'})).toBeVisible();await expect(page.getByRole('alert')).toBeVisible();
+  await expect(page.getByRole('dialog',{name:'添加衣物'})).toBeVisible();await expect(page.getByRole('dialog').getByRole('alert')).toBeVisible();
   await expect(page.locator('dialog form')).toHaveAttribute('aria-describedby','wardrobe-form-error');
   await expect(page.getByLabel('名称')).toHaveValue('故障后恢复');
   const dbCounts=()=>page.evaluate(async()=>{
