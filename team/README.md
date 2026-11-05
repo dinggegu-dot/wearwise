@@ -14,6 +14,8 @@
 | 6号 推荐体验与反馈 | [进入](member-06.md) | [工作卡 #6](https://github.com/dinggegu-dot/wearwise/issues/6) | [查看](https://github.com/dinggegu-dot/wearwise/pulls?q=is%3Apr+M06+in%3Atitle) |
 | 7号 独立验收 | [进入](member-07.md) | [工作卡 #7](https://github.com/dinggegu-dot/wearwise/issues/7) | [查看](https://github.com/dinggegu-dot/wearwise/pulls?q=is%3Apr+M07+in%3Atitle) |
 
+> 新成员先看 [从任务到合并：最短流程](%E6%8F%90%E4%BA%A4%E4%B8%8E%E5%90%88%E5%B9%B6%E6%8C%87%E5%8D%97.md)。每个个人页面新增了对应角色的**当前任务查询**。
+
 ## 每个人只做三件事
 
 1. 点个人入口，在固定工作卡中追加进度评论。
