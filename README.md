@@ -1,97 +1,60 @@
-# WearWise · 智能衣橱
+# WearWise · 本地优先的智能衣橱
 
-**统一交付入口：[提交/查看 PR](https://github.com/dinggegu-dot/wearwise/pulls) · [团队提交总览 #20](https://github.com/dinggegu-dot/wearwise/issues/20) · [工作流说明](team/工作流说明.md)。** 代码、测试和交付文档统一进 PR；返修更新原 PR，进度总览自动化须在配置获准合并后生效。
+**当前功能候选已可测试，尚未合并/发布。** 基础版 [PR #21](https://github.com/dinggegu-dot/wearwise/pull/21) 的产品基线为 `92ee865ccf76d545534b8358e5c89288d5305ddf`；2026-11-06 核查 main 仍是 V0.2 框架。
 
-一个面向日常穿搭的智能衣橱项目。当前发布的是 **V0.2 产品框架**：展示首页、我的衣橱和穿搭推荐三个页面，以及未来功能的布局。
+[当前功能、架构、缺口](docs/project/CURRENT-STATE.md) · [团队优化建议与 DDL](team/NEXT-ITERATION.md) · [总计划 #10](https://github.com/dinggegu-dot/wearwise/issues/10) · [PR/检查总览 #20](https://github.com/dinggegu-dot/wearwise/issues/20)
 
-## 第一项共同任务：完善 Demo
+**共同产品目标：**穿搭推荐保留原计划的图片输出——用用户确认保存的真实衣物图片组成平面搭配卡片，并展示理由。详见 [图片穿搭目标、接口和验收](docs/project/OUTFIT-IMAGE-SPEC.md)；示例图片演示不等于真实照片联调验收通过。
 
-目标：让现有网页真正支持手动管理本地衣物、可选照片和六城市天气。AI 识别、自动推荐等远期功能不在本轮。**这是正在安排的开发任务，不代表功能已经上线。**
+## 已有能力
 
-先看 [完整目标、顺序和验收 #10](https://github.com/dinggegu-dot/wearwise/issues/10)，再打开自己的卡；每张卡只讲你要做什么、等谁的输入、交给谁、怎样自测。
+- 首页、我的衣橱、穿搭推荐三个页面；示例模式内置 8 件，和真实衣橱分库。
+- 手动/照片录入、确认、详情、分类、编辑/替换图片、删除、永久排除与数量联动。
+- IndexedDB + Dexie 事务保存图片/衣物，刷新及同一浏览器重开保留；开发模式读取故障已修复。
+- 六城市实时/示例天气、规则生成 0–2 套搭配、反馈与恢复。
+- 类型、单元、Chrome 开发/生产/静态测试。真实模型识别默认关闭，未验证效果。
 
-**每位成员和自己的 AI 先读：[团队 AI 协作与交接指南](team/AI协作与交接指南.md)**。指南说明每一阶段的完整流程、人与人的对接、真实联调及可复制给 AI 的提示词。
+没有账户/云同步/备份、自动学习、完整灵感分析或历史浏览；不把已留接口当已完成产品。详情和证据见 [现状](docs/project/CURRENT-STATE.md)。
 
-| 岗位（职责不变） | 本轮具体任务 |
-|---|---|
-| 01 主控与集成 | [打开任务 #11](https://github.com/dinggegu-dot/wearwise/issues/11) |
-| 02 数据与衣橱内核 | [打开任务 #12](https://github.com/dinggegu-dot/wearwise/issues/12) |
-| 03 衣橱与录入体验 | [打开任务 #13](https://github.com/dinggegu-dot/wearwise/issues/13) |
-| 04 视觉与照片处理 | [打开任务 #14](https://github.com/dinggegu-dot/wearwise/issues/14) |
-| 05 天气与推荐内核 | [打开任务 #15](https://github.com/dinggegu-dot/wearwise/issues/15) |
-| 06 首页与推荐体验 | [打开任务 #16](https://github.com/dinggegu-dot/wearwise/issues/16) |
-| 07 独立验收 | [打开任务 #17](https://github.com/dinggegu-dot/wearwise/issues/17) |
+## 本地试用候选
 
-### 按完整功能交付，不要求七人同时写代码
-
-| 顺序 | 完成后用户能做什么 | 合作与交接 |
-|---|---|---|
-| A 手动衣橱 | 添加、查看、分类、编辑、删除，刷新保留，首页数量正确 | 02 提供存储，03 完成衣橱，06 补数量；03 给 07 完整候选版本 |
-| B 加入照片 | 在同一衣橱表单选图、预览、保存、刷新读取 | A 合并后，04 给照片处理，02 配合保存，03 接原表单并交 07 |
-| C 加入天气 | 在原首页选城市、看真实天气，失败重试或主动选示例 | B 合并后，05 给天气服务，06 接原首页并交 07 |
-
-每段验收、合并后，下一段从新 main 继续。等待期间可以读代码、准备测试样本和服务测试，不抢先另写一套页面。
-
-### 每个人共同遵守
-
-1. **设计由执行者决定。** 沿用当前风格和技术栈；03、06 复用已有按钮、卡片、颜色和间距，不需要用户或 01 审批每张草图。扩大范围、换技术路线或新增费用才提出。
-2. **只找实际要合作的人。** 把调用入口、输入/输出、成功/失败例子、负责文件写在任务或 PR，对方能调用后确认；不把所有问题都交 01。共用文件约定先后，不同时覆盖。
-3. **交可运行代码。** 写“可联调”时，提供分支、固定提交、调用例子、测试结果；替身不能冒充真实业务。A/B 由 03，C 由 06，提供完整候选版本和依赖 PR 清单给 07。
-4. **07 验收，原负责人修复。** 07 记录实际结果、代码版本和未验证项；01 负责排顺序、解决阻塞及既定权限内的合并，不包揽接口和设计。
-5. **从任务到代码：** GitHub 评论领取 → Fork/任务分支 → 开发自测 → 推送个人分支 → 向本仓库 main 提 PR。写明完成内容、测试、依赖、联调和未完成项。不要直接覆盖 main，不上传密钥、私人照片或用户数据。
-6. **合并与上线：** 用户保留合并决定，合并人须有权限和相应授权；main 更新会触发 Pages。验收结论绑定提交，合并后再检查主分支和网页。
-
-具体 GitHub 操作见 [提交与合并指南](team/提交与合并指南.md)。
-
----
-
-## 在线体验
-
-[打开 WearWise](https://dinggegu-dot.github.io/wearwise/)
-
-## 当前进度
-
-- 已完成：响应式页面、导航、衣橱和推荐功能分区。
-- 计划中：衣物录入与存储、天气、图片识别、推荐规则和反馈。页面上的后续功能均明确标示，当前没有接入真实数据。
-- 仓库保留部分尚未完成的领域代码，不能视为已交付功能。
-
-## 技术栈
-
-Next.js App Router、React、TypeScript、Tailwind CSS、Lucide；计划使用 Dexie、Zod、Vitest 和 Playwright 完善后续功能。
-
-## 团队协作
-
-七位成员从 [团队工作台](team/README.md) 进入各自的任务、进度和 PR；首次提交请看 [从任务到合并](team/%E6%8F%90%E4%BA%A4%E4%B8%8E%E5%90%88%E5%B9%B6%E6%8C%87%E5%8D%97.md)。
-
-## 本地开发
-
-需要 Node.js 22.12 或更高版本。
+使用 #21 分支或其合入后的版本；旧 main 没有这些业务能力。需要 Node.js >=22.12 和正式 Google Chrome：
 
 ```bash
 npm ci --legacy-peer-deps
-npm run dev
+npm run preview
 ```
 
-在浏览器访问 http://127.0.0.1:3000 。当前 npm 依赖树需要 `--legacy-peer-deps`；安装后应执行构建和测试，不能仅凭该选项认定依赖完全兼容。
+等待 Ready，Chrome 打开 `http://127.0.0.1:3000`：体验示例衣橱→我的衣橱 8 件→穿搭推荐→使用示例天气→生成→反馈。真实模式可添加自己的衣物。开发用 `npm run dev`。数据按浏览器和 origin 保存，`localhost` 与 `127.0.0.1` 不同；清理站点数据可能丢失衣物。
+
+更多见 [使用指南](docs/testing/LOCAL-GUIDE.md) 和 [基础验收](docs/testing/BASE-TEST.md)。
+
+## 团队接下来做什么
+
+**11 月 14 日 23:59 前完成个人优化并交代码、测试和设计说明；11 月 15—19 日联调对齐与修复；11 月 20 日完成最终验收。全部北京时间，2026 年。** 14 日不是只交方案。具体选题为建议，成员提前自行沟通并收敛。
+
+[团队工作台](team/README.md) 按 01—07 岗位列出要找谁、建议优化什么和实际交付要求；正式成果仍用同一仓库 PR，返修更新原 PR。旧的 A→B→C 从零搭建任务已被当前优化安排替代；已确认基线和验收要求保留。
+
+## 结构与验证
+
+`src/app` 路由/API；`src/composition` 模式与服务装配；`src/modules` 衣橱、图片、识别、天气、推荐、反馈、示例；`src/shared/infrastructure` Dexie/事务；`tests` 单元和契约；`e2e` 正式 Chrome；`docs/testing` 证据与使用方法。
 
 ```bash
 npm run typecheck
+npm test
 npm run build
 npm run test:e2e
+npm run test:e2e:dev
+npm run build:pages
+npm run test:e2e:pages
 ```
 
-端到端测试要求本机安装正式 Google Chrome，并先完成构建。
+以上串行执行，避免端口和报告冲突。`npm run test:e2e:live` 会实际访问六城市天气接口，真实与模拟分开记录。历史实测 49 项单测、开发/生产各 34 项、Pages 2 项、真实天气 2 项，见 [验收记录](docs/testing/ACCEPTANCE.txt)。本次文档更新不冒称重新跑过全部产品检查。
 
-## 项目结构
+## 发布、AI 与许可
 
-- `src/app`：页面和 API 路由。
-- `src/shared`：共享 UI、样式及基础设施。
-- `src/modules`：后续衣橱、识别、天气、推荐和反馈模块。
-- `src/composition`：模块装配入口。
-- `e2e`：基础 Chrome 端到端检查。
+[线上 Pages](https://dinggegu-dot.github.io/wearwise/) 在本次核查时没有部署上述候选；静态版本不支持服务端识别。合并 main 会触发发布，操作须按既定授权流程进行。
 
-GitHub Pages 发布当前静态页面；需要服务端的功能待后续另行接入，不能直接在 Pages 上运行。暂未配置任何真实 API Key。
+真实识别需另行确认照片发送、服务商/费用/样本并在服务端配置密钥。Open-Meteo 请求固定城市公共坐标，不发送衣橱照片；商业使用需核查 [官方条款](https://open-meteo.com/en/pricing)。
 
-## 许可
-
-暂未指定开源许可证；如需复用或分发，请联系项目所有者。
+项目自身暂未指定开源许可证；第三方复用见 [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md) 与 [来源核查](docs/terra/SOURCE-REUSE.md)。

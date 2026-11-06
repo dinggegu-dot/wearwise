@@ -1,0 +1,302 @@
+独立验收源码、测试与显式配置 SHA-256（测试前；不含 docs、AGENTS.md、next-env.d.ts）
+89d902e8eb36632f226ae69623ab66b333891d76d6633c4bb1c0a132d3e582d7  .env.example
+88a970ad5ff036ec57c2a11d6354e1e9cf49115b9061cfee697e9beba5fe6879  .github/workflows/pages.yml
+b8415c2d854565e604d9259464c5b2986396275a1f16201124c1e824884fd953  .github/workflows/pr-checks.yml
+6497ebedcc8abdce0f6ed2889c6d4ab0d02929d6a91cb32803eb8669366d1ce9  .github/workflows/submission-events.yml
+5cf93b524004dbd7b7c124ffd5c87606bf773fb81e56c8cd9d149d1af77fbf23  .github/workflows/team-progress.yml
+f9377b7a792fe4600ca70cfe109474f68ea9920edad1b92635cbbf8f94c3f975  .gitignore
+3cdf3f766f81e3c82b5559dcedc35d03682f2c4e91f8312bdedbdd118651d4a6  e2e/framework.spec.ts
+c970fe60cc4e52a418917a335510e613ad26f93227a2fb84b16ea8baacfb234b  e2e/live/weather.spec.ts
+b256d7fce606020b226eea10c5686a9b3611f69209441933a00ae363b415b09a  e2e/mode-isolation.spec.ts
+b1da1231b454036d96968773d2ade866f7dc437975414d92a1a43278609afa68  e2e/pages/pages.spec.ts
+96245dc145de363afe5a4c5454375ae9ac90e097303ab4101c9b7cdf59346f5c  e2e/persistence.spec.ts
+518e035d08d00371f3fa26a8abb4023351883c6229fcccd19985ea35ed447f38  e2e/recommendation.spec.ts
+e19e050880a4e4496c45c2fc610edf4d8099fe70d730f6fd78b6e9fbf272667b  e2e/wardrobe.spec.ts
+d3648133692c920d34d3c2a9b85e4a8f788031c9eb957955dd1edb0d269b7d05  e2e/weather.spec.ts
+b8227828aac3eda36cecefd1a76a772336ce99dbbc182b8397e84ab94dada517  next.config.ts
+00e6cc21035553675e89cf4e7d2483ca9f790c898a18ecaa40144bdbfa187dcd  package-lock.json
+37a424a28fb2a545eebc52d5ca3ab8b773f5be46c743eda36e06bcf00921b58b  package.json
+df7b3f507a9842b8e05fbf695952a89cf094e841a62436f3bc8ea08e0999e3dc  playwright.config.ts
+7a9833197df388b17b2cc30b4f386a8c6b638eec46ab2c5de2ec62203ba2d142  playwright.dev.config.ts
+be39b759ee7ab94d2ff4a4c566c3eb4d4dd3d9e1e35a81ba0b5c1508768f2e67  playwright.live.config.ts
+efb117575a8e00730143390f83bb7a8393bf51b3eb37d24dbb8f8dcecdccf10f  playwright.pages.config.ts
+f50058e0d309cdb3e7c25a1123337338641fb71e988572607d57f47209db1fd1  postcss.config.mjs
+8de43336275d0533acf2d2556ecbb61ce7ce2fefb460174f326a65748d6e3e3e  scripts/build-pages.mjs
+4391eeac420d5ae7a5c6d126728d48d0d720ca2f52ce9e6f20701fb0f5e07fbb  scripts/serve-pages.mjs
+28d5166df7e46356cc0cac4a69a6b1c37249bc975f311e5a510f3b2a45b9778c  src/app/api/capabilities/route.ts
+3fe0e902215b41c430bc169d40c07c03803802f9f525f75112b7e5fa9157d301  src/app/api/recognition/route.ts
+fd4e9415010c430ed4b221b02e50b24129d9ae7c5f56e7075316a8d56aa00d74  src/app/globals.css
+8480b55c00fca469faf21efb81c0050e00415f6d3938cd2c5065cc5ecd7a1d8b  src/app/layout.tsx
+b057aabc41b2e61c7be87d8d78f5f335ee98ec16dce7a3d55beef9b3395e56b3  src/app/page.tsx
+2474d7ed9df17c6b379d3be46c2d96657a392ce1a61a5cd79b05de41e5ade860  src/app/recommendations/page.tsx
+a4644b45bb84e593b388ac097a67643e301fccd8639c7a0f987e8507e79fed27  src/app/wardrobe/page.tsx
+7ebad0eda01209a1f35f5c8ee330ba9eab1731f4d925c4e343fc8f78c0f8e4d1  src/composition/index.ts
+bdea009d5dc9de1a5d4b9ee67dea2b4bf2be2471838fe145addfeaea8e71f2d7  src/composition/mode-provider.tsx
+065fa755a21260f2fe5a3e1aa811601e9f469472ca37eaefde03db2ea8ddae28  src/modules/demo/index.ts
+636e99cab68f51bd138256aba813b48b5bf04932c0dd3d9f0af0c3423bc919dc  src/modules/feedback/index.ts
+157f76c7aed9abb73edd05e350d25957417ee76e888589a1df7f5c5a016484c6  src/modules/media/browser-image-processor.ts
+f19e82802e8bd82883f91030d093d03d6b1dc457a0ddc4cb2d0ac884c0a7e0ca  src/modules/recognition/index.ts
+64f81302a5b2fd7c9446f7afe21f07334e931ae6bf4c3111beed84d4ef8842dc  src/modules/recognition/infrastructure/http-provider.ts
+fbf8b54c439f09a0df0f49464cc66e8de54d00186a6c3f2ddc0c01e676e98210  src/modules/recognition/infrastructure/qwen.ts
+cd2a4ba5898817001ab279dc9a746246d477c69aca01767e732e2cd8b92cd4fc  src/modules/recommendation/index.ts
+75aa706c67c76b7721d885999c9968a74f049bc6072bad7aad30b96f6c21040c  src/modules/recommendation/service.ts
+4e5144e38ce86ec51c43ec5a46a84c502cea788404f8c649532b28fe63e1cd1a  src/modules/recommendation/ui/recommendations-page.tsx
+c4e48b72bfc317dc41bb77ae71ac85902522c7232a43ff514f2c3eda9dc1c5db  src/modules/wardrobe/index.ts
+afcee5c0dab6fd7f5d26015ee997a8d82dd0c62eb4e54e89b1ea8a264c0932bb  src/modules/wardrobe/ui/wardrobe-count.tsx
+3fc5b8b8cdd2e1d0cb367738ed3494645b35503d2f6002c7f3ee6b0d58ca2513  src/modules/wardrobe/ui/wardrobe-page.tsx
+ffd1cf02fcdeff5d494ebc3a6677e5a211940ff9216ce55c9302ef359b23f285  src/modules/weather/domain/weather-code.ts
+a38029b6246d86bae11315d25be46cb2db60d6018abd028bdffe1176fbe6d849  src/modules/weather/index.ts
+2790d1a6ff3fa5ef186d3d417f26239159f4c1ff251d3e2ddef73d94152e40bf  src/modules/weather/ui/weather-panel.tsx
+4f3c65228563540899eb027e1f14091f64febe546a5018a5688341bb96bf6f15  src/shared/domain/unit-of-work.ts
+479d7f41f6bc8b3c898970a96d9b93221b099b7671b61838bee2289ceb38d981  src/shared/infrastructure/database.ts
+a84766e1dcafc0fb75c098af74e2667677323aabcaff8c3968f27f04ee22e15d  src/shared/infrastructure/unit-of-work.ts
+b55fb9bddd02f545c8a15f6efe8df82eb0b824ac4efae95c727cbf551f6121aa  src/shared/ui/app.tsx
+544f88ff723548ae18c6b38e147ff2ae0758efa7d75fbad144b2e07c36506bff  tests/architecture/ports.test.ts
+df671262cc5e31abb81bbcd98197d15a709360a14a4f7f0737da2570ce446937  tests/demo/demo.test.ts
+56df3c46a7dba34fe27fbd670f6c2e5c978866642e68f42b45d9101a3c341f4e  tests/fixtures/generated-ui.jpg
+20f9b0f84689c4b9f23f47636bd6f2d30439d4a92a32a27763bf358da0bd948b  tests/media/image.test.ts
+91e8aabd4352832581d82e37d7b465bb63541a5947b560f8d10d2815cf2a2f34  tests/recognition/route.test.ts
+4f0b95b1e27b41582234d08f840303a08a46f2797d0f0bdd8ebf9f0e78020b3c  tests/recommendation/engine.test.ts
+46703258383f4ee447a5daaae40d5d045be23ea946db3337bd8c1a6e7a4e3f92  tests/recommendation/service.test.ts
+4cca69a36021ff8576f5f540d3a24a69571598214a49ee0406283b74c4540b38  tests/wardrobe/storage.test.ts
+b2babe984f7dcb266cf2f56371b28a63f58f5d4e50c03b621258adcf0cae7354  tests/weather/weather.test.ts
+d20b37b268970ddc825c5485378149ad115be66bdbd9cd0ea112cd0854f6e4f3  tsconfig.json
+82f67dcdb40a59b0b3c436cc4b5ab7f438f3d61af99d1070829571e6087b653d  vitest.config.ts
+
+$ npm run typecheck
+
+> wearwise@0.1.0 typecheck
+> tsc --noEmit
+
+EXIT_CODE=0
+
+$ npm test
+
+> wearwise@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.12 <PROJECT_ROOT>
+
+
+ Test Files  8 passed (8)
+      Tests  49 passed (49)
+   Start at  00:11:17
+   Duration  376ms (transform 417ms, setup 0ms, import 792ms, tests 511ms, environment 0ms)
+
+EXIT_CODE=0
+
+$ npm run build
+
+> wearwise@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.4.5 (webpack)
+✓ Running next.config.ts took 46ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.3s
+  Running TypeScript ...
+  Finished TypeScript in 1145ms ...
+  Collecting page data using 8 workers ...
+  Generating static pages using 8 workers (0/7) ...
+  Generating static pages using 8 workers (1/7)
+  Generating static pages using 8 workers (3/7)
+  Generating static pages using 8 workers (5/7)
+✓ Generating static pages using 8 workers (7/7) in 212ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/capabilities
+├ ƒ /api/recognition
+├ ○ /recommendations
+└ ○ /wardrobe
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+EXIT_CODE=0
+
+$ npm run test:e2e
+
+> wearwise@0.1.0 test:e2e
+> playwright test
+
+[WebServer] (node:33089) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 34 tests using 1 worker
+
+(node:33115) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 e2e/framework.spec.ts:6:7 › 框架导航和页面分区 1440px (723ms)
+  ✓   2 e2e/framework.spec.ts:6:7 › 框架导航和页面分区 390px (591ms)
+  ✓   3 e2e/framework.spec.ts:6:7 › 框架导航和页面分区 320px (525ms)
+  ✓   4 e2e/mode-isolation.spec.ts:3:5 › 真实和示例衣橱隔离，重置示例不改变真实衣物 (1.1s)
+  ✓   5 e2e/mode-isolation.spec.ts:42:5 › 反馈写入失败时显示错误，可重试并持久化 (628ms)
+  ✓   6 e2e/mode-isolation.spec.ts:62:5 › 示例初始化失败不留下半库，重试后完整恢复八件 (428ms)
+  ✓   7 e2e/persistence.spec.ts:6:5 › 隔离 Chrome 用户目录关闭并重开后衣物和图片仍可读取 (1.3s)
+  ✓   8 e2e/recommendation.spec.ts:6:6 › 真实衣橱到示例天气、穿搭和反馈的闭环 1440px (979ms)
+  ✓   9 e2e/recommendation.spec.ts:6:6 › 真实衣橱到示例天气、穿搭和反馈的闭环 390px (970ms)
+  ✓  10 e2e/recommendation.spec.ts:41:5 › 另一标签页修改衣橱时当前推荐立即失效 (904ms)
+  ✓  11 e2e/recommendation.spec.ts:56:5 › 刷新后天气控件与已保存推荐使用的城市一致 (778ms)
+  ✓  12 e2e/recommendation.spec.ts:75:5 › 只用键盘完成衣橱、推荐和反馈闭环 (672ms)
+  ✓  13 e2e/recommendation.spec.ts:101:5 › 切换风格和城市后旧搭配失效，历史记录不会恢复为当前推荐 (853ms)
+  ✓  14 e2e/recommendation.spec.ts:116:5 › 获取后五分钟内观测时间先过期时禁止继续使用推荐 (716ms)
+  ✓  15 e2e/recommendation.spec.ts:131:5 › 生成推荐过程中切换模式不会激活或显示旧模式晚结果 (816ms)
+  ✓  16 e2e/wardrobe.spec.ts:5:5 › 真实衣橱：取消、添加、刷新、编辑、筛选、排除和删除 (644ms)
+  ✓  17 e2e/wardrobe.spec.ts:35:5 › 照片在确认前不入库，保存后刷新仍可读取 (2.1s)
+  ✓  18 e2e/wardrobe.spec.ts:62:5 › 浏览器正确处理带 EXIF 旋转的 JPEG (1.2s)
+  ✓  19 e2e/wardrobe.spec.ts:81:5 › 大图缩放、静态 WebP 及无效文件提示 (358ms)
+  ✓  20 e2e/wardrobe.spec.ts:94:5 › 图片编码失败时提示错误，不产生衣物 (295ms)
+  ✓  21 e2e/wardrobe.spec.ts:103:5 › 键盘可打开和取消衣物表单并返回原焦点 (205ms)
+  ✓  22 e2e/wardrobe.spec.ts:110:5 › 10 MiB 透明 PNG 可处理，超限拒绝且临时图片 URL 回收 (1.5s)
+  ✓  23 e2e/wardrobe.spec.ts:142:5 › 查看详情、替换照片及首页数量随添加删除变化 (1.6s)
+  ✓  24 e2e/wardrobe.spec.ts:171:5 › 衣橱写入故障时保留草稿，无孤立图且可重试 (385ms)
+  ✓  25 e2e/wardrobe.spec.ts:196:5 › 模拟识别候选可修改材质并确认后保存 (1.2s)
+  ✓  26 e2e/wardrobe.spec.ts:210:5 › 切换模式会取消在途识别，晚返回候选不会写入衣橱 (1.2s)
+  ✓  27 e2e/wardrobe.spec.ts:225:5 › 读取衣橱失败不显示空衣橱，重试后才显示真实空态 (320ms)
+  ✓  28 e2e/wardrobe.spec.ts:241:5 › 连续重复确认只产生一件衣物和一张图片 (289ms)
+  ✓  29 e2e/wardrobe.spec.ts:253:5 › 图片压缩逐档降低质量，三档仍超限则清楚失败 (1.1s)
+  ✓  30 e2e/wardrobe.spec.ts:275:5 › 旧照片处理晚返回时不能覆盖新选照片 (1.3s)
+  ✓  31 e2e/weather.spec.ts:5:5 › 天气失败后可重试或主动选择示例，切换城市不复用旧结果 (438ms)
+  ✓  32 e2e/weather.spec.ts:26:5 › 快速切换城市时较晚的天气响应不覆盖当前城市 (1.1s)
+  ✓  33 e2e/weather.spec.ts:38:5 › 切换示例模式后旧天气请求的晚响应不会污染新模式 (333ms)
+  ✓  34 e2e/weather.spec.ts:52:5 › 旧天气观测不会作为新鲜实时天气展示 (336ms)
+
+  34 passed (29.2s)
+EXIT_CODE=0
+
+$ npm run build:pages
+
+> wearwise@0.1.0 build:pages
+> node scripts/build-pages.mjs
+
+
+> wearwise@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.4.5 (webpack)
+✓ Running next.config.ts took 13ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.2s
+  Running TypeScript ...
+  Finished TypeScript in 1011ms ...
+  Collecting page data using 6 workers ...
+  Generating static pages using 6 workers (0/5) ...
+  Generating static pages using 6 workers (1/5)
+  Generating static pages using 6 workers (2/5)
+  Generating static pages using 6 workers (3/5)
+✓ Generating static pages using 6 workers (5/5) in 199ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /recommendations
+└ ○ /wardrobe
+
+
+○  (Static)  prerendered as static content
+
+Pages 静态文件已生成到 out/
+EXIT_CODE=0
+
+$ npm run test:e2e:pages
+
+> wearwise@0.1.0 test:e2e:pages
+> playwright test --config=playwright.pages.config.ts
+
+[WebServer] (node:33612) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+(node:33613) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 e2e/pages/pages.spec.ts:3:5 › 静态子路径导航、直接刷新和本地衣橱保存 (655ms)
+  ✓  2 e2e/pages/pages.spec.ts:22:5 › 静态版实际衣橱到推荐反馈并刷新恢复 (895ms)
+
+  2 passed (2.5s)
+EXIT_CODE=0
+
+$ npm run test:e2e:live
+
+> wearwise@0.1.0 test:e2e:live
+> playwright test --config=playwright.live.config.ts
+
+[WebServer] (node:33690) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+(node:33692) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 e2e/live/weather.spec.ts:2:5 › 正式 Chrome 实际读取六城市实时天气 (3.7s)
+  ✓  2 e2e/live/weather.spec.ts:16:5 › 真实衣物与真实天气生成穿搭并保存反馈 (2.2s)
+
+  2 passed (6.8s)
+EXIT_CODE=0
+
+$ npm run test:e2e:dev
+
+> wearwise@0.1.0 test:e2e:dev
+> playwright test --config=playwright.dev.config.ts
+
+[WebServer] (node:33783) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:33784) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 34 tests using 1 worker
+
+(node:33804) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 e2e/framework.spec.ts:6:7 › 框架导航和页面分区 1440px (2.3s)
+  ✓   2 e2e/framework.spec.ts:6:7 › 框架导航和页面分区 390px (1.3s)
+  ✓   3 e2e/framework.spec.ts:6:7 › 框架导航和页面分区 320px (1.3s)
+  ✓   4 e2e/mode-isolation.spec.ts:3:5 › 真实和示例衣橱隔离，重置示例不改变真实衣物 (3.0s)
+  ✓   5 e2e/mode-isolation.spec.ts:42:5 › 反馈写入失败时显示错误，可重试并持久化 (1.8s)
+  ✓   6 e2e/mode-isolation.spec.ts:62:5 › 示例初始化失败不留下半库，重试后完整恢复八件 (1.1s)
+  ✓   7 e2e/persistence.spec.ts:6:5 › 隔离 Chrome 用户目录关闭并重开后衣物和图片仍可读取 (2.5s)
+  ✓   8 e2e/recommendation.spec.ts:6:6 › 真实衣橱到示例天气、穿搭和反馈的闭环 1440px (2.3s)
+  ✓   9 e2e/recommendation.spec.ts:6:6 › 真实衣橱到示例天气、穿搭和反馈的闭环 390px (2.4s)
+  ✓  10 e2e/recommendation.spec.ts:41:5 › 另一标签页修改衣橱时当前推荐立即失效 (2.1s)
+  ✓  11 e2e/recommendation.spec.ts:56:5 › 刷新后天气控件与已保存推荐使用的城市一致 (2.1s)
+  ✓  12 e2e/recommendation.spec.ts:75:5 › 只用键盘完成衣橱、推荐和反馈闭环 (1.4s)
+  ✓  13 e2e/recommendation.spec.ts:101:5 › 切换风格和城市后旧搭配失效，历史记录不会恢复为当前推荐 (2.7s)
+  ✓  14 e2e/recommendation.spec.ts:116:5 › 获取后五分钟内观测时间先过期时禁止继续使用推荐 (1.4s)
+  ✓  15 e2e/recommendation.spec.ts:131:5 › 生成推荐过程中切换模式不会激活或显示旧模式晚结果 (2.1s)
+  ✓  16 e2e/wardrobe.spec.ts:5:5 › 真实衣橱：取消、添加、刷新、编辑、筛选、排除和删除 (1.8s)
+  ✓  17 e2e/wardrobe.spec.ts:35:5 › 照片在确认前不入库，保存后刷新仍可读取 (3.3s)
+  ✓  18 e2e/wardrobe.spec.ts:62:5 › 浏览器正确处理带 EXIF 旋转的 JPEG (1.5s)
+  ✓  19 e2e/wardrobe.spec.ts:81:5 › 大图缩放、静态 WebP 及无效文件提示 (921ms)
+  ✓  20 e2e/wardrobe.spec.ts:94:5 › 图片编码失败时提示错误，不产生衣物 (847ms)
+  ✓  21 e2e/wardrobe.spec.ts:103:5 › 键盘可打开和取消衣物表单并返回原焦点 (783ms)
+  ✓  22 e2e/wardrobe.spec.ts:110:5 › 10 MiB 透明 PNG 可处理，超限拒绝且临时图片 URL 回收 (2.0s)
+  ✓  23 e2e/wardrobe.spec.ts:142:5 › 查看详情、替换照片及首页数量随添加删除变化 (3.0s)
+  ✓  24 e2e/wardrobe.spec.ts:171:5 › 衣橱写入故障时保留草稿，无孤立图且可重试 (977ms)
+  ✓  25 e2e/wardrobe.spec.ts:196:5 › 模拟识别候选可修改材质并确认后保存 (1.8s)
+  ✓  26 e2e/wardrobe.spec.ts:210:5 › 切换模式会取消在途识别，晚返回候选不会写入衣橱 (1.8s)
+  ✓  27 e2e/wardrobe.spec.ts:225:5 › 读取衣橱失败不显示空衣橱，重试后才显示真实空态 (834ms)
+  ✓  28 e2e/wardrobe.spec.ts:241:5 › 连续重复确认只产生一件衣物和一张图片 (885ms)
+  ✓  29 e2e/wardrobe.spec.ts:253:5 › 图片压缩逐档降低质量，三档仍超限则清楚失败 (1.7s)
+  ✓  30 e2e/wardrobe.spec.ts:275:5 › 旧照片处理晚返回时不能覆盖新选照片 (1.9s)
+  ✓  31 e2e/weather.spec.ts:5:5 › 天气失败后可重试或主动选择示例，切换城市不复用旧结果 (1.1s)
+  ✓  32 e2e/weather.spec.ts:26:5 › 快速切换城市时较晚的天气响应不覆盖当前城市 (1.7s)
+  ✓  33 e2e/weather.spec.ts:38:5 › 切换示例模式后旧天气请求的晚响应不会污染新模式 (904ms)
+  ✓  34 e2e/weather.spec.ts:52:5 › 旧天气观测不会作为新鲜实时天气展示 (953ms)
+
+  34 passed (1.0m)
+EXIT_CODE=0
+
+
+测试后源码、测试与显式配置摘要比较：一致
+测试期间额外出现 AGENTS.md，Next dev 改写了自动生成的 next-env.d.ts；两者不纳入上述摘要。
+真实 Qwen 与部署 NOT_RUN；Chrome 测试使用隔离 profile。
