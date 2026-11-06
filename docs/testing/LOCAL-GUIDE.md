@@ -32,7 +32,7 @@ npm run test:e2e:live
 
 浏览器测试使用正式 Google Chrome 和独立测试数据。`test:e2e:live` 会请求六城市天气接口；其余自动测试使用隔离示例或模拟天气响应。`build:pages` 在临时副本中导出静态产物，`test:e2e:pages` 检查 `/wearwise/` 子路径，构建或测试不代表已经上线。
 
-设计、已知限制和实施进度分别见 [架构方案](docs/terra/ARCHITECTURE.md)、[阻塞与未验证](BLOCKED.md)、[进度](PROGRESS.md)；开源代码来源见 [第三方声明](THIRD_PARTY_NOTICES.md)。
+设计、已知限制和实施进度分别见 [历史架构方案](../terra/ARCHITECTURE.md)、[现状与未验证](../project/CURRENT-STATE.md)、[后续计划](../../team/NEXT-ITERATION.md)；开源代码来源见 [第三方声明](../../THIRD_PARTY_NOTICES.md)。
 
 ## 基础测试版补充
 

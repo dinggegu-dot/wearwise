@@ -1,3 +1,5 @@
+> 历史设计/实施记录，保留原文追溯；2026-11-06 的实际能力见 [当前现状](../project/CURRENT-STATE.md)，成员后续安排见 [team-refresh-r2](../../team/NEXT-ITERATION.md)。旧文中的待实现项与确认模板不代表当前状态或新授权。
+
 # WearWise 完整 MVP：Terra 实施蓝图
 
 版本：**Terra-r1**。日期：2026-11-05（Asia/Shanghai）。状态：**用户已确认本地实施，IMPLEMENTING**。用户于本轮明确要求按 Terra-r1 连续完成本地 MVP；真实模型调用、外传、费用和部署仍按原授权边界处理。独立只读方案复核已完成；复核不等于产品实现或功能验收。
