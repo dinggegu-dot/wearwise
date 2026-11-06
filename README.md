@@ -4,6 +4,8 @@
 
 [当前功能、架构、缺口](docs/project/CURRENT-STATE.md) · [团队优化建议与 DDL](team/NEXT-ITERATION.md) · [总计划 #10](https://github.com/dinggegu-dot/wearwise/issues/10) · [PR/检查总览 #20](https://github.com/dinggegu-dot/wearwise/issues/20)
 
+**共同产品目标：**穿搭推荐保留原计划的图片输出——用用户确认保存的真实衣物图片组成平面搭配卡片，并展示理由。详见 [图片穿搭目标、接口和验收](docs/project/OUTFIT-IMAGE-SPEC.md)；示例图片演示不等于真实照片联调验收通过。
+
 ## 已有能力
 
 - 首页、我的衣橱、穿搭推荐三个页面；示例模式内置 8 件，和真实衣橱分库。

@@ -2,6 +2,8 @@
 
 版本 team-refresh-r2 · 核查 2026-11-06 · 北京时间。以代码和测试证据描述现状，后续优化方向见 [团队计划](../../team/NEXT-ITERATION.md)。
 
+**目标补充：**用户确认保留原计划中真实衣物照片组成平面穿搭卡片的目标。[流程、分工和验收](OUTFIT-IMAGE-SPEC.md)。#21 推荐 UI 源码已支持按 imageId 读取图片，但真实照片端到端核验不能仅凭示例截图或本文件推断。
+
 ## 先分清三个状态
 
 - **已验证候选**：PR [#21](https://github.com/dinggegu-dot/wearwise/pull/21)，产品基线 `92ee865ccf76d545534b8358e5c89288d5305ddf`，分支 `codex/testable-base`。下面的功能指这份候选。
