@@ -60,7 +60,7 @@ export function WardrobePage() {
   const start = (item?: Garment) => {
     photoSequence.current++; recognitionAbort.current?.abort(); setRecognizing(false); setRecognitionWarnings([]); setPhoto(undefined); setPreparing(false);
     setEditing(item ?? null); requestId.current = crypto.randomUUID();
-    setDraft(item ? { name: item.name, category: item.category, color: item.color, warmth: item.warmth, styleTags: item.styleTags, material: item.material } : { ...blank });
+    setDraft(item ? { name: item.name, category: item.category, color: item.color, warmth: item.warmth, styleTags: item.styleTags, material: item.material } : { ...blank, category: category === 'all' ? blank.category : category });
     setError(''); setNotice(''); setOpen(true);
   };
   const close = () => { if (!busy) { photoSequence.current++; recognitionAbort.current?.abort(); setRecognizing(false); setRecognitionWarnings([]); setPhoto(undefined); setPreparing(false); dialog.current?.close(); setOpen(false); } };
@@ -91,6 +91,8 @@ export function WardrobePage() {
       const cleaned = { ...draft, styleTags: [...new Set(draft.styleTags.map(tag => tag.trim()).filter(Boolean))] };
       if (editing) await services.wardrobe.update(editing.id, cleaned, editing.revision, photo ? { id: crypto.randomUUID(), blob: photo.blob } : undefined);
       else await services.wardrobe.add({ ...cleaned, sourceType: mode === 'demo' ? 'demo' : photo ? 'photo' : 'manual' }, photo?.blob ?? illustration(draft.category, draft.color), requestId.current);
+      // Keep a successfully saved garment visible when its category changed.
+      if (category !== 'all' && category !== cleaned.category) setCategory(cleaned.category);
       dialog.current?.close(); setOpen(false); notify(); await refresh(); setNotice(editing ? '衣物修改已保存。' : '衣物已保存。');
     } catch (e) { setError(e instanceof Error ? e.message : '保存失败，请重试。'); }
     finally { setBusy(false); setLocked(false); }
@@ -113,7 +115,7 @@ export function WardrobePage() {
     {loading ? <p>正在读取衣橱…</p> : readFailed ? null : visible.length === 0 ? <div className="empty-state"><h2>你的衣橱，值得被好好整理</h2><p>{items.length ? '这个分类还没有衣物。' : '添加第一件衣物，开始整理你的衣橱。'}</p><button className="primary-link" onClick={() => start()}>添加衣物</button></div> : <div className="wardrobe-grid">{visible.map(item => <article className="wardrobe-item" key={item.id}>
       <GarmentImage id={item.id} image={item.imageId} load={loadImage}/><div className="wardrobe-item-content"><h2>{item.name}</h2><p>{labels[item.category]} · {item.color} · {warmths[item.warmth]}</p><p>{item.excludedPermanently ? '已排除穿搭推荐' : '可用于穿搭推荐'}</p><details><summary>查看详情</summary><p>风格：{item.styleTags.length ? item.styleTags.join('、') : '未设置'}</p><p>材质：{item.material || '未设置'}</p><p>添加时间：{new Date(item.createdAt).toLocaleDateString('zh-CN')}</p></details><div className="wardrobe-actions"><button onClick={() => start(item)}>编辑</button><button onClick={() => void toggle(item)}>{item.excludedPermanently ? '恢复推荐' : '排除推荐'}</button><button onClick={() => void remove(item)}>删除</button></div></div>
     </article>)}</div>}
-    {open && <dialog ref={dialog} className="wardrobe-dialog" aria-labelledby="wardrobe-dialog-title" onCancel={event => {
+    {open && <dialog ref={dialog} className="wardrobe-dialog" style={{ margin: 'auto' }} aria-labelledby="wardrobe-dialog-title" onCancel={event => {
       // File inputs bubble cancel when their picker is cancelled or the same file is chosen.
       // Only a cancel targeted at this dialog should close the garment editor.
       if (event.target !== event.currentTarget) return;
