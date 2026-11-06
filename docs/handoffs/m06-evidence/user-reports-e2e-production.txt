@@ -1,0 +1,47 @@
+
+> wearwise@0.1.0 test:e2e
+> playwright test
+
+[WebServer] (node:86372) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 34 tests using 1 worker
+
+(node:59932) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 e2e\framework.spec.ts:6:7 › 框架导航和页面分区 1440px (1.5s)
+  ok  2 e2e\framework.spec.ts:6:7 › 框架导航和页面分区 390px (1.0s)
+  ok  3 e2e\framework.spec.ts:6:7 › 框架导航和页面分区 320px (1.0s)
+  ok  4 e2e\mode-isolation.spec.ts:3:5 › 真实和示例衣橱隔离，重置示例不改变真实衣物 (2.2s)
+  ok  5 e2e\mode-isolation.spec.ts:42:5 › 反馈写入失败时显示错误，可重试并持久化 (1.1s)
+  ok  6 e2e\mode-isolation.spec.ts:62:5 › 示例初始化失败不留下半库，重试后完整恢复八件 (760ms)
+  ok  7 e2e\persistence.spec.ts:6:5 › 隔离 Chrome 用户目录关闭并重开后衣物和图片仍可读取 (3.9s)
+  ok  8 e2e\recommendation.spec.ts:6:6 › 真实衣橱到示例天气、穿搭和反馈的闭环 1440px (2.2s)
+  ok  9 e2e\recommendation.spec.ts:6:6 › 真实衣橱到示例天气、穿搭和反馈的闭环 390px (2.0s)
+  ok 10 e2e\recommendation.spec.ts:41:5 › 另一标签页修改衣橱时当前推荐立即失效 (2.1s)
+  ok 11 e2e\recommendation.spec.ts:56:5 › 刷新后天气控件与已保存推荐使用的城市一致 (1.9s)
+  ok 12 e2e\recommendation.spec.ts:75:5 › 只用键盘完成衣橱、推荐和反馈闭环 (2.8s)
+  ok 13 e2e\recommendation.spec.ts:101:5 › 切换风格和城市后旧搭配失效，历史记录不会恢复为当前推荐 (1.7s)
+  ok 14 e2e\recommendation.spec.ts:116:5 › 获取后五分钟内观测时间先过期时禁止继续使用推荐 (1.4s)
+  ok 15 e2e\recommendation.spec.ts:131:5 › 生成推荐过程中切换模式不会激活或显示旧模式晚结果 (1.5s)
+  ok 16 e2e\wardrobe.spec.ts:5:5 › 真实衣橱：取消、添加、刷新、编辑、筛选、排除和删除 (1.2s)
+  ok 17 e2e\wardrobe.spec.ts:35:5 › 照片在确认前不入库，保存后刷新仍可读取 (1.1s)
+  ok 18 e2e\wardrobe.spec.ts:62:5 › 浏览器正确处理带 EXIF 旋转的 JPEG (1.1s)
+  ok 19 e2e\wardrobe.spec.ts:81:5 › 大图缩放、静态 WebP 及无效文件提示 (1.0s)
+  ok 20 e2e\wardrobe.spec.ts:94:5 › 图片编码失败时提示错误，不产生衣物 (648ms)
+  ok 21 e2e\wardrobe.spec.ts:103:5 › 键盘可打开和取消衣物表单并返回原焦点 (573ms)
+  ok 22 e2e\wardrobe.spec.ts:110:5 › 10 MiB 透明 PNG 可处理，超限拒绝且临时图片 URL 回收 (3.5s)
+  ok 23 e2e\wardrobe.spec.ts:142:5 › 查看详情、替换照片及首页数量随添加删除变化 (1.7s)
+  ok 24 e2e\wardrobe.spec.ts:171:5 › 衣橱写入故障时保留草稿，无孤立图且可重试 (781ms)
+  ok 25 e2e\wardrobe.spec.ts:196:5 › 模拟识别候选可修改材质并确认后保存 (855ms)
+  ok 26 e2e\wardrobe.spec.ts:210:5 › 切换模式会取消在途识别，晚返回候选不会写入衣橱 (832ms)
+  ok 27 e2e\wardrobe.spec.ts:225:5 › 读取衣橱失败不显示空衣橱，重试后才显示真实空态 (632ms)
+  ok 28 e2e\wardrobe.spec.ts:241:5 › 连续重复确认只产生一件衣物和一张图片 (795ms)
+  ok 29 e2e\wardrobe.spec.ts:253:5 › 图片压缩逐档降低质量，三档仍超限则清楚失败 (830ms)
+  ok 30 e2e\wardrobe.spec.ts:275:5 › 旧照片处理晚返回时不能覆盖新选照片 (1.7s)
+  ok 31 e2e\weather.spec.ts:5:5 › 天气失败后可重试或主动选择示例，切换城市不复用旧结果 (752ms)
+  ok 32 e2e\weather.spec.ts:26:5 › 快速切换城市时较晚的天气响应不覆盖当前城市 (1.5s)
+  ok 33 e2e\weather.spec.ts:38:5 › 切换示例模式后旧天气请求的晚响应不会污染新模式 (747ms)
+  ok 34 e2e\weather.spec.ts:52:5 › 旧天气观测不会作为新鲜实时天气展示 (643ms)
+
+  34 passed (54.3s)

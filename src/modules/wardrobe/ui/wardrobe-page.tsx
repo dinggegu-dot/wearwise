@@ -11,7 +11,7 @@ const warmths = { light: '轻薄', medium: '适中', warm: '保暖', unknown: '�
 type Draft = Omit<GarmentInput, 'sourceType'>;
 const blank: Draft = { name: '', category: 'top', color: '', warmth: 'unknown', styleTags: [] };
 
-function GarmentImage({ id, image, load }: { id: string; image: string; load: (id: string) => Promise<Blob | undefined> }) {
+function GarmentImage({ id, image, load, alt = '' }: { id: string; image: string; load: (id: string) => Promise<Blob | undefined>; alt?: string }) {
   const [url, setUrl] = useState<string>();
   useEffect(() => {
     let active = true; let current: string | undefined;
@@ -19,7 +19,7 @@ function GarmentImage({ id, image, load }: { id: string; image: string; load: (i
     load(image).then(blob => { if (blob && active) { current = URL.createObjectURL(blob); setUrl(current); } }).catch(() => {});
     return () => { active = false; if (current) URL.revokeObjectURL(current); };
   }, [id, image, load]);
-  return url ? <img src={url} alt="" className="wardrobe-image" /> : <div className="wardrobe-image wardrobe-placeholder">暂无图片</div>;
+  return url ? <img src={url} alt={alt} className="wardrobe-image" /> : <div className="wardrobe-image wardrobe-placeholder">暂无图片</div>;
 }
 
 export function WardrobePage() {
@@ -113,13 +113,24 @@ export function WardrobePage() {
     {loading ? <p>正在读取衣橱…</p> : readFailed ? null : visible.length === 0 ? <div className="empty-state"><h2>你的衣橱，值得被好好整理</h2><p>{items.length ? '这个分类还没有衣物。' : '添加第一件衣物，开始整理你的衣橱。'}</p><button className="primary-link" onClick={() => start()}>添加衣物</button></div> : <div className="wardrobe-grid">{visible.map(item => <article className="wardrobe-item" key={item.id}>
       <GarmentImage id={item.id} image={item.imageId} load={loadImage}/><div className="wardrobe-item-content"><h2>{item.name}</h2><p>{labels[item.category]} · {item.color} · {warmths[item.warmth]}</p><p>{item.excludedPermanently ? '已排除穿搭推荐' : '可用于穿搭推荐'}</p><details><summary>查看详情</summary><p>风格：{item.styleTags.length ? item.styleTags.join('、') : '未设置'}</p><p>材质：{item.material || '未设置'}</p><p>添加时间：{new Date(item.createdAt).toLocaleDateString('zh-CN')}</p></details><div className="wardrobe-actions"><button onClick={() => start(item)}>编辑</button><button onClick={() => void toggle(item)}>{item.excludedPermanently ? '恢复推荐' : '排除推荐'}</button><button onClick={() => void remove(item)}>删除</button></div></div>
     </article>)}</div>}
-    {open && <dialog ref={dialog} className="wardrobe-dialog" aria-labelledby="wardrobe-dialog-title" onCancel={event => { event.preventDefault(); close(); }}><form onSubmit={save} aria-describedby={error ? 'wardrobe-form-error' : undefined}>
+    {open && <dialog ref={dialog} className="wardrobe-dialog" aria-labelledby="wardrobe-dialog-title" onCancel={event => {
+      // File inputs bubble cancel when their picker is cancelled or the same file is chosen.
+      // Only a cancel targeted at this dialog should close the garment editor.
+      if (event.target !== event.currentTarget) return;
+      event.preventDefault(); close();
+    }}><form onSubmit={save} aria-describedby={error ? 'wardrobe-form-error' : undefined}>
       <h2 id="wardrobe-dialog-title">{editing ? '编辑衣物' : '添加衣物'}</h2><label>名称<input required maxLength={100} value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })}/></label>
       <label>类别<select size={5} value={draft.category} onChange={event => setDraft({ ...draft, category: event.target.value as Draft['category'] })}>{Object.entries(labels).map(([key, value]) => <option key={key} value={key}>{value}</option>)}</select></label>
       <label>颜色<input required maxLength={50} value={draft.color} onChange={event => setDraft({ ...draft, color: event.target.value })}/></label>
       <label>保暖程度<select value={draft.warmth} onChange={event => setDraft({ ...draft, warmth: event.target.value as Draft['warmth'] })}>{Object.entries(warmths).map(([key, value]) => <option key={key} value={key}>{value}</option>)}</select></label>
       <label>材质（可选）<input maxLength={100} value={draft.material ?? ''} onChange={event => setDraft({ ...draft, material: event.target.value })}/></label>
-      <label>衣物照片（可选）<input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => void choosePhoto(event.target.files?.[0])}/></label>{preparing && <p>正在处理图片…</p>}{preview && <img src={preview} alt="照片预览" className="wardrobe-image"/>}{recognitionWarnings.map(warning => <p key={warning}>{warning}</p>)}{photo && mode === 'real' && <div><p>识别时照片将发送至配置的模型服务，请确认后主动使用。</p><button type="button" disabled={recognizing || busy} onClick={() => void recognize()}>{recognizing ? '识别中…' : 'AI 识别衣物'}</button></div>}
+      <label>衣物照片（可选）<input type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="wardrobe-photo-hint" onChange={event => void choosePhoto(event.target.files?.[0])}/></label>
+      <small id="wardrobe-photo-hint">（如果选错照片，可以点击文件名，重新上传正确照片；取消选择会保留当前照片。）</small>
+      {editing && !photo && !preparing && <div key={`${editing.id}:${editing.imageId}`}>
+        <p>当前已保存的照片</p>
+        <GarmentImage id={editing.id} image={editing.imageId} load={loadImage} alt="已保存的衣物照片"/>
+      </div>}
+      {preparing && <p>正在处理图片…</p>}{preview && <img src={preview} alt="照片预览" className="wardrobe-image"/>}{recognitionWarnings.map(warning => <p key={warning}>{warning}</p>)}{photo && mode === 'real' && <div><p>识别时照片将发送至配置的模型服务，请确认后主动使用。</p><button type="button" disabled={recognizing || busy} onClick={() => void recognize()}>{recognizing ? '识别中…' : 'AI 识别衣物'}</button></div>}
       <label>风格标签（用逗号分隔）<input value={draft.styleTags.join(',')} onChange={event => setDraft({ ...draft, styleTags: event.target.value.split(',') })}/></label>
       {error && <p id="wardrobe-form-error" role="alert">{error}</p>}<div className="wardrobe-actions"><button type="button" disabled={busy} onClick={close}>取消</button><button type="submit" disabled={busy || preparing || recognizing}>{busy ? '保存中…' : '确认保存'}</button></div>
     </form></dialog>}
