@@ -1,0 +1,24 @@
+[WebServer] (node:99096) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 15 tests using 1 worker
+
+(node:85912) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 e2e\wardrobe.spec.ts:5:5 › 真实衣橱：取消、添加、刷新、编辑、筛选、排除和删除 (1.5s)
+  ok  2 e2e\wardrobe.spec.ts:35:5 › 照片在确认前不入库，保存后刷新仍可读取 (1.1s)
+  ok  3 e2e\wardrobe.spec.ts:62:5 › 浏览器正确处理带 EXIF 旋转的 JPEG (897ms)
+  ok  4 e2e\wardrobe.spec.ts:81:5 › 大图缩放、静态 WebP 及无效文件提示 (804ms)
+  ok  5 e2e\wardrobe.spec.ts:94:5 › 图片编码失败时提示错误，不产生衣物 (606ms)
+  ok  6 e2e\wardrobe.spec.ts:103:5 › 键盘可打开和取消衣物表单并返回原焦点 (545ms)
+  ok  7 e2e\wardrobe.spec.ts:110:5 › 10 MiB 透明 PNG 可处理，超限拒绝且临时图片 URL 回收 (3.2s)
+  ok  8 e2e\wardrobe.spec.ts:142:5 › 查看详情、替换照片及首页数量随添加删除变化 (1.6s)
+  ok  9 e2e\wardrobe.spec.ts:171:5 › 衣橱写入故障时保留草稿，无孤立图且可重试 (740ms)
+  ok 10 e2e\wardrobe.spec.ts:196:5 › 模拟识别候选可修改材质并确认后保存 (853ms)
+  ok 11 e2e\wardrobe.spec.ts:210:5 › 切换模式会取消在途识别，晚返回候选不会写入衣橱 (793ms)
+  ok 12 e2e\wardrobe.spec.ts:225:5 › 读取衣橱失败不显示空衣橱，重试后才显示真实空态 (585ms)
+  ok 13 e2e\wardrobe.spec.ts:241:5 › 连续重复确认只产生一件衣物和一张图片 (653ms)
+  ok 14 e2e\wardrobe.spec.ts:253:5 › 图片压缩逐档降低质量，三档仍超限则清楚失败 (652ms)
+  ok 15 e2e\wardrobe.spec.ts:275:5 › 旧照片处理晚返回时不能覆盖新选照片 (1.6s)
+
+  15 passed (20.3s)
