@@ -1,0 +1,12 @@
+
+> wearwise@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.12 <repo>
+
+
+ Test Files  8 passed (8)
+      Tests  49 passed (49)
+   Start at  15:49:32
+   Duration  1.62s (transform 1.42s, setup 0ms, import 4.00s, tests 1.73s, environment 1ms)

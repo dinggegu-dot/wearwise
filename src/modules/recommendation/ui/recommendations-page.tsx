@@ -7,16 +7,8 @@ import type { Weather } from '@/modules/weather';
 import type { Style } from '@/modules/recommendation';
 import type { OutfitRecord } from '@/modules/recommendation/service';
 import type { FeedbackChoice } from '@/modules/feedback';
-import type { Garment } from '@/modules/wardrobe';
-
-function OutfitImage({ item, load }: {item: Garment; load: (id:string) => Promise<Blob | undefined>}) {
-  const [url,setUrl] = useState<string>();
-  useEffect(() => { let live = true; let objectUrl: string | undefined;
-    load(item.imageId).then(blob => { if (live && blob) { objectUrl = URL.createObjectURL(blob); setUrl(objectUrl); } }).catch(() => {});
-    return () => { live = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  },[item.imageId,load]);
-  return <figure className="outfit-item">{url ? <img src={url} alt={item.name}/> : <div className="outfit-placeholder">暂无图片</div>}<figcaption>{item.name}</figcaption></figure>;
-}
+import { OutfitImage } from './outfit-image';
+import { FeedbackControls } from './feedback-controls';
 
 export function RecommendationsPage() {
   const { mode } = useMode();
@@ -82,8 +74,13 @@ export function RecommendationsPage() {
   };
   const rate = async (id: string, choice: FeedbackChoice) => {
     if (isStale()) { setClock(Date.now()); return; }
-    try { await services.recommendation.setFeedback(id, choice); setFeedback(previous => ({...previous, [id]: choice})); setError(previous => previous === '反馈保存失败，请重试。' ? '' : previous); }
-    catch { setError('反馈保存失败，请重试。'); }
+    const current = token.current;
+    try {
+      await services.recommendation.setFeedback(id, choice);
+      if (current !== token.current) return;
+      setFeedback(previous => ({...previous, [id]: choice}));
+      setError(previous => previous === '反馈保存失败，请重试。' ? '' : previous);
+    } catch { if (current === token.current) setError('反馈保存失败，请重试。'); }
   };
   return <>
     <div className="page-heading"><div><span className="section-kicker">OUTFITS FOR YOU</span><h1>穿搭推荐<span className="heading-dot">.</span></h1><p>从自己的衣橱中找到适合当下的搭配。</p></div></div>
@@ -96,7 +93,7 @@ export function RecommendationsPage() {
         <button className="primary-link" disabled={!weather || stale || busy} onClick={() => void generate()}>{busy ? '正在生成…' : '生成穿搭'}</button>
         {error && <p role="alert">{error}</p>}
         {records.map((record, index) => <article className="panel" key={record.id}><h3>搭配 {index + 1}</h3><div className="outfit-items">{record.garmentSnapshots.map(item => <OutfitImage key={item.id} item={item} load={loadImage}/>)}</div><p>{record.reason}</p>
-          {record.warnings.map(warning => <p key={warning}>{warning}</p>)}<div className="wardrobe-actions"><span>留下你的想法：</span><button disabled={stale} aria-pressed={feedback[record.id] === 'like'} onClick={() => void rate(record.id, 'like')}>喜欢</button><button disabled={stale} aria-pressed={feedback[record.id] === 'dislike'} onClick={() => void rate(record.id, 'dislike')}>不喜欢</button></div>
+          {record.warnings.map(warning => <p key={warning}>{warning}</p>)}<FeedbackControls choice={feedback[record.id]} disabled={stale} onRate={choice => rate(record.id, choice)}/>
         </article>)}
       </div></div>
   </>;

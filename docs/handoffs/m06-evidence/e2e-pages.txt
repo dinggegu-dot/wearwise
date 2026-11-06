@@ -1,0 +1,58 @@
+
+> wearwise@0.1.0 test:e2e:pages
+> playwright test --config=playwright.pages.config.ts
+
+[WebServer] (node:77972) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+(node:95488) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 e2e\pages\pages.spec.ts:3:5 › 静态子路径导航、直接刷新和本地衣橱保存 (2.0s)
+(node:98320) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 2 e2e\pages\pages.spec.ts:22:5 › 静态版实际衣橱到推荐反馈并刷新恢复 (1.9s)
+
+
+  1) e2e\pages\pages.spec.ts:3:5 › 静态子路径导航、直接刷新和本地衣橱保存 ─────────────────────────────────────────────
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 10
+
+    - Array []
+    + Array [
+    +   "404 http://127.0.0.1:3100/wearwise/wardrobe/__next.wardrobe.__PAGE__.txt?_rsc=PuNLeJK0c5naI3mD",
+    +   "404 http://127.0.0.1:3100/wearwise/recommendations/__next.recommendations.__PAGE__.txt?_rsc=TzcZLGJbx_xDIkyn",
+    +   "404 http://127.0.0.1:3100/wearwise/wardrobe/__next.wardrobe.__PAGE__.txt?_rsc=Mi320vO8c6lXNGQb",
+    +   "404 http://127.0.0.1:3100/wearwise/recommendations/__next.recommendations.__PAGE__.txt?_rsc=w00e3pPBQ0RGh2Uh",
+    +   "404 http://127.0.0.1:3100/wearwise/wardrobe/__next.wardrobe.__PAGE__.txt?_rsc=Mi320vO8c6lXNGQb",
+    +   "404 http://127.0.0.1:3100/wearwise/recommendations/__next.recommendations.__PAGE__.txt?_rsc=w00e3pPBQ0RGh2Uh",
+    +   "404 http://127.0.0.1:3100/wearwise/wardrobe/__next.wardrobe.__PAGE__.txt?_rsc=UodyTZK60gKUT2lN",
+    +   "404 http://127.0.0.1:3100/wearwise/recommendations/__next.recommendations.__PAGE__.txt?_rsc=nZgo6i39hEMudrZL",
+    + ]
+
+      17 |   await expect(page).toHaveURL(/\/wearwise\/recommendations\/$/);
+      18 |   await page.reload(); await expect(page.getByRole('heading',{name:'穿搭推荐.'})).toBeVisible();
+    > 19 |   expect(failed).toEqual([]);
+         |                  ^
+      20 | });
+      21 |
+      22 | test('静态版实际衣橱到推荐反馈并刷新恢复', async ({ page }) => {
+        at <repo>\e2e\pages\pages.spec.ts:19:18
+
+    Error Context: test-results\pages-静态子路径导航、直接刷新和本地衣橱保存\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\pages-静态子路径导航、直接刷新和本地衣橱保存\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\pages-静态子路径导航、直接刷新和本地衣橱保存\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    e2e\pages\pages.spec.ts:3:5 › 静态子路径导航、直接刷新和本地衣橱保存 ──────────────────────────────────────────────
+  1 passed (10.0s)
