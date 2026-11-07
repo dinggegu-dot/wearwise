@@ -4,7 +4,7 @@ export const cities = {
   北京: [39.9042, 116.4074], 成都: [30.5728, 104.0668], 杭州: [30.2741, 120.1551]
 } as const;
 export type City = keyof typeof cities;
-export interface Weather { city: City; temperature: number; apparentTemperature: number; dataTime: string; fetchedAt: string; example: boolean; weatherCode?: number | null; source?: 'open-meteo' | 'example'; cached?: boolean }
+export interface Weather { city: City; temperature: number; apparentTemperature: number; dataTime: string; fetchedAt: string; example: boolean; weatherCode?: number | null; source?: 'open-meteo' | 'example' | 'manual'; cached?: boolean }
 export interface WeatherProvider { current(city: City, signal?: AbortSignal): Promise<Weather> }
 const responseSchema = z.object({
   current_units: z.object({ temperature_2m: z.literal('°C'), apparent_temperature: z.literal('°C') }),

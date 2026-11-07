@@ -62,12 +62,18 @@ export function RecommendationsPage() {
   useEffect(() => {
     setClock(Date.now());
     if (!weather || weather.example) return;
-    const expires = Math.min(Date.parse(weather.fetchedAt) + 300_001, Date.parse(weather.dataTime) + 3 * 60 * 60 * 1000 + 1);
+    const expires = weather.source === 'manual'
+      ? Date.parse(weather.fetchedAt) + 12 * 60 * 60 * 1000 + 1
+      : Math.min(Date.parse(weather.fetchedAt) + 300_001, Date.parse(weather.dataTime) + 3 * 60 * 60 * 1000 + 1);
     const delay = Math.max(0, expires - Date.now());
     const timer = window.setTimeout(() => setClock(Date.now()), delay);
     return () => window.clearTimeout(timer);
   }, [weather]);
-  const staleAt = (time: number) => !!weather && !weather.example && (time - Date.parse(weather.fetchedAt) > 300_000 || time - Date.parse(weather.dataTime) > 3 * 60 * 60 * 1000);
+  const staleAt = (time: number) => {
+    if (!weather || weather.example) return false;
+    if (weather.source === 'manual') return time - Date.parse(weather.fetchedAt) > 12 * 60 * 60 * 1000;
+    return time - Date.parse(weather.fetchedAt) > 300_000 || time - Date.parse(weather.dataTime) > 3 * 60 * 60 * 1000;
+  };
   const isStale = () => staleAt(Date.now());
   const stale = staleAt(clock);
   const generate = async () => {
