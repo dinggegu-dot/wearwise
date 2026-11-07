@@ -8,15 +8,18 @@ export const garmentSchema = z.object({
   styleTags: z.array(z.string().trim().min(1).max(30)).max(20), imageId: z.string().min(1),
   sourceImageId: z.string().min(1).optional(), sourceType: z.enum(['photo', 'shopping_screenshot', 'manual', 'demo']),
   status: z.enum(['confirmed', 'archived']), excludedUntil: z.string().datetime().optional(),
-  excludedPermanently: z.boolean(), createdAt: z.string().datetime(), updatedAt: z.string().datetime()
+  excludedPermanently: z.boolean(), revision: z.number().int().positive().default(1), createdAt: z.string().datetime(), updatedAt: z.string().datetime()
 }).strict();
 export type Garment = z.infer<typeof garmentSchema>;
 export type GarmentInput = Pick<Garment, 'name' | 'category' | 'color' | 'warmth' | 'styleTags' | 'material' | 'sourceType'>;
+export type GarmentPatch = Partial<Pick<Garment, 'name' | 'category' | 'color' | 'warmth' | 'styleTags' | 'material' | 'excludedPermanently'>>;
 export interface Media { id: string; blob: Blob }
 export interface WardrobeRepository {
   list(): Promise<Garment[]>;
   get(id: string): Promise<Garment | undefined>;
   save(garment: Garment, media?: Media): Promise<void>;
+  createOnce(garment: Garment, media: Media): Promise<Garment>;
+  update(id: string, expectedRevision: number, patch: GarmentPatch, media?: Media): Promise<Garment>;
   remove(id: string): Promise<void>;
 }
 export interface MediaRepository { get(id: string): Promise<Blob | undefined> }
@@ -25,19 +28,18 @@ export class WardrobeService {
   constructor(private readonly wardrobe: WardrobeRepository, private readonly media: MediaRepository) {}
   list() { return this.wardrobe.list(); }
   image(id: string) { return this.media.get(id); }
-  async add(input: GarmentInput, blob: Blob) {
+  get(id: string) { return this.wardrobe.get(id); }
+  async count() { return (await this.list()).filter(g => g.status === 'confirmed').length; }
+  async add(input: GarmentInput, blob: Blob, requestId = crypto.randomUUID()) {
     const now = new Date().toISOString();
     const imageId = crypto.randomUUID();
-    const garment = garmentSchema.parse({ ...input, id: crypto.randomUUID(), imageId, status: 'confirmed', excludedPermanently: false, createdAt: now, updatedAt: now });
-    await this.wardrobe.save(garment, { id: imageId, blob });
-    return garment;
+    const garment = garmentSchema.parse({ ...input, id: requestId, imageId, status: 'confirmed', excludedPermanently: false, createdAt: now, updatedAt: now });
+    return this.wardrobe.createOnce(garment, { id: imageId, blob });
   }
-  async update(id: string, input: Partial<Pick<Garment, 'name' | 'category' | 'color' | 'warmth' | 'styleTags' | 'material' | 'excludedPermanently'>>) {
+  async update(id: string, input: GarmentPatch, expectedRevision?: number, media?: Media) {
     const previous = await this.wardrobe.get(id);
     if (!previous) throw new Error('衣物不存在，请刷新后重试');
-    const garment = garmentSchema.parse({ ...previous, ...input, updatedAt: new Date().toISOString() });
-    await this.wardrobe.save(garment);
-    return garment;
+    return this.wardrobe.update(id, expectedRevision ?? previous.revision, input, media);
   }
   remove(id: string) { return this.wardrobe.remove(id); }
 }

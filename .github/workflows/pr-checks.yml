@@ -27,16 +27,15 @@ jobs:
         run: npm run typecheck
       - name: Team progress collector tests
         run: node --test .github/scripts/progress.test.mjs
-      # 仅在零测试时允许成功；已有测试失败仍使任务失败。
-      - name: Unit tests (empty suite allowed)
-        run: npm run test -- --passWithNoTests
+      - name: Unit tests
+        run: npm run test
       - name: Build
         run: npm run build
       - name: Verify Chrome installation
         run: google-chrome --version
       - name: Chrome end-to-end tests
         run: npm run test:e2e
-      - name: Verify GitHub Pages export
-        run: |
-          mv src/app/api "$RUNNER_TEMP/wearwise-api"
-          PAGES_EXPORT=1 npm run build
+      - name: Verify GitHub Pages export and static behavior
+        run: npm run build:pages && npm run test:e2e:pages
+      - name: Chrome development mode regression
+        run: npm run test:e2e:dev
