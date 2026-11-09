@@ -4,6 +4,8 @@
 
 第 01 轮固定提交为 `40d68d94a790e757143739fc84b05477f44d90ff`。这一版本提供首页、我的衣橱、穿搭推荐三个可操作页面，以及穿搭灵感和我的偏好两个页面框架。GitHub Pages 提供静态版本。
 
+**第 2 轮**补齐衣橱、灵感、三组长期偏好和推荐过程的数据服务，数据库升级到 v3。见 [第 2 轮交接](docs/handoffs/ROUND-02.md) 与 [数据服务接口说明](docs/project/ROUND-02-DATA-API.md)。
+
 ## 团队和 AI 的共同材料
 
 [网页功能概述](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/WEB-FUNCTION-OVERVIEW.md) · [推荐依据与记忆规则](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/RECOMMENDATION-MEMORY-RULES.md) · [12 轮次排班](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/ROUND-SCHEDULE.md) · [UI 示例](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/UI-REFERENCE.md) · [交接模板](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/handoffs/ROUND-HANDOFF-TEMPLATE.md)
