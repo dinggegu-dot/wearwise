@@ -1,10 +1,10 @@
 # WearWise · 本地优先的智能衣橱
 
-**第 1 轮统一候选**在 #21 → #22 → #23 的实际提交链上扩展五个页面入口。开始接力前请读取 [第 1 轮交接](docs/handoffs/ROUND-01.md) 和 [本轮范围与旧基线差异](docs/project/ROUND-01-SCOPE.md)。
+**第 1 轮统一候选**在 #21 → #22 → #23 的实际提交链上扩展五个页面入口。开始接力前请读取 [团队 AI 协作与交接指南](team/AI协作与交接指南.md)、[第 1 轮交接](docs/handoffs/ROUND-01.md) 和 [本轮范围与旧基线差异](docs/project/ROUND-01-SCOPE.md)。
 
 [功能概述](docs/project/WEB-FUNCTION-OVERVIEW.md) · [推荐与记忆规则](docs/project/RECOMMENDATION-MEMORY-RULES.md) · [UI 示例](docs/project/UI-REFERENCE.md) · [12 轮次排班](docs/project/ROUND-SCHEDULE.md) · [团队工作台](team/README.md)
 
-**共同产品目标：**穿搭推荐保留原计划的图片输出——用用户确认保存的真实衣物图片组成平面搭配卡片，并展示理由。详见 [图片穿搭目标、接口和验收](docs/project/OUTFIT-IMAGE-SPEC.md)；示例图片演示不等于真实照片联调验收通过。
+**共同产品目标：**穿搭推荐保留原计划的图片输出——用用户确认保存的真实衣物图片组成平面搭配卡片，并展示理由。详见 [真实衣物图片和平铺验收](docs/project/OUTFIT-IMAGE-SPEC.md)。
 
 ## 已有能力
 
@@ -14,7 +14,7 @@
 - 六城市实时/示例天气、规则生成 0–2 套搭配、反馈与恢复。
 - 类型、单元、Chrome 开发/生产/静态测试。真实模型识别默认关闭，未验证效果。
 
-没有账户/云同步/备份、自动学习、完整灵感分析或历史浏览；不把已留接口当已完成产品。详情和证据见 [现状](docs/project/CURRENT-STATE.md)。
+没有账户/云同步/备份、自动学习、完整灵感分析或历史浏览；不把已留接口当已完成产品。详情和证据见 [第 1 轮候选现状](docs/project/CURRENT-STATE.md)。
 
 ## 本地试用候选
 

@@ -1,14 +1,17 @@
-# WearWise
+# WearWise 候选本地启动与验证
 
 WearWise 是本地优先的智能衣橱网页。当前实施候选支持照片或手动录入、衣橱分类和编辑、六城市天气、基于衣橱的规则搭配、反馈，以及与真实衣橱隔离的示例模式。数据保存在当前浏览器的 IndexedDB；清理站点数据或更换浏览器可能丢失，当前没有跨设备同步或备份。
 
 ## 本地启动
 
-需要 Node.js 22.12 及以上，以及已安装的项目依赖。在本目录运行：
+按 [第 1 轮交接](../handoffs/ROUND-01.md) 固定候选 SHA。需要 Node.js 22.12 及以上和正式 Google Chrome。在仓库根目录运行：
 
 ```bash
-npm run dev
+npm ci --legacy-peer-deps
+npm run preview
 ```
+
+日常开发可以改用 `npm run dev`。生产与开发模式的测试分别运行。
 
 打开 `http://127.0.0.1:3000`，首次选择真实衣橱或示例衣橱。真实衣橱中通过“添加衣物”录入自己的衣物；到首页或推荐页获取天气；推荐页选择天气和风格后生成搭配并留下反馈。示例模式内置八件示例衣物，选择示例天气即可演示。
 
@@ -32,8 +35,6 @@ npm run test:e2e:live
 
 浏览器测试使用正式 Google Chrome 和独立测试数据。`test:e2e:live` 会请求六城市天气接口；其余自动测试使用隔离示例或模拟天气响应。`build:pages` 在临时副本中导出静态产物，`test:e2e:pages` 检查 `/wearwise/` 子路径，构建或测试不代表已经上线。
 
-设计、已知限制和实施进度分别见 [历史架构方案](../terra/ARCHITECTURE.md)、[现状与未验证](../project/CURRENT-STATE.md)、[后续计划](../../team/NEXT-ITERATION.md)；开源代码来源见 [第三方声明](../../THIRD_PARTY_NOTICES.md)。
+设计、已知限制和实施进度分别见 [历史架构方案](../terra/ARCHITECTURE.md)、[现状与未验证](../project/CURRENT-STATE.md)、[12 轮次排班](../project/ROUND-SCHEDULE.md)；开源代码来源见 [第三方声明](../../THIRD_PARTY_NOTICES.md)。
 
-## 基础测试版补充
-
-普通试用运行 `npm run preview`，开发运行 `npm run dev`。开发模式回归 `npm run test:e2e:dev` 与生产回归分开串行运行。初始化未就绪时天气按钮禁用。验收与后续交接见 [BASE-TEST.md](BASE-TEST.md)。
+开发模式回归 `npm run test:e2e:dev` 与生产回归分开串行运行。初始化未就绪时天气按钮禁用。五页复测见 [第 1 轮验证记录](ROUND-01-VERIFICATION.txt)。

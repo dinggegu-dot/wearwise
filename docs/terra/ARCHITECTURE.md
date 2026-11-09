@@ -1,4 +1,4 @@
-> 历史设计/实施记录，保留原文追溯；2026-11-06 的实际能力见 [当前现状](../project/CURRENT-STATE.md)，成员后续安排见 [team-refresh-r2](../../team/NEXT-ITERATION.md)。旧文中的待实现项与确认模板不代表当前状态或新授权。
+> Terra 历史设计和实施记录。正文的执行指令、范围和状态用于追溯旧版本。现行开发按 [12 轮次排班](../project/ROUND-SCHEDULE.md) 及 [第 1 轮交接](../handoffs/ROUND-01.md)。
 
 # WearWise 完整 MVP：Terra 实施蓝图
 
