@@ -1,4 +1,4 @@
-> 历史设计/实施记录，保留原文追溯；2026-11-06 的实际能力见 [当前现状](../project/CURRENT-STATE.md)，成员后续安排见 [team-refresh-r2](../../team/NEXT-ITERATION.md)。旧文中的待实现项与确认模板不代表当前状态或新授权。
+> Terra 历史设计和实施记录。正文的执行指令、范围和状态用于追溯旧版本。现行开发按 [12 轮次排班](../project/ROUND-SCHEDULE.md) 及 [第 1 轮交接](../handoffs/ROUND-01.md)。
 
 我确认按 WearWise Terra-r1 方案完成本地 MVP；请在本会话连续实施，不等待其他成员。必须先完整读取本工作区 docs/terra/ARCHITECTURE.md 和 SOURCE-REUSE.md；它们定义范围、架构、具体开源供体和验收。遵循用户与宿主的实际授权边界；缺权限/预算的部分写 BLOCKED.md，继续不受影响工作。中断后先读 PROGRESS.md 续做。
 

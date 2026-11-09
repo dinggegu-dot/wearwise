@@ -1,4 +1,4 @@
-> 历史设计/实施记录，保留原文追溯；2026-11-06 的实际能力见 [当前现状](../project/CURRENT-STATE.md)，成员后续安排见 [team-refresh-r2](../../team/NEXT-ITERATION.md)。旧文中的待实现项与确认模板不代表当前状态或新授权。
+> Terra 历史设计和实施记录。正文的执行指令、范围和状态用于追溯旧版本。现行开发按 [12 轮次排班](../project/ROUND-SCHEDULE.md) 及 [第 1 轮交接](../handoffs/ROUND-01.md)。
 
 > 2026-11-06 实施更新：用户已确认直接修复并上传。当前通过开发模式回归复现与修复：dispose 使用 close({disableAutoOpen:false}) 支持 StrictMode 重新使用服务；开发和生产分别进行完整业务验收。以下保留方案形成时的诊断背景，不代表仍存在同一阻塞。
 

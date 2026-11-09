@@ -1,5 +1,7 @@
 # WearWise 开源复用清单（供 Terra 直接实施）
 
+> Terra 历史选型与复用研究。实际采用和许可证见 [第三方源码声明](../../THIRD_PARTY_NOTICES.md)，当前开发按 [12 轮次排班](../project/ROUND-SCHEDULE.md)。
+
 版本：Terra-r1；核查日期：2026-11-05。用户要求优先借鉴开源、快速完成。本文件明确具体复用对象，不要求执行者重新从零调研。与同目录 `ARCHITECTURE.md` 配套。
 
 ## 1. 结论

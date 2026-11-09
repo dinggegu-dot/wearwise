@@ -1,19 +1,17 @@
 # WearWise 团队工作台
 
-按 **2026-11-09 的 12 轮次排班** 接力。[排班](../docs/project/ROUND-SCHEDULE.md) · [功能概述](../docs/project/WEB-FUNCTION-OVERVIEW.md) · [推荐与记忆规则](../docs/project/RECOMMENDATION-MEMORY-RULES.md) · [UI 示例](../docs/project/UI-REFERENCE.md) · [第 1 轮交接](../docs/handoffs/ROUND-01.md) · [交接模板](../docs/handoffs/ROUND-HANDOFF-TEMPLATE.md)
+按 2026-11-09 的 12 轮排班接力。第 01 轮已交付，02 从固定候选开工，签收由 02 本人完成。 [总计划 #10](https://github.com/dinggegu-dot/wearwise/issues/10) · [第 01 → 02 轮交接](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/handoffs/ROUND-01.md)
 
-以下岗位入口用于追溯先前工作和 PR。当前轮次、交付与顺序以新版排班为准。
+团队成员和 AI 从 [协作与交接指南](AI协作与交接指南.md) 进入。该指南链接共同材料、说明每轮接收关系和三条铁律，并提供开工指令。 [12 轮次排班](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/ROUND-SCHEDULE.md)
 
-| 岗位 | 历史任务 | 成员说明 |
-|---|---|---|
-| 01 主控与集成 | [#11](https://github.com/dinggegu-dot/wearwise/issues/11) | [建议及对接](member-01.md) |
-| 02 数据与衣橱内核 | [#12](https://github.com/dinggegu-dot/wearwise/issues/12) | [建议及对接](member-02.md) |
-| 03 衣橱与录入体验 | [#13](https://github.com/dinggegu-dot/wearwise/issues/13) | [建议及对接](member-03.md) |
-| 04 视觉识别与灵感服务 | [#14](https://github.com/dinggegu-dot/wearwise/issues/14) | [建议及对接](member-04.md) |
-| 05 天气与推荐内核 | [#15](https://github.com/dinggegu-dot/wearwise/issues/15) | [建议及对接](member-05.md) |
-| 06 首页、推荐体验与反馈 | [#16](https://github.com/dinggegu-dot/wearwise/issues/16) | [建议及对接](member-06.md) |
-| 07 独立验收与质量 | [#17](https://github.com/dinggegu-dot/wearwise/issues/17) | [建议及对接](member-07.md) |
+| 岗位 | 负责轮次 | 开工入口 |
+| --- | --- | --- |
+| 01 主控与集成 | 01、11 | [#11](https://github.com/dinggegu-dot/wearwise/issues/11) · [个人页](member-01.md) |
+| 02 数据与我的偏好 | 02、07 | [#12](https://github.com/dinggegu-dot/wearwise/issues/12) · [个人页](member-02.md) |
+| 03 我的衣橱 | 05 | [#13](https://github.com/dinggegu-dot/wearwise/issues/13) · [个人页](member-03.md) |
+| 04 真实 AI 与穿搭灵感 | 03、06 | [#14](https://github.com/dinggegu-dot/wearwise/issues/14) · [个人页](member-04.md) |
+| 05 推荐规则与反馈 | 04、08 | [#15](https://github.com/dinggegu-dot/wearwise/issues/15) · [个人页](member-05.md) |
+| 06 首页与导航 | 09 | [#16](https://github.com/dinggegu-dot/wearwise/issues/16) · [个人页](member-06.md) |
+| 07 独立验收 | 10、12 | [#17](https://github.com/dinggegu-dot/wearwise/issues/17) · [个人页](member-07.md) |
 
-[总计划 #10](https://github.com/dinggegu-dot/wearwise/issues/10) · [提交 PR](https://github.com/dinggegu-dot/wearwise/pulls) · [证据总览 #20](https://github.com/dinggegu-dot/wearwise/issues/20) · [设计/交付模板](OPTIMIZATION-TEMPLATE.md) · [协作指南](AI协作与交接指南.md)
-
-第 1 轮从 #21 → #22 → #23 的实际提交链收敛。02 从交接中的固定候选继续，旧任务及旧 PR 保留供比对。
+进度和接口约定放在本人任务卡或对应 PR，正式成果走 PR。后续轮次以实际交接 SHA 为开发起点；收到可运行的接口后，由接收方复验再记录联调结论。 [提交与合并指南](提交与合并指南.md) · [工作流说明](工作流说明.md) · [证据总览 #20](https://github.com/dinggegu-dot/wearwise/issues/20)
