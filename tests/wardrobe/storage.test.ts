@@ -65,7 +65,7 @@ describe('衣橱存储事务', () => {
 });
 
 describe('历史数据与共享图片', () => {
-  it('v1 数据迁移到 v2 时保留衣物、图片和旧反馈', async () => {
+  it('v1 数据迁移到最新版本时保留衣物、图片和旧反馈', async () => {
     const { default: Dexie } = await import('dexie');
     const name = `wearwise-test-${crypto.randomUUID()}`;
     const old = new Dexie(name);
@@ -83,13 +83,13 @@ describe('历史数据与共享图片', () => {
     expect((await db.feedback.get('old-outfit'))?.choice).toBe('like');
     expect((await db.outfits.get('old-outfit'))?.recordVersion).toBe(1);
   });
-  it('共享图片在最后一个引用删除之前不会被清除', async () => {
+  it('删除为软删除：衣橱与数量扣除，白底图保留给旧搭配快照', async () => {
     const {db,service}=setup();
     const first=await service.add(input,new Blob(['shared']));
-    const second={...first,id:crypto.randomUUID(),name:'同图衣物'};
-    await new DexieWardrobeRepository(db).save(second);
     await service.remove(first.id);
+    expect(await service.list()).toEqual([]); expect(await service.count()).toBe(0);
+    expect((await service.get(first.id))?.deletedAt).toBeDefined();
     expect(await (await service.image(first.imageId))?.text()).toBe('shared');
-    await service.remove(second.id); expect(await service.image(first.imageId)).toBeUndefined();
+    expect(await db.garments.count()).toBe(1);
   });
 });

@@ -4,17 +4,20 @@ export const cities = {
   北京: [39.9042, 116.4074], 成都: [30.5728, 104.0668], 杭州: [30.2741, 120.1551]
 } as const;
 export type City = keyof typeof cities;
-export interface Weather { city: City; temperature: number; apparentTemperature: number; dataTime: string; fetchedAt: string; example: boolean; weatherCode?: number | null; source?: 'open-meteo' | 'example'; cached?: boolean }
+export interface Weather { city: City; temperature: number; apparentTemperature: number; dataTime: string; fetchedAt: string; example: boolean; weatherCode?: number | null; source?: 'open-meteo' | 'example'; cached?: boolean;
+  /** 当天（北京时间）最低/最高气温，供推荐依据快照记录温度范围。 */
+  temperatureMin?: number | null; temperatureMax?: number | null }
 export interface WeatherProvider { current(city: City, signal?: AbortSignal): Promise<Weather> }
 const responseSchema = z.object({
   current_units: z.object({ temperature_2m: z.literal('°C'), apparent_temperature: z.literal('°C') }),
-  current: z.object({ time: z.number().int().positive(), temperature_2m: z.number().finite(), apparent_temperature: z.number().finite(), weather_code: z.number().int().nullable().optional() })
+  current: z.object({ time: z.number().int().positive(), temperature_2m: z.number().finite(), apparent_temperature: z.number().finite(), weather_code: z.number().int().nullable().optional() }),
+  daily: z.object({ temperature_2m_min: z.array(z.number().finite().nullable()).min(1), temperature_2m_max: z.array(z.number().finite().nullable()).min(1) }).optional()
 });
 export class OpenMeteoProvider implements WeatherProvider {
   async current(city: City, signal?: AbortSignal): Promise<Weather> {
     const coords = cities[city];
     if (!coords) throw new Error('请选择有效城市');
-    const params = new URLSearchParams({ latitude: String(coords[0]), longitude: String(coords[1]), current: 'temperature_2m,apparent_temperature,weather_code', timezone: 'Asia/Shanghai', timeformat: 'unixtime' });
+    const params = new URLSearchParams({ latitude: String(coords[0]), longitude: String(coords[1]), current: 'temperature_2m,apparent_temperature,weather_code', daily: 'temperature_2m_min,temperature_2m_max', forecast_days: '1', timezone: 'Asia/Shanghai', timeformat: 'unixtime' });
     const deadline = AbortSignal.timeout(10000);
     const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`, { signal: signal ? AbortSignal.any([signal, deadline]) : deadline });
     if (!response.ok) throw new Error('天气暂时不可用，请重试');
@@ -23,11 +26,12 @@ export class OpenMeteoProvider implements WeatherProvider {
     // Open-Meteo 的 current 可有观测延迟；拒绝明显过期或超前的数据。
     if (observedAt < now - 3 * 60 * 60 * 1000 || observedAt > now + 15 * 60 * 1000) throw new Error('天气观测时间异常，请重试');
     const dataTime = new Date(observedAt).toISOString();
-    return { city, temperature: parsed.current.temperature_2m, apparentTemperature: parsed.current.apparent_temperature, weatherCode: parsed.current.weather_code ?? null, dataTime, fetchedAt: new Date().toISOString(), example: false, source: 'open-meteo' };
+    return { city, temperature: parsed.current.temperature_2m, apparentTemperature: parsed.current.apparent_temperature, weatherCode: parsed.current.weather_code ?? null, dataTime, fetchedAt: new Date().toISOString(), example: false, source: 'open-meteo',
+      temperatureMin: parsed.daily?.temperature_2m_min[0] ?? null, temperatureMax: parsed.daily?.temperature_2m_max[0] ?? null };
   }
 }
 export class ExampleWeatherProvider implements WeatherProvider {
-  async current(city: City): Promise<Weather> { const now = new Date().toISOString(); return { city, temperature: 22, apparentTemperature: 21, weatherCode: 2, dataTime: now, fetchedAt: now, example: true, source: 'example' }; }
+  async current(city: City): Promise<Weather> { const now = new Date().toISOString(); return { city, temperature: 22, apparentTemperature: 21, temperatureMin: 19, temperatureMax: 25, weatherCode: 2, dataTime: now, fetchedAt: now, example: true, source: 'example' }; }
 }
 export class WeatherService {
   private cache = new Map<City, Weather>();

@@ -26,10 +26,12 @@ describe('推荐与反馈事务', () => {
   const restored=await service.restore(); expect(restored.map(record=>record.id)).toEqual(generated.records.map(record=>record.id));
   expect((await service.getFeedback(restored[0].id))?.choice).toBe('like');
  });
- it('衣橱变更后旧结果失效，过期快照不可写入', async () => {
+ it('删除衣物不改变已展示的搭配，但过期快照不可写入新批次', async () => {
   const {db,wardrobe,service}=setup(); await seed(wardrobe); const weather=await new ExampleWeatherProvider().current('深圳');
   const result=await service.generate(weather,'日常休闲',crypto.randomUUID()); expect(result.records).toHaveLength(1);
-  await wardrobe.remove(result.records[0].garmentIds[0]); expect(await service.restore()).toEqual([]);
+  await wardrobe.remove(result.records[0].garmentIds[0]);
+  const restored=await service.restore(); expect(restored.map(r=>r.id)).toEqual([result.records[0].id]);
+  expect(await wardrobe.image(restored[0].garmentSnapshots[0].imageId)).toBeDefined();
   const store=new DexieRecommendationStore(db); await expect(store.saveBatch(result.records,result.records[0].wardrobeRevision)).rejects.toThrow('衣橱已改变');
  });
  it('生成期间上下文变更时只保留历史记录，不激活旧结果',async()=>{

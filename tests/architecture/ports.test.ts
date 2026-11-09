@@ -16,7 +16,7 @@ describe('领域边界',()=>{
  });
  it('衣橱存储可替换，应用服务不绑定 Dexie',async()=>{
   const records = new Map<string,Garment>();
-  const repo:WardrobeRepository={list:async()=>[...records.values()],get:async id=>records.get(id),save:async item=>{records.set(item.id,item);},createOnce:async item=>{records.set(item.id,item);return item;},update:async()=>{throw new Error('not used');},remove:async id=>{records.delete(id);}};
+  const repo:WardrobeRepository={list:async()=>[...records.values()],get:async id=>records.get(id),save:async item=>{records.set(item.id,item);},createOnce:async item=>{records.set(item.id,item);return item;},update:async()=>{throw new Error('not used');},setPause:async()=>{throw new Error('not used');},remove:async id=>{records.delete(id);}};
   const service=new WardrobeService(repo,{get:async()=>new Blob(['local'])});
   const saved=await service.add({name:'替代衣物',category:'top',color:'白',warmth:'unknown',styleTags:[],sourceType:'manual'},new Blob(['photo']));
   expect((await service.list())[0].id).toBe(saved.id);await service.remove(saved.id);expect(await service.count()).toBe(0);
@@ -34,7 +34,7 @@ describe('领域边界',()=>{
  });
  it('衣橱事务可连续删除引用并清理图片，过程中失败可回滚',async()=>{
   const db=new WearWiseDatabase(`wearwise-test-${crypto.randomUUID()}`);opened.push(db);const uow=new DexieUnitOfWork(db);
-  const now=new Date().toISOString();const garment:Garment={id:'a',name:'上衣',category:'top',color:'白',warmth:'unknown',styleTags:[],imageId:'photo',sourceType:'manual',status:'confirmed',excludedPermanently:false,revision:1,createdAt:now,updatedAt:now};
+  const now=new Date().toISOString();const garment:Garment={id:'a',name:'上衣',category:'top',color:'白',warmth:'unknown',styleTags:[],imageId:'photo',sourceType:'manual',fit:'不确定',description:'',revision:1,createdAt:now,updatedAt:now};
   await uow.write('wardrobe',async tx=>{await tx.media.add({id:'photo',blob:new Blob(['x'])});await tx.garments.add(garment);await tx.meta.put({key:'wardrobeRevision',value:1});});
   await uow.write('wardrobe',async tx=>{const previous=await tx.garments.get('a');expect(previous).toBeDefined();await tx.garments.remove('a');if(!await tx.garments.referencesImage('photo'))await tx.media.remove('photo');await tx.meta.put({key:'wardrobeRevision',value:2});});
   expect(await db.garments.count()).toBe(0);expect(await db.media.count()).toBe(0);expect((await db.meta.get('wardrobeRevision'))?.value).toBe(2);

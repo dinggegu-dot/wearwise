@@ -2,6 +2,8 @@
 
 **第 1 轮统一候选**在 #21 → #22 → #23 的实际提交链上扩展五个页面入口。开始接力前请读取 [第 1 轮交接](docs/handoffs/ROUND-01.md) 和 [本轮范围与旧基线差异](docs/project/ROUND-01-SCOPE.md)。
 
+**第 2 轮**补齐衣橱、灵感、三组长期偏好和推荐过程的数据服务，数据库升级到 v3。见 [第 2 轮交接](docs/handoffs/ROUND-02.md) 与 [数据服务接口说明](docs/project/ROUND-02-DATA-API.md)。
+
 [功能概述](docs/project/WEB-FUNCTION-OVERVIEW.md) · [推荐与记忆规则](docs/project/RECOMMENDATION-MEMORY-RULES.md) · [UI 示例](docs/project/UI-REFERENCE.md) · [12 轮次排班](docs/project/ROUND-SCHEDULE.md) · [团队工作台](team/README.md)
 
 **共同产品目标：**穿搭推荐保留原计划的图片输出——用用户确认保存的真实衣物图片组成平面搭配卡片，并展示理由。详见 [图片穿搭目标、接口和验收](docs/project/OUTFIT-IMAGE-SPEC.md)；示例图片演示不等于真实照片联调验收通过。

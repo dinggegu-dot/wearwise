@@ -22,7 +22,7 @@ export class DemoService {
     const records = items.map(([name, category, color, warmth, styleTags]) => {
       const id = crypto.randomUUID(), imageId = crypto.randomUUID();
       return { garment: { id, name, category, color, warmth, styleTags:[...styleTags], imageId,
-        sourceType:'demo' as const, status:'confirmed' as const, excludedPermanently:false, revision:1,
+        sourceType:'demo' as const, fit:'不确定', description:'', revision:1,
         createdAt:now, updatedAt:now }, media:{id:imageId, blob:illustration(category,color)} };
     });
     await this.store.seed(records, reset);
