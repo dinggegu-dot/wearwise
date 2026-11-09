@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import { garmentSchema, type Garment, type Media, type WardrobeRepository, type MediaRepository } from '@/modules/wardrobe';
+import { garmentSchema, type Garment, type GarmentFilter, type Media, type WardrobeRepository, type MediaRepository } from '@/modules/wardrobe';
 import type { Feedback, FeedbackRepository } from '@/modules/feedback';
 
 export class WearWiseDatabase extends Dexie {
@@ -14,8 +14,24 @@ export class WearWiseDatabase extends Dexie {
 }
 export class DexieWardrobeRepository implements WardrobeRepository {
   constructor(private readonly db: WearWiseDatabase) {}
-  async list() { return (await this.db.garments.toArray()).map(g => garmentSchema.parse(g)); }
+  async list(filter: GarmentFilter = {}) {
+    const items = filter.category ? await this.db.garments.where('category').equals(filter.category).toArray() : await this.db.garments.toArray();
+    // 新加入的衣物排在前面。
+    return items.map(g => garmentSchema.parse(g)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
   async get(id: string) { const item = await this.db.garments.get(id); return item ? garmentSchema.parse(item) : undefined; }
+  async create(input: Garment, media: Media) {
+    const garment = garmentSchema.parse(input);
+    return this.db.transaction('rw', this.db.garments, this.db.media, async () => {
+      // 同一个 id 已保存过（例如重复点击确认）时直接返回已有衣物，不再写入。
+      const existing = await this.db.garments.get(garment.id);
+      if (existing) return garmentSchema.parse(existing);
+      if (media.id !== garment.imageId || !(media.blob instanceof Blob)) throw new Error('图片数据无效');
+      await this.db.media.put(media);
+      await this.db.garments.add(garment);
+      return garment;
+    });
+  }
   async save(input: Garment, media?: Media) {
     const garment = garmentSchema.parse(input);
     await this.db.transaction('rw', this.db.garments, this.db.media, async () => {
