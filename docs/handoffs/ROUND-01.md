@@ -4,18 +4,19 @@
 
 ## 唯一代码起点
 
-本轮候选分支为 `codex/round-01-baseline`，GitHub 原仓库为 [dinggegu-dot/wearwise](https://github.com/dinggegu-dot/wearwise)。父提交是 #23 的 `a1c1cf51e33cb947dae8326b54ae3e5d410267b3`，依次包含 #22 与 #21。该 SHA 只标识父提交，带本轮页面和文档的交付 SHA 由外附交接入口和 Git bundle 的分支头锁定。对比说明和可复用项见 [R01-01](../project/ROUND-01-SCOPE.md#已核实的来源与决策)。
+本轮唯一入口为 [团队仓库的 `codex/round-01-baseline`](https://github.com/dinggegu-dot/wearwise/tree/codex/round-01-baseline)。基线来自 #23 的 `a1c1cf51e33cb947dae8326b54ae3e5d410267b3`，依次包含 #22 与 #21。对比说明和可复用项见 [R01-01](../project/ROUND-01-SCOPE.md#已核实的来源与决策)。
 
-拿到 `wearwise-round-01.bundle` 后在空目录操作，核对 SHA 与外附交接入口一致：
+在空目录执行下列命令。用 `git rev-parse HEAD` 记录检出的完整 SHA，与交付记录核对。
 
 ```sh
-git bundle list-heads wearwise-round-01.bundle
-git clone --branch codex/round-01-baseline wearwise-round-01.bundle wearwise
+git clone --branch codex/round-01-baseline --single-branch https://github.com/dinggegu-dot/wearwise.git wearwise
 cd wearwise
 git rev-parse HEAD
 npm ci --legacy-peer-deps
 npm run preview
 ```
+
+离线交接时，把克隆命令中的 GitHub URL 换为随交接附送的 `wearwise-round-01.bundle` 路径。
 
 Node.js 22.12 或更高版本，使用正式 Google Chrome 打开 `http://127.0.0.1:3000`。开发用 `npm run dev`，同一时间只启动一种模式。若端口被占用，先停止自己先前启动的服务；测试脚本默认使用 3000（生产/开发）和 3100（静态）。
 
@@ -46,7 +47,7 @@ Node.js 22.12 或更高版本，使用正式 Google Chrome 打开 `http://127.0.
 | R01-02 五页入口 | PASS。生产 Chrome 回归含五页导航和当前栏目标记；静态 Chrome 回归含子路径、直达刷新和资源错误检查。 |
 | R01-03 原有业务 | PASS（本机受测流程）。类型、普通构建、49 单测、生产和开发 Chrome 各 34 项、#22 图片和反馈专项 12 项、静态构建和静态 Chrome 2 项通过。实时 Open-Meteo 2 项通过，覆盖六城市查询及真实天气参与本地测试衣物推荐和反馈；该流程使用手动录入样本。真实照片的完整识别与网络审计不在当前结果内。 |
 | R01-04 资料和边界 | PASS。3 份 Word、对应 Markdown、16 张 PNG 与索引整理进候选，工作台与 README 链接共同依据。独立校验正文、表格、源文件与索引。 |
-| R01-05 交接 | 本地可交付。干净安装 BLOCKED，使用原工作区相同锁文件且已存在的依赖副本运行。02 的跨电脑启动、01 本人复核和团队签收 NOT_RUN。 |
+| R01-05 交接 | 本机干净安装 PASS。从空目录克隆，按原锁文件执行 `npm ci --legacy-peer-deps` 成功，锁文件未变。类型检查、49 项单测、生产构建和 34 项正式 Chrome 回归重跑通过。02 的跨电脑启动与签收、01 本人复核 NOT_RUN。 |
 
 独立复核在独立端口和正式 Chrome 上执行自编流程。通过五项导航选中态、示例八件刷新、生成后反馈刷新与跨页恢复，以及 #23 的分类默认值、改类保存、弹窗居中和刷新。冒烟无浏览器外网请求，另实际复现旧版切换风格清除结果。该检查是第 1 轮独立抽查，07 的整体验收在第 10、12 轮。
 
@@ -54,5 +55,4 @@ Node.js 22.12 或更高版本，使用正式 Google Chrome 打开 `http://127.0.
 
 - **新铁律的运行验收未完成。** 生产回归复现了旧版切换风格或城市使当前搭配失效。旧生成开始会清空展示，保存的旧版反馈按搭配 ID 关联。当前无单次反馈和连续更换，也无首页今日穿搭调整入口。按 [范围与规则差异](../project/ROUND-01-SCOPE.md#三条铁律与旧基线的落差) 由 02/05/06 分轮补齐，01 本人和 07 后续按模板操作复核。
 - **开发模式路由日志。** 开发套件断言 34/34 通过，运行中仍出现 Next.js 的 “Router action dispatched before initialization”。#22 已记录同类日志；此处保留为已知问题。
-- **跨电脑安装和 Windows 静态表现待复测。** 离线安装缺少包缓存。自动审批拒绝执行在线 npm 下载和安装脚本。#22 在 Windows 报告的 symlink EPERM 和静态资源 404 本机未复现，02 可先用普通本地启动交接。
-- **资料的远端发布待定。** 交付包保留 Word 和 UI 原件。若经授权发布到 GitHub，需明确团队材料是否可随代码公开。现有 GitHub PR 仍供追溯。
+- **Windows 静态表现待复测。** #22 在 Windows 报告的 symlink EPERM 和静态资源 404 在 macOS 未复现，02 可先用普通本地启动交接。
