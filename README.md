@@ -8,7 +8,7 @@
 
 [网页功能概述](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/WEB-FUNCTION-OVERVIEW.md) · [推荐依据与记忆规则](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/RECOMMENDATION-MEMORY-RULES.md) · [12 轮次排班](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/ROUND-SCHEDULE.md) · [UI 示例](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/UI-REFERENCE.md) · [交接模板](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/handoffs/ROUND-HANDOFF-TEMPLATE.md)
 
-开工前读共同材料与上一轮交接，并以其固定 SHA 为基础。每轮负责人亲自复核可操作流程。只有点击「生成穿搭」并成功才开启新一轮，单次反馈在同一轮持续有效，首页与推荐页调整互相独立。
+每位成员和自己的 AI 先读 [团队 AI 协作与交接指南](team/AI协作与交接指南.md)，再读共同材料与上一轮交接，以交接指定的固定 SHA 为基础。每轮负责人亲自复核可操作流程。只有点击「生成穿搭」并成功才开启新一轮，单次反馈在同一轮持续有效，首页与推荐页调整互相独立。
 
 | 岗位 | 负责轮次 | 任务卡 |
 | --- | --- | --- |
