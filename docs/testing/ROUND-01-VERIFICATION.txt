@@ -1,0 +1,136 @@
+WearWise R01-r1 · 2026-11-09 Asia/Shanghai
+macOS 26.6.2 arm64 · Node 22.23.2 · npm 10.9.8 · Google Chrome 156.0.8078.80
+父提交 a1c1cf51e33cb947dae8326b54ae3e5d410267b3
+候选最终 SHA 见外附交接；测试后仅更新 Markdown 和证据。
+
+PASS npm run typecheck
+PASS npm test · 8 files / 49 tests
+PASS npm run build · 五个页面及两个既有 API
+PASS 83 个相对链接解析
+
+以下为运行日志中的测试断言及统计。
+
+=== prod ===
+  ✓   1 e2e/framework.spec.ts:6:7 › 框架导航和页面分区 1440px (1.8s)
+  ✓   2 e2e/framework.spec.ts:6:7 › 框架导航和页面分区 390px (679ms)
+  ✓   3 e2e/framework.spec.ts:6:7 › 框架导航和页面分区 320px (640ms)
+  ✓   4 e2e/mode-isolation.spec.ts:3:5 › 真实和示例衣橱隔离，重置示例不改变真实衣物 (1.3s)
+  ✓   5 e2e/mode-isolation.spec.ts:42:5 › 反馈写入失败时显示错误，可重试并持久化 (601ms)
+  ✓   6 e2e/mode-isolation.spec.ts:62:5 › 示例初始化失败不留下半库，重试后完整恢复八件 (419ms)
+  ✓   7 e2e/persistence.spec.ts:6:5 › 隔离 Chrome 用户目录关闭并重开后衣物和图片仍可读取 (2.5s)
+  ✓   8 e2e/recommendation.spec.ts:6:6 › 真实衣橱到示例天气、穿搭和反馈的闭环 1440px (948ms)
+  ✓   9 e2e/recommendation.spec.ts:6:6 › 真实衣橱到示例天气、穿搭和反馈的闭环 390px (980ms)
+  ✓  10 e2e/recommendation.spec.ts:41:5 › 另一标签页修改衣橱时当前推荐立即失效 (882ms)
+  ✓  11 e2e/recommendation.spec.ts:56:5 › 刷新后天气控件与已保存推荐使用的城市一致 (750ms)
+  ✓  12 e2e/recommendation.spec.ts:75:5 › 只用键盘完成衣橱、推荐和反馈闭环 (689ms)
+  ✓  13 e2e/recommendation.spec.ts:101:5 › 切换风格和城市后旧搭配失效，历史记录不会恢复为当前推荐 (849ms)
+  ✓  14 e2e/recommendation.spec.ts:116:5 › 获取后五分钟内观测时间先过期时禁止继续使用推荐 (674ms)
+  ✓  15 e2e/recommendation.spec.ts:131:5 › 生成推荐过程中切换模式不会激活或显示旧模式晚结果 (768ms)
+  ✓  16 e2e/wardrobe.spec.ts:5:5 › 真实衣橱：取消、添加、刷新、编辑、筛选、排除和删除 (617ms)
+  ✓  17 e2e/wardrobe.spec.ts:35:5 › 照片在确认前不入库，保存后刷新仍可读取 (2.0s)
+  ✓  18 e2e/wardrobe.spec.ts:62:5 › 浏览器正确处理带 EXIF 旋转的 JPEG (1.1s)
+  ✓  19 e2e/wardrobe.spec.ts:81:5 › 大图缩放、静态 WebP 及无效文件提示 (380ms)
+  ✓  20 e2e/wardrobe.spec.ts:94:5 › 图片编码失败时提示错误，不产生衣物 (287ms)
+  ✓  21 e2e/wardrobe.spec.ts:103:5 › 键盘可打开和取消衣物表单并返回原焦点 (184ms)
+  ✓  22 e2e/wardrobe.spec.ts:110:5 › 10 MiB 透明 PNG 可处理，超限拒绝且临时图片 URL 回收 (1.3s)
+  ✓  23 e2e/wardrobe.spec.ts:142:5 › 查看详情、替换照片及首页数量随添加删除变化 (1.6s)
+  ✓  24 e2e/wardrobe.spec.ts:171:5 › 衣橱写入故障时保留草稿，无孤立图且可重试 (389ms)
+  ✓  25 e2e/wardrobe.spec.ts:196:5 › 模拟识别候选可修改材质并确认后保存 (1.2s)
+  ✓  26 e2e/wardrobe.spec.ts:210:5 › 切换模式会取消在途识别，晚返回候选不会写入衣橱 (1.1s)
+  ✓  27 e2e/wardrobe.spec.ts:225:5 › 读取衣橱失败不显示空衣橱，重试后才显示真实空态 (303ms)
+  ✓  28 e2e/wardrobe.spec.ts:241:5 › 连续重复确认只产生一件衣物和一张图片 (280ms)
+  ✓  29 e2e/wardrobe.spec.ts:253:5 › 图片压缩逐档降低质量，三档仍超限则清楚失败 (1.1s)
+  ✓  30 e2e/wardrobe.spec.ts:275:5 › 旧照片处理晚返回时不能覆盖新选照片 (1.3s)
+  ✓  31 e2e/weather.spec.ts:5:5 › 天气失败后可重试或主动选择示例，切换城市不复用旧结果 (410ms)
+  ✓  32 e2e/weather.spec.ts:26:5 › 快速切换城市时较晚的天气响应不覆盖当前城市 (1.1s)
+  ✓  33 e2e/weather.spec.ts:38:5 › 切换示例模式后旧天气请求的晚响应不会污染新模式 (324ms)
+  ✓  34 e2e/weather.spec.ts:52:5 › 旧天气观测不会作为新鲜实时天气展示 (341ms)
+  34 passed (31.5s)
+
+=== m06 ===
+  ✓   1 src/modules/recommendation/ui/outfit-image.browser.spec.ts:68:7 › generated patterns: saved image identity, feedback and refresh 1440px (1.2s)
+  ✓   2 src/modules/recommendation/ui/outfit-image.browser.spec.ts:68:7 › generated patterns: saved image identity, feedback and refresh 390px (952ms)
+  ✓   3 src/modules/recommendation/ui/outfit-image.browser.spec.ts:84:5 › read failure is distinct from missing media and keyboard retry recovers (840ms)
+  ✓   4 src/modules/recommendation/ui/outfit-image.browser.spec.ts:105:5 › user report: feedback has a visible selected state and saved confirmation (923ms)
+  ✓   5 src/modules/recommendation/ui/outfit-image.browser.spec.ts:122:5 › user report: failed feedback is not shown as saved and can be retried (858ms)
+  ✓   6 src/modules/recommendation/ui/outfit-image.browser.spec.ts:140:5 › user report: cancelling photo reselection keeps the garment dialog and draft (438ms)
+  ✓   7 src/modules/recommendation/ui/outfit-image.browser.spec.ts:175:5 › missing Blob has an explicit placeholder and keeps names and reason (1.5s)
+  ✓   8 src/modules/recommendation/ui/outfit-image.browser.spec.ts:193:5 › user report: editing shows the saved photo and only replaces it after confirmation (1.1s)
+  ✓   9 src/modules/recommendation/ui/outfit-image.browser.spec.ts:225:5 › decode failure is explicit; leaving the page releases every card URL (861ms)
+  ✓  10 src/modules/recommendation/ui/outfit-image.browser.spec.ts:247:5 › image loading is announced; late decode after mode switch cannot show old images (1.7s)
+  ✓  11 src/modules/recommendation/ui/outfit-image.browser.spec.ts:268:5 › replace photo invalidates old batch; regenerated card reads new image, exclusion removes it (2.0s)
+  ✓  12 src/modules/recommendation/ui/outfit-image.browser.spec.ts:287:5 › cold weather fixture renders both dress and separates with the stored coat (1.1s)
+  12 passed (14.5s)
+
+=== pages-build ===
+┌ ○ /
+├ ○ /_not-found
+├ ○ /inspiration
+├ ○ /preferences
+├ ○ /recommendations
+└ ○ /wardrobe
+Pages 静态文件已生成到 out/
+
+=== pages ===
+  ✓  1 e2e/pages/pages.spec.ts:3:5 › 静态子路径导航、直接刷新和本地衣橱保存 (805ms)
+  ✓  2 e2e/pages/pages.spec.ts:28:5 › 静态版实际衣橱到推荐反馈并刷新恢复 (875ms)
+  2 passed (2.3s)
+
+=== live ===
+  ✓  1 e2e/live/weather.spec.ts:2:5 › 正式 Chrome 实际读取六城市实时天气 (2.8s)
+  ✓  2 e2e/live/weather.spec.ts:16:5 › 真实衣物与真实天气生成穿搭并保存反馈 (1.7s)
+  2 passed (5.5s)
+
+=== dev ===
+  ✓   1 e2e/framework.spec.ts:6:7 › 框架导航和页面分区 1440px (2.7s)
+  ✓   2 e2e/framework.spec.ts:6:7 › 框架导航和页面分区 390px (1.5s)
+  ✓   3 e2e/framework.spec.ts:6:7 › 框架导航和页面分区 320px (1.5s)
+  ✓   4 e2e/mode-isolation.spec.ts:3:5 › 真实和示例衣橱隔离，重置示例不改变真实衣物 (2.9s)
+  ✓   5 e2e/mode-isolation.spec.ts:42:5 › 反馈写入失败时显示错误，可重试并持久化 (1.8s)
+  ✓   6 e2e/mode-isolation.spec.ts:62:5 › 示例初始化失败不留下半库，重试后完整恢复八件 (1.0s)
+  ✓   7 e2e/persistence.spec.ts:6:5 › 隔离 Chrome 用户目录关闭并重开后衣物和图片仍可读取 (2.6s)
+  ✓   8 e2e/recommendation.spec.ts:6:6 › 真实衣橱到示例天气、穿搭和反馈的闭环 1440px (2.3s)
+  ✓   9 e2e/recommendation.spec.ts:6:6 › 真实衣橱到示例天气、穿搭和反馈的闭环 390px (2.3s)
+  ✓  10 e2e/recommendation.spec.ts:41:5 › 另一标签页修改衣橱时当前推荐立即失效 (2.1s)
+  ✓  11 e2e/recommendation.spec.ts:56:5 › 刷新后天气控件与已保存推荐使用的城市一致 (2.0s)
+  ✓  12 e2e/recommendation.spec.ts:75:5 › 只用键盘完成衣橱、推荐和反馈闭环 (1.3s)
+  ✓  13 e2e/recommendation.spec.ts:101:5 › 切换风格和城市后旧搭配失效，历史记录不会恢复为当前推荐 (2.6s)
+  ✓  14 e2e/recommendation.spec.ts:116:5 › 获取后五分钟内观测时间先过期时禁止继续使用推荐 (1.4s)
+  ✓  15 e2e/recommendation.spec.ts:131:5 › 生成推荐过程中切换模式不会激活或显示旧模式晚结果 (2.0s)
+  ✓  16 e2e/wardrobe.spec.ts:5:5 › 真实衣橱：取消、添加、刷新、编辑、筛选、排除和删除 (1.8s)
+[WebServer] [browser] Uncaught Error: Internal Next.js error: Router action dispatched before initialization.
+  ✓  17 e2e/wardrobe.spec.ts:35:5 › 照片在确认前不入库，保存后刷新仍可读取 (3.3s)
+  ✓  18 e2e/wardrobe.spec.ts:62:5 › 浏览器正确处理带 EXIF 旋转的 JPEG (1.5s)
+  ✓  19 e2e/wardrobe.spec.ts:81:5 › 大图缩放、静态 WebP 及无效文件提示 (928ms)
+  ✓  20 e2e/wardrobe.spec.ts:94:5 › 图片编码失败时提示错误，不产生衣物 (838ms)
+  ✓  21 e2e/wardrobe.spec.ts:103:5 › 键盘可打开和取消衣物表单并返回原焦点 (769ms)
+  ✓  22 e2e/wardrobe.spec.ts:110:5 › 10 MiB 透明 PNG 可处理，超限拒绝且临时图片 URL 回收 (1.9s)
+  ✓  23 e2e/wardrobe.spec.ts:142:5 › 查看详情、替换照片及首页数量随添加删除变化 (2.9s)
+  ✓  24 e2e/wardrobe.spec.ts:171:5 › 衣橱写入故障时保留草稿，无孤立图且可重试 (926ms)
+  ✓  25 e2e/wardrobe.spec.ts:196:5 › 模拟识别候选可修改材质并确认后保存 (1.8s)
+  ✓  26 e2e/wardrobe.spec.ts:210:5 › 切换模式会取消在途识别，晚返回候选不会写入衣橱 (1.7s)
+  ✓  27 e2e/wardrobe.spec.ts:225:5 › 读取衣橱失败不显示空衣橱，重试后才显示真实空态 (806ms)
+  ✓  28 e2e/wardrobe.spec.ts:241:5 › 连续重复确认只产生一件衣物和一张图片 (820ms)
+  ✓  29 e2e/wardrobe.spec.ts:253:5 › 图片压缩逐档降低质量，三档仍超限则清楚失败 (939ms)
+  ✓  30 e2e/wardrobe.spec.ts:275:5 › 旧照片处理晚返回时不能覆盖新选照片 (1.9s)
+  ✓  31 e2e/weather.spec.ts:5:5 › 天气失败后可重试或主动选择示例，切换城市不复用旧结果 (966ms)
+  ✓  32 e2e/weather.spec.ts:26:5 › 快速切换城市时较晚的天气响应不覆盖当前城市 (1.7s)
+  ✓  33 e2e/weather.spec.ts:38:5 › 切换示例模式后旧天气请求的晚响应不会污染新模式 (959ms)
+  ✓  34 e2e/weather.spec.ts:52:5 › 旧天气观测不会作为新鲜实时天气展示 (939ms)
+  34 passed (1.0m)
+
+=== 独立正式 Chrome 抽查 ===
+Google Chrome 156.0.8078.80 Node v22.23.2 darwin arm64
+PASS: navigation / sole active marker and all 5 links
+PASS: fresh isolated demo initialized 8 unique garments; 8 after refresh
+PASS: navigation /wardrobe sole active marker and all 5 links
+PASS: navigation /recommendations sole active marker and all 5 links
+PASS: navigation /inspiration sole active marker and all 5 links
+PASS: navigation /preferences sole active marker and all 5 links
+PASS: recommendation and saved dislike restored on reload and after visiting the placeholder
+REPRODUCED LEGACY GAP: style change alone clears current recommendation; no generate click
+PASS: #23 shoe-filter creation defaults to shoes; modal edge margins balanced within 1px at 1280×900 {"horizontal":0,"vertical":0}
+PASS: #23 saving a shoe-filter draft as outerwear selects outerwear, shows the record, and preserves it after reload
+PASS: no external network requests in the browser during the smoke flow
+
+独立文档核验：729 个源段落、8 张表、3 份 Word、16 张 PNG、71 个内部链接及锚点通过。

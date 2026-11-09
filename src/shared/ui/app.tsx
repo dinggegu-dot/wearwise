@@ -5,8 +5,14 @@ import { WardrobePage } from '@/modules/wardrobe/ui/wardrobe-page';
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, CloudSun, Shirt, Sparkles, Plus, LayoutGrid, Camera, SlidersHorizontal, Heart, CalendarDays, Sun, Footprints, Layers, CircleHelp } from 'lucide-react';
 
-type Page = 'home' | 'wardrobe' | 'recommendations';
-const links = [{ href: '/', title: '首页', page: 'home' }, { href: '/wardrobe', title: '我的衣橱', page: 'wardrobe' }, { href: '/recommendations', title: '穿搭推荐', page: 'recommendations' }] as const;
+const links = [
+  { href: '/', title: '首页', page: 'home' },
+  { href: '/wardrobe', title: '我的衣橱', page: 'wardrobe' },
+  { href: '/recommendations', title: '穿搭推荐', page: 'recommendations' },
+  { href: '/inspiration', title: '穿搭灵感', page: 'inspiration' },
+  { href: '/preferences', title: '我的偏好', page: 'preferences' },
+] as const;
+type Page = (typeof links)[number]['page'];
 function Soon({children = '后续开放'}:{children?: React.ReactNode}) { return <span className="soon">{children}</span>; }
 function Header({page}:{page:Page}) { return <header className="header"><Link href="/" className="brand"><span className="brand-mark"><Shirt size={19}/></span><span>wearwise<span className="brand-dot">.</span></span></Link><nav aria-label="主导航">{links.map(link => <Link key={link.href} className={page === link.page ? 'nav-link current' : 'nav-link'} aria-current={page === link.page ? 'page' : undefined} href={link.href}>{link.title}</Link>)}</nav><span className="header-tag"><span className="status-dot"/> 智能衣橱</span></header>; }
 function Footer() { return <footer className="footer"><div className="footer-brand">wearwise<span>.</span></div><p>让每一天，都穿得更自在。</p><span>为更简单的生活而设计 · WearWise</span></footer>; }
@@ -17,4 +23,25 @@ function Home() { return <AppShell page="home"><section className="hero"><div cl
 const categories = ['全部', '上衣', '下装', '外套', '连衣裙', '鞋履'];
 function Wardrobe() { return <AppShell page="wardrobe"><div className="page-heading"><div><span className="section-kicker">YOUR WARDROBE</span><h1>我的衣橱<span className="heading-dot">.</span></h1><p>为每一件喜欢的衣物，找到属于它的位置。</p></div><DisabledButton icon={<Plus size={17}/>}>添加衣物</DisabledButton></div><div className="page-layout"><aside className="side-card"><div className="side-title"><LayoutGrid size={17}/> 衣物分类 <Soon/></div><div className="category-list">{categories.map((c,i)=><span className={i===0?'category active':'category'} key={c}>{c}<span>—</span></span>)}</div><div className="side-note"><Sparkles size={17}/><p><b>一点小期待</b><br/>衣物整理功能正在规划中，未来会在这里与你见面。</p></div></aside><div className="content-area"><div className="toolbar"><div><b>全部衣物</b><span> · 衣物列表</span></div><span className="quiet"><SlidersHorizontal size={15}/> 筛选 · 后续开放</span></div><div className="empty-state"><div className="empty-icon"><Shirt size={38} strokeWidth={1.1}/><span><Sparkles size={14}/></span></div><h2>你的衣橱，值得被好好整理</h2><p>未来可以在这里添加衣物，建立属于自己的衣橱。<br/>衣物录入和图片识别功能还在准备中。</p><DisabledButton icon={<Plus size={16}/>}>添加第一件衣物</DisabledButton><span className="empty-caption">A LITTLE SPACE FOR YOUR FAVORITES</span></div><div className="coming-row"><div className="mini-icon"><Camera size={19}/></div><div><b>图片识别录入</b><p>未来上传衣物照片，轻松整理你的衣橱。</p></div><Soon/></div><div className="coming-row"><div className="mini-icon"><SlidersHorizontal size={19}/></div><div><b>编辑与删除</b><p>未来可以修改衣物信息或从衣橱中删除。</p></div><Soon/></div></div></div></AppShell>; }
 function Recommendations() { return <AppShell page="recommendations"><div className="page-heading"><div><span className="section-kicker">OUTFITS FOR YOU</span><h1>穿搭推荐<span className="heading-dot">.</span></h1><p>为每一个普通的日子，留一点穿搭灵感。</p></div><span className="page-badge"><Sparkles size={16}/> 穿出自己的节奏</span></div><div className="recommend-layout"><aside className="recommend-side"><div className="panel"><div className="panel-title"><span className="mini-icon"><CloudSun size={18}/></span><div><b>天气参考</b><p>为穿搭多一份考虑</p></div><Soon/></div><div className="placeholder-weather"><Sun size={30} strokeWidth={1.2}/><div><b>天气功能准备中</b><p>未来可选择城市查看天气</p></div></div></div><div className="panel"><div className="panel-title"><span className="mini-icon"><SlidersHorizontal size={17}/></span><div><b>选择风格</b><p>找到适合你的日常</p></div><Soon/></div><div className="style-placeholder"><span>日常休闲</span><span>简约通勤</span></div></div></aside><div className="outfit-panel"><div className="outfit-heading"><div><span className="section-kicker">TODAY'S LOOK</span><h2>为你推荐</h2><p>未来将根据你的衣橱和天气，给出搭配建议。</p></div><Soon/></div><div className="outfit-empty"><div className="outfit-illustration"><span><Shirt size={29} strokeWidth={1.3}/></span><span><Layers size={29} strokeWidth={1.3}/></span><span><Footprints size={29} strokeWidth={1.3}/></span></div><h3>你的专属穿搭，正在准备中</h3><p>衣橱整理与穿搭推荐功能将在后续版本上线。<br/>每一次搭配，都从了解自己开始。</p><DisabledButton icon={<Sparkles size={16}/>}>生成穿搭</DisabledButton></div><div className="feedback-placeholder"><div><Heart size={19}/><span><b>留下你的想法</b><small>喜欢或不喜欢，未来都可以告诉我们。</small></span></div><Soon/></div></div></div><div className="tip"><CircleHelp size={17}/><span>这里是 WearWise 的基础框架，功能会逐步完善。</span><CalendarDays size={16}/></div></AppShell>; }
-export function App({page}:{page:Page}) { return page === 'home' ? <Home/> : page === 'wardrobe' ? <AppShell page="wardrobe"><WardrobePage/></AppShell> : <AppShell page="recommendations"><RecommendationsPage/></AppShell>; }
+const upcomingPages = {
+  inspiration: { title: '穿搭灵感', description: '这里将用于管理长期穿搭参考。' },
+  preferences: { title: '我的偏好', description: '这里将用于管理明确偏好、灵感归纳和永久反馈。' },
+};
+
+export function App({ page }: { page: Page }) {
+  if (page === 'home') return <Home/>;
+  if (page === 'wardrobe') return <AppShell page={page}><WardrobePage/></AppShell>;
+  if (page === 'recommendations') return <AppShell page={page}><RecommendationsPage/></AppShell>;
+
+  const { title, description } = upcomingPages[page];
+  return (
+    <AppShell page={page}>
+      <div className="page-heading">
+        <div><h1>{title}<span className="heading-dot">.</span></h1><p>{description}</p></div>
+      </div>
+      <section className="outfit-panel empty-state" aria-label={title}>
+        <Soon>功能将在后续轮次接入</Soon>
+      </section>
+    </AppShell>
+  );
+}

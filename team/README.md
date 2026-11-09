@@ -1,10 +1,10 @@
 # WearWise 团队工作台
 
-当前安排 **team-refresh-r2（2026-11-06）**：[功能/结构/缺口](../docs/project/CURRENT-STATE.md) → [优化建议与 DDL](NEXT-ITERATION.md) → 本人任务。
+按 **2026-11-09 的 12 轮次排班** 接力。[排班](../docs/project/ROUND-SCHEDULE.md) · [功能概述](../docs/project/WEB-FUNCTION-OVERVIEW.md) · [推荐与记忆规则](../docs/project/RECOMMENDATION-MEMORY-RULES.md) · [UI 示例](../docs/project/UI-REFERENCE.md) · [第 1 轮交接](../docs/handoffs/ROUND-01.md) · [交接模板](../docs/handoffs/ROUND-HANDOFF-TEMPLATE.md)
 
-**11 月 14 日 23:59 前完成优化并交付可运行代码、测试、设计与对接记录；15—19 日集成对齐修复；11 月 20 日最终验收。** 全部北京时间，2026 年。14 日不是只交设计。建议方向可由成员讨论调整，重大范围须记录确认。
+以下岗位入口用于追溯先前工作和 PR。当前轮次、交付与顺序以新版排班为准。
 
-| 岗位 | 当前任务 | 成员说明 |
+| 岗位 | 历史任务 | 成员说明 |
 |---|---|---|
 | 01 主控与集成 | [#11](https://github.com/dinggegu-dot/wearwise/issues/11) | [建议及对接](member-01.md) |
 | 02 数据与衣橱内核 | [#12](https://github.com/dinggegu-dot/wearwise/issues/12) | [建议及对接](member-02.md) |
@@ -16,4 +16,4 @@
 
 [总计划 #10](https://github.com/dinggegu-dot/wearwise/issues/10) · [提交 PR](https://github.com/dinggegu-dot/wearwise/pulls) · [证据总览 #20](https://github.com/dinggegu-dot/wearwise/issues/20) · [设计/交付模板](OPTIMIZATION-TEMPLATE.md) · [协作指南](AI协作与交接指南.md)
 
-基础候选 #21 已测但未合并。以总计划记录的基线为准；不要从旧 main 重复搭衣橱/天气。旧岗位导航 #1—#7 关闭归档，实际进度在 #11—#17 维护。成员未全部绑定账号，任务公开不等于已读或已领取。
+第 1 轮从 #21 → #22 → #23 的实际提交链收敛。02 从交接中的固定候选继续，旧任务及旧 PR 保留供比对。

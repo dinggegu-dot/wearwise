@@ -16,6 +16,12 @@ test('静态子路径导航、直接刷新和本地衣橱保存', async ({ page 
   await page.getByRole('link',{name:'穿搭推荐',exact:true}).click();
   await expect(page).toHaveURL(/\/wearwise\/recommendations\/$/);
   await page.reload(); await expect(page.getByRole('heading',{name:'穿搭推荐.'})).toBeVisible();
+  for (const [title, path] of [['穿搭灵感', 'inspiration'], ['我的偏好', 'preferences']]) {
+    await page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: title }).click();
+    await expect(page).toHaveURL(new RegExp('/wearwise/' + path + '/$'));
+    await page.reload();
+    await expect(page.getByRole('heading', { name: title + '.' })).toBeVisible();
+  }
   expect(failed).toEqual([]);
 });
 

@@ -1,14 +1,14 @@
 # WearWise · 本地优先的智能衣橱
 
-**当前功能候选已可测试，尚未合并/发布。** 基础版 [PR #21](https://github.com/dinggegu-dot/wearwise/pull/21) 的产品基线为 `92ee865ccf76d545534b8358e5c89288d5305ddf`；2026-11-06 核查 main 仍是 V0.2 框架。
+**第 1 轮统一候选**在 #21 → #22 → #23 的实际提交链上扩展五个页面入口。开始接力前请读取 [第 1 轮交接](docs/handoffs/ROUND-01.md) 和 [本轮范围与旧基线差异](docs/project/ROUND-01-SCOPE.md)。
 
-[当前功能、架构、缺口](docs/project/CURRENT-STATE.md) · [团队优化建议与 DDL](team/NEXT-ITERATION.md) · [总计划 #10](https://github.com/dinggegu-dot/wearwise/issues/10) · [PR/检查总览 #20](https://github.com/dinggegu-dot/wearwise/issues/20)
+[功能概述](docs/project/WEB-FUNCTION-OVERVIEW.md) · [推荐与记忆规则](docs/project/RECOMMENDATION-MEMORY-RULES.md) · [UI 示例](docs/project/UI-REFERENCE.md) · [12 轮次排班](docs/project/ROUND-SCHEDULE.md) · [团队工作台](team/README.md)
 
 **共同产品目标：**穿搭推荐保留原计划的图片输出——用用户确认保存的真实衣物图片组成平面搭配卡片，并展示理由。详见 [图片穿搭目标、接口和验收](docs/project/OUTFIT-IMAGE-SPEC.md)；示例图片演示不等于真实照片联调验收通过。
 
 ## 已有能力
 
-- 首页、我的衣橱、穿搭推荐三个页面；示例模式内置 8 件，和真实衣橱分库。
+- 首页、我的衣橱、穿搭推荐三个业务页面；穿搭灵感和我的偏好可进入页面框架。示例模式内置 8 件，和真实衣橱分库。
 - 手动/照片录入、确认、详情、分类、编辑/替换图片、删除、永久排除与数量联动。
 - IndexedDB + Dexie 事务保存图片/衣物，刷新及同一浏览器重开保留；开发模式读取故障已修复。
 - 六城市实时/示例天气、规则生成 0–2 套搭配、反馈与恢复。
@@ -18,7 +18,7 @@
 
 ## 本地试用候选
 
-使用 #21 分支或其合入后的版本；旧 main 没有这些业务能力。需要 Node.js >=22.12 和正式 Google Chrome：
+先按交接固定候选分支和提交。需要 Node.js 22.12 或更高版本，以及正式 Google Chrome。
 
 ```bash
 npm ci --legacy-peer-deps
@@ -31,9 +31,7 @@ npm run preview
 
 ## 团队接下来做什么
 
-**11 月 14 日 23:59 前完成个人优化并交代码、测试和设计说明；11 月 15—19 日联调对齐与修复；11 月 20 日完成最终验收。全部北京时间，2026 年。** 14 日不是只交方案。具体选题为建议，成员提前自行沟通并收敛。
-
-[团队工作台](team/README.md) 按 01—07 岗位列出要找谁、建议优化什么和实际交付要求；正式成果仍用同一仓库 PR，返修更新原 PR。旧的 A→B→C 从零搭建任务已被当前优化安排替代；已确认基线和验收要求保留。
+按 [12 轮次排班](docs/project/ROUND-SCHEDULE.md) 接力。01 的候选交给 02 扩展数据服务，后续轮次使用 [统一交接单](docs/handoffs/ROUND-HANDOFF-TEMPLATE.md)。[旧任务记录](team/NEXT-ITERATION.md) 用于追溯已有功能与历史安排。
 
 ## 结构与验证
 
