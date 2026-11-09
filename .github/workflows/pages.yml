@@ -20,9 +20,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --legacy-peer-deps
-      # GitHub Pages 是静态托管；暂不发布服务端 API。
-      - run: mv src/app/api "$RUNNER_TEMP/wearwise-api"
-      - run: PAGES_EXPORT=1 npm run build
+      # 与 PR 的静态回归共用导出命令，避免修改源码工作树。
+      - run: npm run build:pages
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out
