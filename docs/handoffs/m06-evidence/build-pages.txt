@@ -1,0 +1,19 @@
+
+> wearwise@0.1.0 build:pages
+> node scripts/build-pages.mjs
+
+node:internal/fs/promises:1714
+  return await PromisePrototypeThen(
+         ^
+
+Error: EPERM: operation not permitted, symlink '<repo>\node_modules' -> '<workspace>\output\M06\tmp\wearwise-pages-mB5Y50\node_modules'
+    at async symlink (node:internal/fs/promises:1714:10)
+    at async file:///<repo>/scripts/build-pages.mjs:15:3 {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'symlink',
+  path: '<repo>\\node_modules',
+  dest: '<workspace>\\output\\M06\\tmp\\wearwise-pages-mB5Y50\\node_modules'
+}
+
+Node.js v24.22.1

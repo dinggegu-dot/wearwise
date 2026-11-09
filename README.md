@@ -2,7 +2,7 @@
 
 **开发接力从 [12 轮总计划 #10](https://github.com/dinggegu-dot/wearwise/issues/10) 开始。** 第 01 轮已交付。第 02 轮由 02 从 [候选分支](https://github.com/dinggegu-dot/wearwise/tree/codex/round-01-baseline) 开始，在自己的电脑完成安装、五页复验与签收。[01 → 02 交接](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/handoffs/ROUND-01.md)
 
-第 01 轮固定提交为 `40d68d94a790e757143739fc84b05477f44d90ff`。候选包含首页、我的衣橱、穿搭推荐，以及穿搭灵感和我的偏好两个页面框架。线上仍是 V0.2 框架。
+第 01 轮固定提交为 `40d68d94a790e757143739fc84b05477f44d90ff`。这一版本提供首页、我的衣橱、穿搭推荐三个可操作页面，以及穿搭灵感和我的偏好两个页面框架。GitHub Pages 提供静态版本。
 
 ## 团队和 AI 的共同材料
 
@@ -28,15 +28,15 @@
 
 [打开 WearWise](https://dinggegu-dot.github.io/wearwise/)
 
-## 线上版本当前进度
+## 第 1 轮功能范围
 
-- 已完成：响应式页面、导航、衣橱和推荐功能分区。
-- 计划中：衣物录入与存储、天气、图片识别、推荐规则和反馈。页面上的后续功能均明确标示，当前没有接入真实数据。
-- 仓库保留部分尚未完成的领域代码，不能视为已交付功能。
+- 示例衣橱含 8 件衣物。真实衣橱支持手动和本地照片录入、分类、编辑、换图与删除。数据保存在当前浏览器。
+- 首页和推荐页可查看天气，推荐页可生成规则搭配并保存反馈。
+- 穿搭灵感和我的偏好提供页面入口及框架，具体功能按后续轮次接入。
 
 ## 技术栈
 
-Next.js App Router、React、TypeScript、Tailwind CSS、Lucide；计划使用 Dexie、Zod、Vitest 和 Playwright 完善后续功能。
+Next.js App Router、React、TypeScript、Tailwind CSS、Lucide、Dexie、Zod、Vitest 和 Playwright。
 
 ## 团队协作
 
@@ -71,7 +71,7 @@ npm run test:e2e
 - `src/composition`：模块装配入口。
 - `e2e`：基础 Chrome 端到端检查。
 
-GitHub Pages 发布当前静态页面；需要服务端的功能待后续另行接入，不能直接在 Pages 上运行。暂未配置任何真实 API Key。
+GitHub Pages 发布静态页面。真实图片识别需要服务端配置，当前默认关闭。
 
 ## 许可
 

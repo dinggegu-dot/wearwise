@@ -1,0 +1,19 @@
+[WebServer] (node:97156) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:97828) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 8 tests using 1 worker
+
+(node:95592) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 src\modules\recommendation\ui\outfit-image.browser.spec.ts:68:7 › generated patterns: saved image identity, feedback and refresh 1440px (6.2s)
+  ok 2 src\modules\recommendation\ui\outfit-image.browser.spec.ts:68:7 › generated patterns: saved image identity, feedback and refresh 390px (4.3s)
+  ok 3 src\modules\recommendation\ui\outfit-image.browser.spec.ts:84:5 › read failure is distinct from missing media and keyboard retry recovers (2.9s)
+  ok 4 src\modules\recommendation\ui\outfit-image.browser.spec.ts:105:5 › missing Blob has an explicit placeholder and keeps names and reason (2.7s)
+  ok 5 src\modules\recommendation\ui\outfit-image.browser.spec.ts:123:5 › decode failure is explicit; leaving the page releases every card URL (2.9s)
+  ok 6 src\modules\recommendation\ui\outfit-image.browser.spec.ts:145:5 › image loading is announced; late decode after mode switch cannot show old images (3.7s)
+  ok 7 src\modules\recommendation\ui\outfit-image.browser.spec.ts:166:5 › replace photo invalidates old batch; regenerated card reads new image, exclusion removes it (4.0s)
+  ok 8 src\modules\recommendation\ui\outfit-image.browser.spec.ts:185:5 › cold weather fixture renders both dress and separates with the stored coat (3.5s)
+
+  8 passed (39.1s)

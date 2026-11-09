@@ -1,0 +1,16 @@
+.button[aria-pressed='true'] {
+  background: #6d8066;
+  color: #fff;
+  border-color: #6d8066;
+}
+
+.button:disabled {
+  opacity: .65;
+  cursor: default;
+}
+
+.status {
+  margin: -.4rem 0 .6rem;
+  color: #40523c;
+  font-size: .85rem;
+}

@@ -1,0 +1,15 @@
+
+> wearwise@0.1.0 test:e2e:live
+> playwright test --config=playwright.live.config.ts
+
+[WebServer] (node:94736) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+(node:60324) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 e2e\live\weather.spec.ts:2:5 › 正式 Chrome 实际读取六城市实时天气 (5.0s)
+  ok 2 e2e\live\weather.spec.ts:16:5 › 真实衣物与真实天气生成穿搭并保存反馈 (3.1s)
+
+  2 passed (11.9s)
