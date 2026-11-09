@@ -1,55 +1,34 @@
 # WearWise · 智能衣橱
 
-**统一交付入口：[提交/查看 PR](https://github.com/dinggegu-dot/wearwise/pulls) · [团队提交总览 #20](https://github.com/dinggegu-dot/wearwise/issues/20) · [工作流说明](team/工作流说明.md)。** 代码、测试和交付文档统一进 PR；返修更新原 PR，进度总览自动化须在配置获准合并后生效。
+**开发接力从 [12 轮总计划 #10](https://github.com/dinggegu-dot/wearwise/issues/10) 开始。** 第 01 轮已交付。第 02 轮由 02 从 [候选分支](https://github.com/dinggegu-dot/wearwise/tree/codex/round-01-baseline) 开始，在自己的电脑完成安装、五页复验与签收。[01 → 02 交接](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/handoffs/ROUND-01.md)
 
-一个面向日常穿搭的智能衣橱项目。当前发布的是 **V0.2 产品框架**：展示首页、我的衣橱和穿搭推荐三个页面，以及未来功能的布局。
+第 01 轮固定提交为 `40d68d94a790e757143739fc84b05477f44d90ff`。候选包含首页、我的衣橱、穿搭推荐，以及穿搭灵感和我的偏好两个页面框架。线上仍是 V0.2 框架。
 
-## 第一项共同任务：完善 Demo
+## 团队和 AI 的共同材料
 
-目标：让现有网页真正支持手动管理本地衣物、可选照片和六城市天气。AI 识别、自动推荐等远期功能不在本轮。**这是正在安排的开发任务，不代表功能已经上线。**
+[网页功能概述](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/WEB-FUNCTION-OVERVIEW.md) · [推荐依据与记忆规则](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/RECOMMENDATION-MEMORY-RULES.md) · [12 轮次排班](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/ROUND-SCHEDULE.md) · [UI 示例](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/UI-REFERENCE.md) · [交接模板](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/handoffs/ROUND-HANDOFF-TEMPLATE.md)
 
-先看 [完整目标、顺序和验收 #10](https://github.com/dinggegu-dot/wearwise/issues/10)，再打开自己的卡；每张卡只讲你要做什么、等谁的输入、交给谁、怎样自测。
+开工前读共同材料与上一轮交接，并以其固定 SHA 为基础。每轮负责人亲自复核可操作流程。只有点击「生成穿搭」并成功才开启新一轮，单次反馈在同一轮持续有效，首页与推荐页调整互相独立。
 
-**每位成员和自己的 AI 先读：[团队 AI 协作与交接指南](team/AI协作与交接指南.md)**。指南说明每一阶段的完整流程、人与人的对接、真实联调及可复制给 AI 的提示词。
+| 岗位 | 负责轮次 | 任务卡 |
+| --- | --- | --- |
+| 01 主控与集成 | 01、11 | [#11](https://github.com/dinggegu-dot/wearwise/issues/11) |
+| 02 数据与我的偏好 | 02、07 | [#12](https://github.com/dinggegu-dot/wearwise/issues/12) |
+| 03 我的衣橱 | 05 | [#13](https://github.com/dinggegu-dot/wearwise/issues/13) |
+| 04 真实 AI 与穿搭灵感 | 03、06 | [#14](https://github.com/dinggegu-dot/wearwise/issues/14) |
+| 05 推荐规则与反馈 | 04、08 | [#15](https://github.com/dinggegu-dot/wearwise/issues/15) |
+| 06 首页与导航 | 09 | [#16](https://github.com/dinggegu-dot/wearwise/issues/16) |
+| 07 独立验收 | 10、12 | [#17](https://github.com/dinggegu-dot/wearwise/issues/17) |
 
-| 岗位（职责不变） | 本轮具体任务 |
-|---|---|
-| 01 主控与集成 | [打开任务 #11](https://github.com/dinggegu-dot/wearwise/issues/11) |
-| 02 数据与衣橱内核 | [打开任务 #12](https://github.com/dinggegu-dot/wearwise/issues/12) |
-| 03 衣橱与录入体验 | [打开任务 #13](https://github.com/dinggegu-dot/wearwise/issues/13) |
-| 04 视觉与照片处理 | [打开任务 #14](https://github.com/dinggegu-dot/wearwise/issues/14) |
-| 05 天气与推荐内核 | [打开任务 #15](https://github.com/dinggegu-dot/wearwise/issues/15) |
-| 06 首页与推荐体验 | [打开任务 #16](https://github.com/dinggegu-dot/wearwise/issues/16) |
-| 07 独立验收 | [打开任务 #17](https://github.com/dinggegu-dot/wearwise/issues/17) |
+提交时在 PR 写清负责轮次、基线、验证结果和未完成项。具备仓库写权限的团队成员可参与评审和验收，并在满足 main 保护和 CI 要求后合并 PR。第 10、12 轮的独立整体验收由 07 主责。
 
-### 按完整功能交付，不要求七人同时写代码
-
-| 顺序 | 完成后用户能做什么 | 合作与交接 |
-|---|---|---|
-| A 手动衣橱 | 添加、查看、分类、编辑、删除，刷新保留，首页数量正确 | 02 提供存储，03 完成衣橱，06 补数量；03 给 07 完整候选版本 |
-| B 加入照片 | 在同一衣橱表单选图、预览、保存、刷新读取 | A 合并后，04 给照片处理，02 配合保存，03 接原表单并交 07 |
-| C 加入天气 | 在原首页选城市、看真实天气，失败重试或主动选示例 | B 合并后，05 给天气服务，06 接原首页并交 07 |
-
-每段验收、合并后，下一段从新 main 继续。等待期间可以读代码、准备测试样本和服务测试，不抢先另写一套页面。
-
-### 每个人共同遵守
-
-1. **设计由执行者决定。** 沿用当前风格和技术栈；03、06 复用已有按钮、卡片、颜色和间距，不需要用户或 01 审批每张草图。扩大范围、换技术路线或新增费用才提出。
-2. **只找实际要合作的人。** 把调用入口、输入/输出、成功/失败例子、负责文件写在任务或 PR，对方能调用后确认；不把所有问题都交 01。共用文件约定先后，不同时覆盖。
-3. **交可运行代码。** 写“可联调”时，提供分支、固定提交、调用例子、测试结果；替身不能冒充真实业务。A/B 由 03，C 由 06，提供完整候选版本和依赖 PR 清单给 07。
-4. **07 验收，原负责人修复。** 07 记录实际结果、代码版本和未验证项；01 负责排顺序、解决阻塞及既定权限内的合并，不包揽接口和设计。
-5. **从任务到代码：** GitHub 评论领取 → Fork/任务分支 → 开发自测 → 推送个人分支 → 向本仓库 main 提 PR。写明完成内容、测试、依赖、联调和未完成项。不要直接覆盖 main，不上传密钥、私人照片或用户数据。
-6. **合并与上线：** 用户保留合并决定，合并人须有权限和相应授权；main 更新会触发 Pages。验收结论绑定提交，合并后再检查主分支和网页。
-
-具体 GitHub 操作见 [提交与合并指南](team/提交与合并指南.md)。
-
----
+[提交与查看 PR](https://github.com/dinggegu-dot/wearwise/pulls) · [团队提交总览 #20](https://github.com/dinggegu-dot/wearwise/issues/20) · [提交与合并指南](team/提交与合并指南.md)
 
 ## 在线体验
 
 [打开 WearWise](https://dinggegu-dot.github.io/wearwise/)
 
-## 当前进度
+## 线上版本当前进度
 
 - 已完成：响应式页面、导航、衣橱和推荐功能分区。
 - 计划中：衣物录入与存储、天气、图片识别、推荐规则和反馈。页面上的后续功能均明确标示，当前没有接入真实数据。
@@ -61,9 +40,11 @@ Next.js App Router、React、TypeScript、Tailwind CSS、Lucide；计划使用 D
 
 ## 团队协作
 
-七位成员从 [团队工作台](team/README.md) 进入各自的任务、进度和 PR；首次提交请看 [从任务到合并](team/%E6%8F%90%E4%BA%A4%E4%B8%8E%E5%90%88%E5%B9%B6%E6%8C%87%E5%8D%97.md)。
+七位成员通过 [新版团队工作台](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/team/README.md) 查看共同资料，并在上面的任务卡记录接力结果。
 
 ## 本地开发
+
+复验五页候选时，按 [01 → 02 交接](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/handoffs/ROUND-01.md) 克隆候选分支。以下命令同样适用于本仓库当前分支。
 
 需要 Node.js 22.12 或更高版本。
 
