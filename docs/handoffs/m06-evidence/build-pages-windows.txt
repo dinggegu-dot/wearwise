@@ -1,0 +1,30 @@
+
+> wearwise@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.4.5 (webpack)
+✓ Running next.config.ts took 102ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 8.1s
+  Running TypeScript ...
+  Finished TypeScript in 3.7s ...
+  Collecting page data using 6 workers ...
+  Generating static pages using 6 workers (0/5) ...
+  Generating static pages using 6 workers (1/5)
+  Generating static pages using 6 workers (2/5)
+  Generating static pages using 6 workers (3/5)
+✓ Generating static pages using 6 workers (5/5) in 852ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /recommendations
+└ ○ /wardrobe
+
+
+○  (Static)  prerendered as static content
+
+Pages 静态文件已生成到 out/

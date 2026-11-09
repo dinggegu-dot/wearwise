@@ -1,0 +1,123 @@
+[WebServer] (node:96084) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+(node:37808) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 src\modules\recommendation\ui\outfit-image.browser.spec.ts:105:5 › user report: feedback has a visible selected state and saved confirmation (2.0s)
+(node:60984) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 src\modules\recommendation\ui\outfit-image.browser.spec.ts:122:5 › user report: failed feedback is not shown as saved and can be retried (7.1s)
+(node:100064) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  3 src\modules\recommendation\ui\outfit-image.browser.spec.ts:140:5 › user report: cancelling photo reselection keeps the garment dialog and draft (6.3s)
+
+
+  1) src\modules\recommendation\ui\outfit-image.browser.spec.ts:105:5 › user report: feedback has a visible selected state and saved confirmation
+
+    Error: expect(received).not.toBe(expected) // Object.is equality
+
+    Expected: not "rgb(255, 255, 255)"
+
+      111 |   const originalColor = await like.evaluate(button => getComputedStyle(button).backgroundColor);
+      112 |   await like.click(); await expect(like).toHaveAttribute('aria-pressed', 'true');
+    > 113 |   expect(await like.evaluate(button => getComputedStyle(button).backgroundColor)).not.toBe(originalColor);
+          |                                                                                       ^
+      114 |   await expect(article.getByRole('status')).toHaveText('反馈已保存：喜欢');
+      115 |   await dislike.click(); await expect(dislike).toHaveAttribute('aria-pressed', 'true');
+      116 |   await expect(like).toHaveAttribute('aria-pressed', 'false');
+        at <repo>\src\modules\recommendation\ui\outfit-image.browser.spec.ts:113:87
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\m06\outfit-image.browser-user--f7840-tate-and-saved-confirmation\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\m06\outfit-image.browser-user--f7840-tate-and-saved-confirmation\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\m06\outfit-image.browser-user--f7840-tate-and-saved-confirmation\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\m06\outfit-image.browser-user--f7840-tate-and-saved-confirmation\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) src\modules\recommendation\ui\outfit-image.browser.spec.ts:122:5 › user report: failed feedback is not shown as saved and can be retried
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator: locator('.outfit-panel article').first().getByRole('status')
+    Expected: "反馈已保存：喜欢"
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveText" locator('.outfit-panel article').first().getByRole('status') with timeout 5000ms
+      - waiting for locator('.outfit-panel article').first().getByRole('status')
+
+
+      134 |   await expect(like).toHaveAttribute('aria-pressed', 'false');
+      135 |   await expect(article.getByText('反馈已保存：喜欢', { exact: true })).toHaveCount(0);
+    > 136 |   await like.click(); await expect(article.getByRole('status')).toHaveText('反馈已保存：喜欢');
+          |                                                                 ^
+      137 |   await expect(page.getByRole('alert').filter({ hasText: '反馈保存失败' })).toHaveCount(0);
+      138 | });
+      139 |
+        at <repo>\src\modules\recommendation\ui\outfit-image.browser.spec.ts:136:65
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\m06\outfit-image.browser-user--ff944-as-saved-and-can-be-retried\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\m06\outfit-image.browser-user--ff944-as-saved-and-can-be-retried\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\m06\outfit-image.browser-user--ff944-as-saved-and-can-be-retried\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\m06\outfit-image.browser-user--ff944-as-saved-and-can-be-retried\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) src\modules\recommendation\ui\outfit-image.browser.spec.ts:140:5 › user report: cancelling photo reselection keeps the garment dialog and draft
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('dialog', { name: '添加衣物' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('dialog', { name: '添加衣物' }) with timeout 5000ms
+      - waiting for getByRole('dialog', { name: '添加衣物' })
+
+
+      148 |   // Keep this distinct from Escape on the garment dialog itself.
+      149 |   await input.dispatchEvent('cancel', { bubbles: true, cancelable: false });
+    > 150 |   await expect(dialog).toBeVisible(); await expect(page.getByLabel('名称')).toHaveValue('换图草稿');
+          |                        ^
+      151 |   await expect(page.getByAltText('照片预览')).toHaveAttribute('src', originalPreview!);
+      152 |   await expect(input).toHaveAttribute('aria-describedby', 'wardrobe-photo-hint');
+      153 |   await expect(page.locator('#wardrobe-photo-hint')).toContainText('如果选错照片');
+        at <repo>\src\modules\recommendation\ui\outfit-image.browser.spec.ts:150:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\m06\outfit-image.browser-user--43c4a-he-garment-dialog-and-draft\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\m06\outfit-image.browser-user--43c4a-he-garment-dialog-and-draft\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\m06\outfit-image.browser-user--43c4a-he-garment-dialog-and-draft\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\m06\outfit-image.browser-user--43c4a-he-garment-dialog-and-draft\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    src\modules\recommendation\ui\outfit-image.browser.spec.ts:105:5 › user report: feedback has a visible selected state and saved confirmation
+    src\modules\recommendation\ui\outfit-image.browser.spec.ts:122:5 › user report: failed feedback is not shown as saved and can be retried
+    src\modules\recommendation\ui\outfit-image.browser.spec.ts:140:5 › user report: cancelling photo reselection keeps the garment dialog and draft

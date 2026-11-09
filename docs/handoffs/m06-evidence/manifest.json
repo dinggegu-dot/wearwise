@@ -1,0 +1,125 @@
+{
+  "description": "Actual command outputs; ANSI colors and local machine paths are redacted, line endings and trailing whitespace normalized. Earlier runs are historical, not reruns of the final source.",
+  "records": [
+    {
+      "file": "build-pages-windows.txt",
+      "sourceSha256": "9650104d8e67356b4a3003395cf8a5a10808da33aff7846734f80aea79f59bb7",
+      "publishedSha256": "b810c38085907fb53eb6c513d3aac2cd56c663f74e34fa869aeefb99307e64dd"
+    },
+    {
+      "file": "build-pages.txt",
+      "sourceSha256": "81c8f058225b6c08d5190e32f50b8002c177085abc2a1ed207a46f4bc5113385",
+      "publishedSha256": "952136e91be57026f8ad6f3ca890b7f3baa24d8fff222574462ab2c2aee3a1dd"
+    },
+    {
+      "file": "build-production.txt",
+      "sourceSha256": "f27d6509ce3eadb71ba7b61b45709c407899137214c11f2b80d6dc9ddfce807c",
+      "publishedSha256": "401b73845482b9392cf7e665c48cb8875a4af528beef6e71245993a1c8165606"
+    },
+    {
+      "file": "e2e-development.txt",
+      "sourceSha256": "9ea7f34d45d2c3f67446aa848ec0f847ede753e782659d9459e0c3f5b6cf6858",
+      "publishedSha256": "6659a24341c7a1c9104d14ab1ce253bfaa12a87c21cd407c699edf23489e88bb"
+    },
+    {
+      "file": "e2e-pages.txt",
+      "sourceSha256": "107bab5c31476311de3fda0becff806810ab29ffad81e35b85fbecb77dd40200",
+      "publishedSha256": "320a039b500dd3d1da77825ec1d26532dfb2ff7c648aaf76cfe98ec6c2e785dd"
+    },
+    {
+      "file": "e2e-production.txt",
+      "sourceSha256": "ab489a90dd4ad47b278bc2f2bc6e54574e8d2c41a804ad533f21df79f2ce11d0",
+      "publishedSha256": "617dbdde62aea21f75a19d106849ae17dcce4e4ccb6d9a9983b001c4ea33f732"
+    },
+    {
+      "file": "remove-photo-note-build.txt",
+      "sourceSha256": "d9475b10b0879898ac17554ca64ee4244df1309f8ba6d1bcfeac52b1399fdde0",
+      "publishedSha256": "9ad3ae0f6118e131d08dc84b788f867e8d16a0ea3277436251dc9d3ecb159ff8"
+    },
+    {
+      "file": "saved-photo-build.txt",
+      "sourceSha256": "5db843d921769e3235b3be8c829d5fdba1d2213376628982bf8fecdb564eaec3",
+      "publishedSha256": "ee667263cc3f97f6a0e3940d112e64028ecf8403dd356492b152620126e0dcc5"
+    },
+    {
+      "file": "saved-photo-typecheck.txt",
+      "sourceSha256": "7b05eeea2fd6116c5fb925e97f3aafdffef9f024cedf995468586bb03706015c",
+      "publishedSha256": "93eca05ec81547b51e09ae2a62b661b71340906ace4bf2117a89aa05fe65aec2"
+    },
+    {
+      "file": "saved-photo-ui-development.txt",
+      "sourceSha256": "e298b01743fb0f0e5dd7aa9a8e1509ae7c055a0d3a54c0bca9a9d28945f84a36",
+      "publishedSha256": "38075178c10d96e27ca76abab4a4657b53cda69c499f7418bb608049fbb9d71d"
+    },
+    {
+      "file": "saved-photo-ui-production.txt",
+      "sourceSha256": "16a3df7bb2bfb9308994385af03a201b5404fee8b464613a4105727c4c7348ba",
+      "publishedSha256": "d3644bbab45680e3f259c16a5cd8e7984fb36ed8e91bfbcfba730a4f90a5186c"
+    },
+    {
+      "file": "saved-photo-wardrobe-production.txt",
+      "sourceSha256": "133ee57cacae0b209581137ff4dfe53f0ddb84be7789d4255a99f02d49a1397f",
+      "publishedSha256": "78f2706ef677e8b8e00c2f9bab090aecc47245e031f8af2ac6892e08b2cbb294"
+    },
+    {
+      "file": "typecheck.txt",
+      "sourceSha256": "7b05eeea2fd6116c5fb925e97f3aafdffef9f024cedf995468586bb03706015c",
+      "publishedSha256": "93eca05ec81547b51e09ae2a62b661b71340906ace4bf2117a89aa05fe65aec2"
+    },
+    {
+      "file": "ui-development.txt",
+      "sourceSha256": "9fde9747b1ff24fffea694a8e88b5a7d0803cd036ba134c4fcf9089711d29d00",
+      "publishedSha256": "674033fe2fd22ffc7a4f950fcaa0c15f817f0034cebed0cbc82efb03a9f5cfa7"
+    },
+    {
+      "file": "ui-production.txt",
+      "sourceSha256": "ec57a5cd925ab6cd886b12403443c982b9789a39bba7b168177e21d47eace2de",
+      "publishedSha256": "2706b6c7b6700c9f546b4384ba9e11d4040ac665286930193d9efe8e478091e1"
+    },
+    {
+      "file": "unit.txt",
+      "sourceSha256": "004afcf89cbe19f177d1f5450b60ca0a70b603b66f999015e779c75373733d20",
+      "publishedSha256": "6a3b9940f64aa29463e38a524c5367dd1d8fd108e6d76a6fc2054802816f3639"
+    },
+    {
+      "file": "user-reports-baseline.txt",
+      "sourceSha256": "5ae989ca15cf457dbad75d5ec53c1b57d4d6242a3282184d1e63da17c47348a6",
+      "publishedSha256": "363d7b6081d759bd6b181b28aa2652cc77d3c4d3de90491ffdc0d3370bd847f5"
+    },
+    {
+      "file": "user-reports-build.txt",
+      "sourceSha256": "6004cd75e3e798a350ad1031cde53204ad4b4dc0a9bf66533a973ae92bdbaff9",
+      "publishedSha256": "6e5b0c5d29725bcc6e02c255babffed650bd6fc70f5eb9de7c4c2cbce5df4676"
+    },
+    {
+      "file": "user-reports-e2e-production.txt",
+      "sourceSha256": "d7b36e3ec78c6ea6bb81318f26e242654c5b7f727a3b22669d9199bb0037e318",
+      "publishedSha256": "1d36a1707e845756cd9c7f3794d0531bbe3415d68d4b2c7f2ff12ba8b507de7d"
+    },
+    {
+      "file": "user-reports-typecheck.txt",
+      "sourceSha256": "7b05eeea2fd6116c5fb925e97f3aafdffef9f024cedf995468586bb03706015c",
+      "publishedSha256": "93eca05ec81547b51e09ae2a62b661b71340906ace4bf2117a89aa05fe65aec2"
+    },
+    {
+      "file": "user-reports-ui-development.txt",
+      "sourceSha256": "68b1e622d3dfff95de5cf8276bac4bac46b51fd42aba61afabfb61e4e88085ea",
+      "publishedSha256": "0d58a9232c4797de8d256ca9591e4b568e6e53b2fcfea6bdf339e7012f901680"
+    },
+    {
+      "file": "user-reports-ui-production.txt",
+      "sourceSha256": "d3531a01b9cf3db63fdff2cfdb6cd4c657dd55f9dba9939f094749d7caa96722",
+      "publishedSha256": "26c22f9a9a27b79c4d1ddde1c51c48e33c38f14e284733d8019ed1cc3e6ca74d"
+    },
+    {
+      "file": "user-reports-unit.txt",
+      "sourceSha256": "583aa73c2e5c2f71d60474c4f6c942af0901421d02804802c8260595a1cd69c4",
+      "publishedSha256": "91863c83cf742e7bc48c2ca0d47997f8953b7f31e04a917e910ad0ff1a27f55e"
+    },
+    {
+      "file": "weather-live.txt",
+      "sourceSha256": "24d933582d907d8c4526e6afe8bc1325e1275ec59f136dd33b8865e840ceb60f",
+      "publishedSha256": "7f57c50f624c687302ed60c704fda88b1e473dea5c2231bc5682be66cf020b21"
+    }
+  ]
+}
