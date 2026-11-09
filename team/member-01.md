@@ -1,24 +1,7 @@
-# 01 号｜主控与集成
+# 01 号 主控与集成
 
-[统一 PR 提交](https://github.com/dinggegu-dot/wearwise/compare) · [查看提交与证据 #20](https://github.com/dinggegu-dot/wearwise/issues/20) · [填写与返修方法](工作流说明.md)。已有 PR 继续更新原分支，不另传 zip。
+负责第 01、11 轮。第 01 轮已将固定候选交给 02。第 11 轮从 07 接收第 10 轮问题清单，按固定候选复现并修复跨模块接缝，交 07 复验。
 
-## 你的当前任务：完善 Demo
+开工以个人任务卡和上一轮固定交接为准。记录实际接口、测试与未决项，并把固定 SHA、启动步骤和证据交给接收人。
 
-**[打开你的具体任务 #11](https://github.com/dinggegu-dot/wearwise/issues/11)**
-
-你负责当前段的排期、阻塞和基于验收结果的合并。A/B 段候选版本由 03 提供，C 段由 06 提供，07 给出验收结果；普通界面和接口设计不等你审批。
-
-任务卡已经列明你的操作顺序、直接合作的人、输入输出、自测和交付要求。请在那里评论“已领取”、记录进度和放 PR 链接，不另外维护一套任务。
-
-## 你的常用入口
-
-- **[团队 AI 协作与交接指南](AI协作与交接指南.md)**：了解完整流程、需要对接谁和怎样确认联调。
-
-- [共同目标和阶段顺序](https://github.com/dinggegu-dot/wearwise/issues/10)
-- [如何 Fork、提交代码和发起 PR](提交与合并指南.md)
-- [仓库所有 PR](https://github.com/dinggegu-dot/wearwise/pulls)
-- [岗位入口 #1](https://github.com/dinggegu-dot/wearwise/issues/1)
-
-## 可以直接交给你的 AI
-
-> 我负责 WearWise 的 01 号岗位。请先阅读上面的具体任务卡、总计划和团队 AI 协作与交接指南，检查最新 main 和已有工作。按卡中的阶段、依赖和交接要求协调；记录进度、07 的验收、阻塞、合并及发布结果。有实际代码或配置变更时再说明提交与测试；不要为凑交付创建分支。不要把准备、模拟或单独模块通过当作完整功能完成。
+[个人任务 #11](https://github.com/dinggegu-dot/wearwise/issues/11) · [12 轮次排班](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/ROUND-SCHEDULE.md) · [团队 AI 协作与交接指南](AI协作与交接指南.md) · [提交与合并指南](提交与合并指南.md)
