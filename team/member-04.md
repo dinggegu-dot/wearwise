@@ -1,24 +1,7 @@
-# 04 号｜视觉与照片处理
+# 04 号 真实 AI 与穿搭灵感
 
-[统一 PR 提交](https://github.com/dinggegu-dot/wearwise/compare) · [查看提交与证据 #20](https://github.com/dinggegu-dot/wearwise/issues/20) · [填写与返修方法](工作流说明.md)。已有 PR 继续更新原分支，不另传 zip。
+负责第 03、06 轮。第 03 轮接 02 的数据服务，提供服务端真实 AI、图片处理、分析和结构化推荐通道给 05。第 06 轮接收第 05 轮衣橱候选，完成灵感页面与归纳，交 02。
 
-## 你的当前任务：完善 Demo
+开工以个人任务卡和上一轮固定交接为准。记录实际接口、测试与未决项，并把固定 SHA、启动步骤和证据交给接收人。
 
-**[打开你的具体任务 #14](https://github.com/dinggegu-dot/wearwise/issues/14)**
-
-A 段期间准备样本和方案；A 合并后，B 段给 03 本地照片处理方法，并与 02 对齐 Blob 保存。你不另做独立衣橱页面。
-
-任务卡已经列明你的操作顺序、直接合作的人、输入输出、自测和交付要求。请在那里评论“已领取”、记录进度和放 PR 链接，不另外维护一套任务。
-
-## 你的常用入口
-
-- **[团队 AI 协作与交接指南](AI协作与交接指南.md)**：了解完整流程、需要对接谁和怎样确认联调。
-
-- [共同目标和阶段顺序](https://github.com/dinggegu-dot/wearwise/issues/10)
-- [如何 Fork、提交代码和发起 PR](提交与合并指南.md)
-- [仓库所有 PR](https://github.com/dinggegu-dot/wearwise/pulls)
-- [岗位入口 #4](https://github.com/dinggegu-dot/wearwise/issues/4)
-
-## 可以直接交给你的 AI
-
-> 我负责 WearWise 的 04 号岗位。请先阅读上面的具体任务卡、总计划和团队 AI 协作与交接指南，检查最新 main、我的分支及未提交改动。保持本轮范围和现有风格，按卡中的阶段、依赖和交接要求完成工作。说明实际修改、测试、未验证项、需要交给谁的可运行提交；不要把准备、模拟或单独模块通过当作完整功能完成。
+[个人任务 #14](https://github.com/dinggegu-dot/wearwise/issues/14) · [12 轮次排班](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/ROUND-SCHEDULE.md) · [团队 AI 协作与交接指南](AI协作与交接指南.md) · [提交与合并指南](提交与合并指南.md)

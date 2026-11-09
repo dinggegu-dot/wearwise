@@ -40,7 +40,7 @@ Next.js App Router、React、TypeScript、Tailwind CSS、Lucide；计划使用 D
 
 ## 团队协作
 
-七位成员通过 [新版团队工作台](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/team/README.md) 查看共同资料，并在上面的任务卡记录接力结果。
+七位成员通过 [新版团队工作台](team/README.md) 查看共同资料，并在上面的任务卡记录接力结果。
 
 ## 本地开发
 

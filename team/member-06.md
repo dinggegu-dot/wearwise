@@ -1,24 +1,7 @@
-# 06 号｜首页与推荐体验
+# 06 号 首页与导航
 
-[统一 PR 提交](https://github.com/dinggegu-dot/wearwise/compare) · [查看提交与证据 #20](https://github.com/dinggegu-dot/wearwise/issues/20) · [填写与返修方法](工作流说明.md)。已有 PR 继续更新原分支，不另传 zip。
+负责第 09 轮。第 09 轮接收第 08 轮组件和服务，完成桌面端五栏目导航、共享天气和首页独立调整，把固定五页候选交 07。
 
-## 你的当前任务：完善 Demo
+开工以个人任务卡和上一轮固定交接为准。记录实际接口、测试与未决项，并把固定 SHA、启动步骤和证据交给接收人。
 
-**[打开你的具体任务 #16](https://github.com/dinggegu-dot/wearwise/issues/16)**
-
-A 段按 02 的服务补首页数量并交 03；C 段接 05 天气服务，沿用已完成页面风格，给 07 完整天气候选版本。
-
-任务卡已经列明你的操作顺序、直接合作的人、输入输出、自测和交付要求。请在那里评论“已领取”、记录进度和放 PR 链接，不另外维护一套任务。
-
-## 你的常用入口
-
-- **[团队 AI 协作与交接指南](AI协作与交接指南.md)**：了解完整流程、需要对接谁和怎样确认联调。
-
-- [共同目标和阶段顺序](https://github.com/dinggegu-dot/wearwise/issues/10)
-- [如何 Fork、提交代码和发起 PR](提交与合并指南.md)
-- [仓库所有 PR](https://github.com/dinggegu-dot/wearwise/pulls)
-- [岗位入口 #6](https://github.com/dinggegu-dot/wearwise/issues/6)
-
-## 可以直接交给你的 AI
-
-> 我负责 WearWise 的 06 号岗位。请先阅读上面的具体任务卡、总计划和团队 AI 协作与交接指南，检查最新 main、我的分支及未提交改动。保持本轮范围和现有风格，按卡中的阶段、依赖和交接要求完成工作。说明实际修改、测试、未验证项、需要交给谁的可运行提交；不要把准备、模拟或单独模块通过当作完整功能完成。
+[个人任务 #16](https://github.com/dinggegu-dot/wearwise/issues/16) · [12 轮次排班](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/ROUND-SCHEDULE.md) · [团队 AI 协作与交接指南](AI协作与交接指南.md) · [提交与合并指南](提交与合并指南.md)
