@@ -1,6 +1,6 @@
 # 第 3 轮交接候选 · 04 → 05
 
-> **状态：第 3 轮 PR 候选，待 05 独立验收。** 分支为 `codex/round-03-ai`，基线为第 2 轮 PR #29 的 `63efce6d10e265ada27b539664a2723b00305da5`；评审应以 GitHub PR 显示的最新 head SHA 为准。基线 SHA 不是第 3 轮候选提交。
+> **状态：[第 3 轮 PR #30](https://github.com/dinggegu-dot/wearwise/pull/30) 候选，待 05 独立验收。** 分支为 `codex/round-03-ai`，基线为第 2 轮 PR #29 的 `63efce6d10e265ada27b539664a2723b00305da5`；评审应以 GitHub PR 显示的最新 head SHA 为准。基线 SHA 不是第 3 轮候选提交。
 
 本地全部文件变更见[第 3 轮文件清单](ROUND-03-FILES.md)。
 

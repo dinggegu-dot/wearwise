@@ -8,9 +8,11 @@
 | `M` | `.gitignore` |
 | `M` | `.github/workflows/pr-checks.yml` |
 | `M` | `README.md` |
+| `M` | `e2e/framework.spec.ts` |
 | `M` | `e2e/mode-isolation.spec.ts` |
 | `M` | `e2e/pages/pages.spec.ts` |
 | `M` | `e2e/persistence.spec.ts` |
+| `M` | `e2e/wardrobe.spec.ts` |
 | `M` | `package-lock.json` |
 | `M` | `package.json` |
 | `M` | `src/app/api/capabilities/route.ts` |
