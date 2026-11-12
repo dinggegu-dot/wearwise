@@ -9,7 +9,7 @@
 
 ## 下载与安装
 
-模型权重不放入普通 Git 提交。新环境由维护者在明确决定使用本地白底处理后下载一次；`npm install`、`npm test` 和构建不隐式下载模型。PR 的 GitHub Actions 流程则在浏览器测试前明确下载固定版本，并以 SHA-256 为键缓存、逐次复核大小与哈希，校验失败不执行浏览器测试。建议本机先存入 macOS 用户缓存 `~/Library/Caches/WearWise/models/birefnet-lite-512/18d56c5/model_fp16.onnx`，再安装到仓库 `public/models/birefnet/model_fp16.onnx`。如果已有用户提供的本地文件，可直接从该文件开始校验，不必重新下载。缓存目录不放 API Key、用户照片或业务数据。
+模型权重不放入普通 Git 提交。`npm install`、`npm test` 和构建不隐式下载模型；需要模型时显式运行 `bash scripts/install-birefnet-model.sh`。PR 检查和 GitHub Pages 发布工作流都在构建/页面测试前调用同一脚本，从固定修订下载、核对字节数及 SHA-256，并按内容摘要缓存；静态导出后再次核对 `out/models/birefnet/model_fp16.onnx`。校验失败则停止发布。建议本机先存入 macOS 用户缓存 `~/Library/Caches/WearWise/models/birefnet-lite-512/18d56c5/model_fp16.onnx`，再安装到仓库 `public/models/birefnet/model_fp16.onnx`。如果已有用户提供的本地文件，可直接从该文件开始校验，不必重新下载。缓存目录不放 API Key、用户照片或业务数据。
 
 操作顺序：
 
@@ -20,6 +20,6 @@
 
 ## 浏览器缓存与后续部署
 
-当前页面只在用户处理图片时请求模型，同一页面的 ONNX session 在内存中复用；失败后清除 session 缓存以允许重试。Next.js 静态路径目前响应 `Cache-Control: public, max-age=0` 与 ETag，浏览器可以重新验证和复用未变内容，但**不是**长期不可变缓存，也不保证首次 94 MiB 下载时间。当前运行路径是无版本的 `model_fp16.onnx`，更换该文件时必须重新做 SHA、兼容和图像效果测试，并清理旧运行页面的内存 session。
+当前页面只在用户处理图片时请求模型，同一页面的 ONNX session 在内存中复用；失败后清除 session 缓存以允许重试。本地 Next.js Node 静态路径目前响应 `Cache-Control: public, max-age=0` 与 ETag，浏览器可以重新验证并复用未变内容；GitHub Pages 的实际缓存头要等上线后核对。两者都不保证首次 94 MiB 下载时间。当前运行路径是无版本的 `model_fp16.onnx`，更换该文件时必须重新做 SHA、兼容和图像效果测试，并清理旧运行页面的内存 session。
 
-正式部署前，由团队决定模型分发方式：受控静态资源、单独发布资产或带版本的同源资源路径。若改用长期缓存，应把版本或内容摘要放进 URL，再配置 `immutable`，同时更新加载路径和回退测试。部署检查必须验证实际发出的文件 SHA-256、许可证、WebGPU/WASM 回退、首次加载时间与目标设备可用内存；不要仅凭构建通过判定模型已部署。本轮没有下载新模型，也没有更改现有静态加载路径或缓存头。
+GitHub Pages 的发布方案已固定：工作流下载并校验模型，将它与 MIT 许可证一起放入静态导出产物；模型 URL 为 `/wearwise/models/birefnet/model_fp16.onnx`。本地静态网站已验证该 URL 的 HTTP 200、导出文件的大小和 SHA-256，以及浏览器实际抠图、保存和刷新；**当前 PR 尚未合入 `main`，线上 GitHub Pages 尚未更新或验收**。GitHub 官方规定[已发布站点不大于 1 GB](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)，[Pages 工件中的 tar 不大于 10 GB](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)；本模型约 94 MiB，但首次下载时间和带宽仍需上线后观察。其他托管环境需执行同一安装/校验步骤并保证同源路径。若改用长期缓存，应把版本或内容摘要放进 URL，再配置 `immutable`，同时更新加载路径和回退测试。本轮没有更改现有静态加载路径或缓存头。

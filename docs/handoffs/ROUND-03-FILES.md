@@ -7,6 +7,7 @@
 | `M` | `.env.example` |
 | `M` | `.gitignore` |
 | `M` | `.github/workflows/pr-checks.yml` |
+| `M` | `.github/workflows/pages.yml` |
 | `M` | `README.md` |
 | `M` | `e2e/framework.spec.ts` |
 | `M` | `e2e/mode-isolation.spec.ts` |
@@ -46,6 +47,7 @@
 | `??` | `playwright.qwen-acceptance.config.ts` |
 | `??` | `playwright.webkit.config.ts` |
 | `??` | `public/models/birefnet/LICENSE` |
+| `??` | `scripts/install-birefnet-model.sh` |
 | `??` | `spikes/birefnet/.gitignore` |
 | `??` | `spikes/birefnet/fixtures/garment-clear.svg` |
 | `??` | `spikes/birefnet/fixtures/garment-fine-edges.svg` |

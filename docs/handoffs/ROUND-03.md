@@ -32,7 +32,7 @@ BiRefNet Lite 技术 Spike **已完成实测验证**，见 [BiRefNet Spike 报�
 
 **正式衣橱图片流程现已完成接线与页面级验证。** 固定依赖 ONNX Runtime Web 1.31.1，模型和 MIT 许可证放在 `public/models/birefnet/`。新增的浏览器处理模块按 Spike 使用 RGB 512×512、ImageNet NCHW 归一化、logits sigmoid alpha、原图尺寸遮罩重采样和白底合成。WebGPU 优先；不支持或 session 初始化失败时尝试 WASM，WebGPU 推理失败也降级重试 WASM。模型加载或推理均失败时 `prepareImage` 保留现有图片处理结果，衣橱新增/编辑仍用同一第二轮保存接口。
 
-兼容性：`prepareImage(file, signal?)` 参数和原有 `PreparedImage` 字段均保留，`backgroundRemoval` 是可选新增字段；未知/不支持的设备不会阻断上传，页面会区分抠图成功与原图回退。测试在隔离 Chromium context 中实际运行本地模型，确认抠图白底 Blob 保存且刷新后仍可见；另拦截模型请求验证回退与保存。模型约 94 MiB，仅图片处理时从同源静态路径加载。WebKit 引擎白底预览也已通过；实际 Safari 浏览器、其他 GPU 与更多真实衣物照片需要后续复核。
+兼容性：`prepareImage(file, signal?)` 参数和原有 `PreparedImage` 字段均保留，`backgroundRemoval` 是可选新增字段；未知/不支持的设备不会阻断上传，页面会区分抠图成功与原图回退。测试在隔离 Chromium context 中实际运行本地模型，确认抠图白底 Blob 保存且刷新后仍可见；另拦截模型请求验证回退与保存。模型约 94 MiB，仅图片处理时从同源静态路径加载。WebKit 引擎白底预览也已通过；用户在实际 Safari 手动确认上传和保存可用，Safari 白底效果、其他 GPU 与更多真实衣物照片仍需复核。
 
 本次补充“重新处理白底图”：衣橱新增/编辑弹窗只在当前上传的**原始 `File`** 仍在内存中时显示入口；重新处理直接以该文件调用本地模型，不把已有白底预览当成原图。失败时保留之前成功的白底图。第 2 轮图片数据只保存处理后的图片，未保存原图；关闭弹窗或保存后会丢弃内存中的原始文件。此后编辑已保存衣物如需重新抠图，必须由用户重新选择原照片；不会伪称可从已保存白底图恢复原图。真实模型页面测试覆盖首次加载失败后重试成功、保存后入口消失。
 
@@ -49,7 +49,8 @@ BiRefNet Lite 技术 Spike **已完成实测验证**，见 [BiRefNet Spike 报�
 | 灵感标签逐条编辑和并行识别 | `npx playwright test --config=playwright.parallel.config.ts` | **PASS，2/2**：灵感标签文字/类型修改、删除、添加、保存及刷新复核；衣物识别与本机白底并行，结果回填 |
 | 真实穿搭灵感照片分析 | 本地 `POST /api/inspiration/analyze`，使用 `tests/fixtures/real-outfit-cc0.jpg` | **PASS，HTTP 200，28.7 秒**；返回“拼色毛皮大衣街头造型”、9 个涵盖配色/风格/版型/层次/场景的标签和非空分析。图片来源、许可及哈希见 `tests/fixtures/README.md`；这是真实 OpenRouter 请求 |
 | 真实故障后恢复配置并重试 | `npx playwright test --config=playwright.openrouter-recovery.config.ts` | **PASS，1/1，33.0 秒**：独立服务用无效占位凭据收到真实 OpenRouter 认证拒绝（HTTP 502）；网页显示错误并保留图片。第二次请求使用本机有效服务配置，真实 OpenRouter HTTP 200，分析结果回填且错误消失。未改动用户的密钥 |
-| WebKit 引擎兼容性 | `npx playwright test --config=playwright.webkit.config.ts` | **PASS，1/1，7.3 秒**：真实本地 BiRefNet 模型完成白底预览。Playwright WebKit 27.2 在存储 Blob 至 IndexedDB 时另有 `UnknownError: Error preparing Blob/File data to be stored in object store`；保存流程未通过。macOS Safari 26.6.2 的远程自动化未启用，无法启动 Safari WebDriver，故**实际 Safari 尚未验收** |
+| WebKit 引擎与实际 Safari | `npx playwright test --config=playwright.webkit.config.ts`；用户在 macOS Safari 手动试用 | Playwright WebKit 白底预览 **PASS，1/1**，其 IndexedDB Blob 写入仍报 `UnknownError`。用户于 2026-11-12 报告在实际 Safari 可上传并保存衣物；这是用户手动验收，不等于 Playwright WebKit 自动化通过，亦未单独确认 Safari 白底效果及刷新后的持久化 |
+| GitHub Pages 静态白底模型交付 | `bash scripts/install-birefnet-model.sh --verify out/models/birefnet/model_fp16.onnx`；`npx playwright test --config=playwright.pages.config.ts --grep '静态网站加载固定 BiRefNet'` | 本地静态导出模型字节数、SHA-256 **PASS**；浏览器从 `/wearwise` 子路径真实加载模型、完成白底抠图、保存并刷新复核 **PASS，1/1**。发布工作流已加入固定下载与双重校验；线上 Pages 要等 PR 合入 main 后才能验证 |
 | 自动识图页面和保存失败重试 | `npx playwright test --config=playwright.ai-live.config.ts --grep '真实识别候选'`；隔离 Chromium context | **PASS，1/1**：上传后自动请求当前 Qwen，用户修改候选后保存；保存失败可重试，刷新后数据保留。验收超时设为 90 秒；本机 60 秒时限的一次调用曾返回 `AI_TIMEOUT` |
 | 用户此前提供的鞋子实拍图复验 | 将 `截屏2026-11-08 03.47.04.png` 转 JPEG 调用 `/api/recognition`；再通过 `WEARWISE_TEST_IMAGE` 在上述 Playwright 页面测试中上传原 PNG | **PASS，2/2**：接口 HTTP 200，约 25.2 秒，识别为 `shoes` 并返回通过 Schema 的候选；网页上传→本机白底处理→自动识别→用户修改→注入一次保存故障→重试→刷新后仅 1 条衣物和 1 张图片，Playwright 约 24.6 秒。测试使用独立浏览器 context，未改用户现有衣橱数据 |
 | 衣物识别提速与页面回填复验 | 当前 Qwen 识别请求设置 `reasoning.effort=minimal`；`e2e/wardrobe-parallel.spec.ts`；同一鞋子实拍图的真实 OpenRouter 请求和 `e2e/live/ai-save.spec.ts` | **PASS**：最低推理强度直调约 14.2 秒，HTTP 200 且字段可解析；并行与回填页面测试 1/1，证明识别请求在白底模型加载期间已发出、版型和描述可编辑、提前修改的名称不被覆盖、确认后才保存；真实网页流程 1/1，约 15.4 秒。之前同图直调约 25.2 秒、网页约 24.6 秒；这些是单次实测，云端耗时会波动。`effort=none` 被当前端点以 HTTP 400 拒绝，已撤回 |
@@ -75,11 +76,11 @@ BiRefNet Lite 技术 Spike **已完成实测验证**，见 [BiRefNet Spike 报�
 
 ## 未完成项与接力条件
 
-1. BiRefNet Spike、衣橱业务接线、原图仍在内存时的白底重处理、Chromium 保存及 WebKit 白底预览已验证。**实际 Safari 尚未验证**：本机 Safari WebDriver 提示须在 Safari 设置中启用“允许远程自动化”，该操作需要用户在本机完成。Playwright WebKit 27.2 的 IndexedDB Blob 写入报告 `UnknownError: Error preparing Blob/File data to be stored in object store`，故 WebKit 保存未通过；尚不能断言实际 Safari 也有此问题。未改动第 2 轮数据库层。其他 GPU、低内存手机、更多真实衣物照片与细边缘效果仍待验证。模型不是衣物分类器。
+1. BiRefNet Spike、衣橱业务接线、原图仍在内存时的白底重处理、Chromium 保存及 WebKit 白底预览已验证。用户报告在实际 Safari 手动上传并保存成功；白底效果和刷新持久化尚未由用户确认。Playwright WebKit 27.2 的 IndexedDB Blob 写入仍报告 `UnknownError: Error preparing Blob/File data to be stored in object store`，不能以此断言实际 Safari 也有问题。未改动第 2 轮数据库层。其他 GPU、低内存手机、更多真实衣物照片与细边缘效果仍待验证。模型不是衣物分类器。
 2. 当前 Qwen 模型的真实识别、真实穿搭灵感、推荐调用及 Schema 已通过；真实认证拒绝后**恢复有效配置并在页面重试成功**也已通过。真实 OpenRouter 断网和超时尚未人为触发，错误映射由模拟上游测试覆盖。用户报告的一张上传照片触发格式错误，未取得该照片和原始模型响应，无法确认具体字段；已针对可识别的响应格式差异修复，并用用户此前提供的鞋子实拍图通过真实接口和完整网页流程复验。报错的原照片仍需用户在本地重新验证。
 3. 第 2 轮数据契约只保存处理后的衣物图片。关闭编辑窗或保存后，重新处理白底图须重新上传原始照片；不能从已保存白底图恢复原图。05 传入推荐时需从第 2 轮服务读取当前可用衣物，并在调用前根据四项开关过滤条件。本接口不自行读取浏览器数据库。
    临时参考图的视觉输入通道已实现并通过真实调用；05 的调用方仍须按已启用条件读取图片，接口契约和读取边界待 05 回复确认，不能把本次本地测试当作跨成员联调。
-4. 模型权重是约 94 MiB 的公共静态资产，已把本地权重路径排除于普通 Git 暂存；[模型交付与缓存方案](../spikes/BiRefNet-model-delivery.md)记录固定来源、版本、大小、SHA-256、MIT 许可、手动安装和浏览器缓存现状。PR 检查会明确下载固定文件、按字节数和 SHA-256 核对后再运行浏览器测试；这不等于正式部署已提供模型。评审时仍需决定部署如何交付模型文件，单纯构建通过不代表新环境的白底处理可用。
+4. 模型权重约 94 MiB，不进入普通 Git 提交。[模型交付与缓存方案](../spikes/BiRefNet-model-delivery.md)记录固定来源、版本、SHA-256、MIT 许可和浏览器缓存现状。PR 检查及 GitHub Pages 发布已共用固定下载/校验脚本；导出后的模型和静态网页抠图保存已本地实测。团队计划 12 轮结束后才合并，故**当前线上 Pages 仍是旧版本**；本 PR 合入 main 后才会触发含模型的发布，并需再核对线上 URL 与实际白底效果。其他托管环境仍须自行运行同一安装步骤。
 5. 05 接收后需实测 `/api/recommendation` 的结构化响应、坏 ID 拒绝和断网/超时错误，并记录固定 SHA、实际模型配置状态及本机结果。
 
 ## 接收签收

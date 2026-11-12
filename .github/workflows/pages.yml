@@ -20,8 +20,17 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --legacy-peer-deps
+      - name: Cache verified BiRefNet model
+        uses: actions/cache@v4
+        with:
+          path: public/models/birefnet/model_fp16.onnx
+          key: birefnet-lite-512-fp16-eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516
+      - name: Install and verify BiRefNet model
+        run: bash scripts/install-birefnet-model.sh
       # 与 PR 的静态回归共用导出命令，避免修改源码工作树。
       - run: npm run build:pages
+      - name: Verify exported BiRefNet model
+        run: bash scripts/install-birefnet-model.sh --verify out/models/birefnet/model_fp16.onnx
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out

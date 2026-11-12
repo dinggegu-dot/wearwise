@@ -75,7 +75,7 @@ npm run test:e2e
 - `src/composition`：模块装配入口。
 - `e2e`：基础 Chrome 端到端检查。
 
-GitHub Pages 发布静态页面。真实图片识别需要服务端配置，当前默认关闭。
+GitHub Pages 发布静态页面。发布工作流会下载并校验固定 BiRefNet Lite 模型，静态网站可在浏览器本机完成白底抠图；OpenRouter 图片识别、灵感分析和模型推荐仍需要服务端，静态版不提供这些接口。模型来源、大小、SHA-256 和安装方法见 [模型交付说明](docs/spikes/BiRefNet-model-delivery.md)。
 
 ## 许可
 
