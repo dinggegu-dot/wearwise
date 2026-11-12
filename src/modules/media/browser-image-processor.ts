@@ -1,5 +1,7 @@
 // 改编自 Closet Kit 的浏览器 Canvas 图片处理；许可与来源见 THIRD_PARTY_NOTICES.md。
-export interface PreparedImage { blob: Blob; width: number; height: number; mime: 'image/jpeg' }
+import { removeBiRefNetBackground } from './birefnet-background-remover';
+
+export interface PreparedImage { blob: Blob; width: number; height: number; mime: 'image/jpeg'; backgroundRemoval?: 'removed' | 'fallback' }
 const fail = () => { throw new Error('图片损坏或格式不受支持，请选择静态 JPEG、PNG 或 WebP 图片。'); };
 const stopped = (signal?: AbortSignal) => { if (signal?.aborted) throw new DOMException('已取消', 'AbortError'); };
 const ascii = (b: Uint8Array, start: number, n: number) => String.fromCharCode(...b.subarray(start, start + n));
@@ -46,7 +48,16 @@ export function inspectImage(bytes: Uint8Array): { type: string; width: number; 
   return { type, width, height };
 }
 
-export async function prepareImage(file: File, signal?: AbortSignal): Promise<PreparedImage> {
+async function jpegBlob(canvas: HTMLCanvasElement, signal?: AbortSignal): Promise<Blob> {
+  for (const quality of [0.85, 0.75, 0.65]) {
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', quality)); stopped(signal);
+    if (!blob) throw new Error('图片转换失败，请重试。');
+    if (blob.size <= 4 * 1024 * 1024) return blob;
+  }
+  throw new Error('图片处理后仍然过大，请选择其他图片。');
+}
+
+export async function prepareImage(file: File, signal?: AbortSignal, onValidatedImage?: (image: PreparedImage) => void): Promise<PreparedImage> {
   stopped(signal);
   if (!file.size || file.size > 10 * 1024 * 1024) throw new Error('图片大小须在 10 MB 以内。');
   const metadata = inspectImage(new Uint8Array(await file.arrayBuffer())); stopped(signal);
@@ -64,12 +75,20 @@ export async function prepareImage(file: File, signal?: AbortSignal): Promise<Pr
     const height = Math.max(1, Math.round(image.naturalHeight * ratio));
     const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
     const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('图片处理不可用。');
-    ctx.fillStyle = '#f5f0e8'; ctx.fillRect(0, 0, width, height); ctx.drawImage(image, 0, 0, width, height);
-    for (const quality of [0.85, 0.75, 0.65]) {
-      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', quality)); stopped(signal);
-      if (!blob) throw new Error('图片转换失败，请重试。');
-      if (blob.size <= 4 * 1024 * 1024) return { blob, width, height, mime: 'image/jpeg' };
+    ctx.drawImage(image, 0, 0, width, height);
+    // Recognition can start with the validated original while local background removal runs.
+    if (onValidatedImage) onValidatedImage({ blob: await jpegBlob(canvas, signal), width, height, mime: 'image/jpeg' });
+    let backgroundRemoval: PreparedImage['backgroundRemoval'] = 'fallback';
+    try {
+      const cutout = await removeBiRefNetBackground(canvas, width, height, signal);
+      stopped(signal);
+      ctx.clearRect(0, 0, width, height); ctx.drawImage(cutout.canvas, 0, 0);
+      backgroundRemoval = 'removed';
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') throw error;
+      // Keep the established image preparation path usable when the local model or GPU is unavailable.
+      ctx.fillStyle = '#f5f0e8'; ctx.fillRect(0, 0, width, height); ctx.drawImage(image, 0, 0, width, height);
     }
-    throw new Error('图片处理后仍然过大，请选择其他图片。');
+    return { blob: await jpegBlob(canvas, signal), width, height, mime: 'image/jpeg', backgroundRemoval };
   } finally { URL.revokeObjectURL(src); }
 }

@@ -11,7 +11,7 @@ const opened: WearWiseDatabase[]=[];
 afterEach(async()=>{for(const db of opened.splice(0))await db.delete();});
 describe('领域边界',()=>{
  it('模型 provider 可替换并仍经过候选校验',async()=>{
-  const provider: RecognitionProvider={recognize:vi.fn(async()=>({candidateId:crypto.randomUUID(),name:'上衣',category:'top' as const,color:'白',warmth:'unknown' as const,styleTags:[],warnings:[]}))};
+  const provider: RecognitionProvider={recognize:vi.fn(async()=>({candidateId:crypto.randomUUID(),name:'上衣',category:'top' as const,color:'白',fit:'不确定',warmth:'unknown' as const,material:'不确定',styleTags:[],description:'不确定',warnings:[]}))};
   expect((await new RecognitionService(provider).recognize(new Blob(['test']))).name).toBe('上衣');expect(provider.recognize).toHaveBeenCalledOnce();
  });
  it('衣橱存储可替换，应用服务不绑定 Dexie',async()=>{

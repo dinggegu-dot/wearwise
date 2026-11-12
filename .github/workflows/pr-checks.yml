@@ -1,7 +1,7 @@
 name: Pull request checks
 on:
   pull_request:
-    branches: [main]
+    branches: [main, codex/round-02-data]
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,9 +33,16 @@ jobs:
         run: npm run build
       - name: Verify Chrome installation
         run: google-chrome --version
+      - name: Cache verified BiRefNet model
+        uses: actions/cache@v4
+        with:
+          path: public/models/birefnet/model_fp16.onnx
+          key: birefnet-lite-512-fp16-eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516
+      - name: Install and verify BiRefNet model for browser tests
+        run: bash scripts/install-birefnet-model.sh
       - name: Chrome end-to-end tests
         run: npm run test:e2e
       - name: Verify GitHub Pages export and static behavior
-        run: npm run build:pages && npm run test:e2e:pages
+        run: npm run build:pages && bash scripts/install-birefnet-model.sh --verify out/models/birefnet/model_fp16.onnx && npm run test:e2e:pages
       - name: Chrome development mode regression
         run: npm run test:e2e:dev
