@@ -2,6 +2,7 @@ import { WardrobeCount } from '@/modules/wardrobe/ui/wardrobe-count';
 import { RecommendationsPage } from '@/modules/recommendation/ui/recommendations-page';
 import { WeatherPanel } from '@/modules/weather/ui/weather-panel';
 import { WardrobePage } from '@/modules/wardrobe/ui/wardrobe-page';
+import { InspirationPage } from '@/modules/inspiration/ui/inspiration-page';
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, CloudSun, Shirt, Sparkles, Plus, LayoutGrid, Camera, SlidersHorizontal, Heart, CalendarDays, Sun, Footprints, Layers, CircleHelp } from 'lucide-react';
 
@@ -32,6 +33,7 @@ export function App({ page }: { page: Page }) {
   if (page === 'home') return <Home/>;
   if (page === 'wardrobe') return <AppShell page={page}><WardrobePage/></AppShell>;
   if (page === 'recommendations') return <AppShell page={page}><RecommendationsPage/></AppShell>;
+  if (page === 'inspiration') return <AppShell page={page}><InspirationPage/></AppShell>;
 
   const { title, description } = upcomingPages[page];
   return (

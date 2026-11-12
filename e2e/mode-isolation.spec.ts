@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test';
 
-test('真实和示例衣橱隔离，重置示例不改变真实衣物', async ({ page, context }) => {
+test('首次直接进入真实衣橱；切换示例后数据仍隔离', async ({ page, context, baseURL }) => {
   const external: string[] = [];
-  context.on('request', request => { const url = new URL(request.url()); if (url.origin !== 'http://127.0.0.1:3000' && url.origin !== 'http://localhost:3000') external.push(url.toString()); });
+  const localOrigin = new URL(baseURL!).origin;
+  context.on('request', request => { const url = new URL(request.url()); if (url.origin !== localOrigin) external.push(url.toString()); });
   await page.goto('/');
-  await expect(page.getByRole('heading', {name:'欢迎使用 WearWise'})).toBeVisible();
-  await page.getByRole('button', {name:'使用真实衣橱'}).click();
+  await expect(page.getByText('真实衣橱 · 仅本浏览器保存')).toBeVisible();
+  await expect(page.getByRole('heading', {name:'欢迎使用 WearWise'})).toHaveCount(0);
   await page.getByRole('link', {name:'我的衣橱', exact:true}).click();
   await page.getByRole('button', {name:'＋ 添加衣物'}).click();
   await page.getByLabel('名称').fill('真实衣物'); await page.getByLabel('颜色').fill('黑色');
@@ -48,7 +49,7 @@ test('反馈写入失败时显示错误，可重试并持久化',async({page})=>
       return original.call(this,value,key);
     };
   });
-  await page.goto('/');await page.getByRole('button',{name:'体验示例衣橱'}).click();
+  await page.goto('/');await page.getByRole('button',{name:'切换示例模式'}).click();
   await page.getByRole('link',{name:'穿搭推荐',exact:true}).click();await expect(page.getByRole('heading',{name:'穿搭推荐.'})).toBeVisible();await page.getByRole('button',{name:'使用示例天气'}).click();await page.getByRole('button',{name:'生成穿搭'}).click();
   const outfit=page.locator('article').filter({hasText:'搭配 1'});await expect(outfit).toBeVisible();
   await page.evaluate(()=>{(window as unknown as {failNextFeedback:boolean}).failNextFeedback=true;});
@@ -69,13 +70,13 @@ test('示例初始化失败不留下半库，重试后完整恢复八件',async(
       return original.call(this,value,key);
     };
   });
-  await page.goto('/');await page.getByRole('button',{name:'体验示例衣橱'}).click();
+  await page.goto('/');await page.getByRole('button',{name:'切换示例模式'}).click();
   await expect(page.getByRole('alert').filter({hasText:'示例衣橱准备失败'})).toBeVisible();
   const counts=await page.evaluate(async()=>{
     const db=await new Promise<IDBDatabase>((resolve,reject)=>{const request=indexedDB.open('wearwise-demo-v1');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
     const result=await new Promise<number[]>((resolve,reject)=>{const tx=db.transaction(['garments','media'],'readonly');const garments=tx.objectStore('garments').count(),media=tx.objectStore('media').count();tx.oncomplete=()=>resolve([garments.result,media.result]);tx.onerror=()=>reject(tx.error);});db.close();return result;
   });
   expect(counts).toEqual([0,0]);
-  await page.getByRole('button',{name:'体验示例衣橱'}).click();await expect(page.getByText('示例模式 · 示例数据')).toBeVisible();
+  await page.getByRole('button',{name:'切换示例模式'}).click();await expect(page.getByText('示例模式 · 示例数据')).toBeVisible();
   await page.getByRole('link',{name:'我的衣橱',exact:true}).click();await expect(page.locator('article')).toHaveCount(8);
 });

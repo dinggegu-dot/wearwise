@@ -1,0 +1,3 @@
+# Keep downloaded model weights and private test photos local to this Spike.
+/model/onnx/*.onnx
+/fixtures/user-*.png

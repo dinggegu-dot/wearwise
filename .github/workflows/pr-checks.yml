@@ -1,7 +1,7 @@
 name: Pull request checks
 on:
   pull_request:
-    branches: [main]
+    branches: [main, codex/round-02-data]
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,6 +33,21 @@ jobs:
         run: npm run build
       - name: Verify Chrome installation
         run: google-chrome --version
+      - name: Cache verified BiRefNet model
+        uses: actions/cache@v4
+        with:
+          path: public/models/birefnet/model_fp16.onnx
+          key: birefnet-lite-512-fp16-eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516
+      - name: Install and verify BiRefNet model for browser tests
+        run: |
+          model=public/models/birefnet/model_fp16.onnx
+          if [ ! -f "$model" ]; then
+            curl --fail --location --retry 3 --retry-delay 2 --output "$model.part" \
+              'https://huggingface.co/studioludens/birefnet-lite-512/resolve/18d56c5/onnx/model_fp16.onnx'
+            mv "$model.part" "$model"
+          fi
+          test "$(wc -c < "$model")" -eq 98484532
+          printf '%s  %s\n' eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516 "$model" | sha256sum --check --status
       - name: Chrome end-to-end tests
         run: npm run test:e2e
       - name: Verify GitHub Pages export and static behavior

@@ -9,7 +9,7 @@ test('隔离 Chrome 用户目录关闭并重开后衣物和图片仍可读取', 
   try {
     let page = context.pages()[0] ?? await context.newPage();
     await page.goto('http://127.0.0.1:3000/wardrobe');
-    await page.getByRole('button', {name:'使用真实衣橱'}).click();
+    await expect(page.getByText('真实衣橱 · 仅本浏览器保存')).toBeVisible();
     await page.getByRole('button', {name:'＋ 添加衣物'}).click();
     await page.getByLabel('名称').fill('重开测试衣物'); await page.getByLabel('颜色').fill('绿色');
     const png = await page.evaluate(() => { const c=document.createElement('canvas');c.width=8;c.height=8;return c.toDataURL('image/png').split(',')[1]; });

@@ -5,13 +5,17 @@ import { GET } from '@/app/api/capabilities/route';
 import { recognizeWithQwen } from '@/modules/recognition/infrastructure/qwen';
 import { readFileSync } from 'node:fs';
 const stubImage = readFileSync('tests/fixtures/generated-ui.jpg');
-function request(file = new File([stubImage], 'photo.jpg', {type:'image/jpeg'})) {
+function request(file = new File([stubImage], 'photo.jpg', {type:'image/jpeg'}), forwardedHost?: string, requestUrl = 'http://127.0.0.1:3000/api/recognition') {
   const form = new FormData(); form.set('image',file);
-  return new Request('http://127.0.0.1:3000/api/recognition',{method:'POST',headers:{host:'127.0.0.1:3000',origin:'http://127.0.0.1:3000'},body:form});
+  const headers:Record<string,string>={host:'127.0.0.1:3000',origin:'http://127.0.0.1:3000'};
+  if (forwardedHost) headers['x-forwarded-host']=forwardedHost;
+  return new Request(requestUrl,{method:'POST',headers,body:form});
 }
-beforeEach(() => { (globalThis as unknown as Record<symbol, number>)[Symbol.for('wearwise.qwen.calls')] = 0; vi.stubEnv('AI_ENABLE','0'); vi.stubEnv('DASHSCOPE_API_KEY',''); vi.stubEnv('QWEN_MODEL',''); vi.stubEnv('AI_MAX_CALLS_PER_PROCESS','0'); });
+beforeEach(() => { (globalThis as unknown as Record<symbol, number>)[Symbol.for('wearwise.qwen.calls')] = 0; vi.stubEnv('OPENROUTER_API_KEY',''); vi.stubEnv('AI_MODEL',''); vi.stubEnv('AI_ENABLE','0'); vi.stubEnv('DASHSCOPE_API_KEY',''); vi.stubEnv('QWEN_MODEL',''); vi.stubEnv('AI_MAX_CALLS_PER_PROCESS','0'); });
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
-function enable() { vi.stubEnv('AI_ENABLE','1'); vi.stubEnv('DASHSCOPE_API_KEY','test-not-a-real-key'); vi.stubEnv('QWEN_MODEL','test-model'); vi.stubEnv('QWEN_BASE_URL','https://dashscope.aliyuncs.com/compatible-mode/v1'); vi.stubEnv('AI_MAX_CALLS_PER_PROCESS','99'); }
+function enable() { vi.stubEnv('OPENROUTER_API_KEY','test-not-a-real-key'); vi.stubEnv('AI_MODEL','test-model'); vi.stubEnv('AI_TIMEOUT_MS','30000'); vi.stubEnv('AI_ENABLE','1'); vi.stubEnv('DASHSCOPE_API_KEY','test-not-a-real-key'); vi.stubEnv('QWEN_MODEL','test-model'); vi.stubEnv('QWEN_BASE_URL','https://dashscope.aliyuncs.com/compatible-mode/v1'); vi.stubEnv('AI_MAX_CALLS_PER_PROCESS','99'); }
+const candidate={name:'白衬衫',category:'top',color:'白',warmth:'unknown',styleTags:[],warnings:[]};
+function modelResponse(value:unknown) { return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(value)}}]})); }
 describe('识别 HTTP 及模型边界',()=>{
  it('未配置时清楚不可用，且无上游请求',async()=>{
   const fetcher=vi.fn(); vi.stubGlobal('fetch',fetcher);
@@ -29,29 +33,54 @@ describe('识别 HTTP 及模型边界',()=>{
   expect(response.status).toBe(400);expect(fetcher).not.toHaveBeenCalled();
  });
  it('有效候选经严格校验，正式 ID 在应用层生成',async()=>{
-  enable();const candidate={name:'白衬衫',category:'top',color:'白',warmth:'unknown',styleTags:[],warnings:[]};
-  const fetcher=vi.fn().mockResolvedValue(new Response(JSON.stringify({choices:[{message:{content:JSON.stringify({kind:'garment',candidate})}}]})));
+  enable();const fetcher=vi.fn().mockResolvedValue(modelResponse(candidate));
   vi.stubGlobal('fetch',fetcher);const response=await POST(request());const body=await response.json();
   expect(response.status).toBe(200);expect(body.data.candidate).toMatchObject(candidate);expect(body.data.candidate.candidateId).toMatch(/^[0-9a-f-]{36}$/);expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(fetcher.mock.calls[0][1].body).response_format).toEqual({type:'json_object'});
  });
- it('进程调用上限阻止第二次上游请求',async()=>{
-  enable();vi.stubEnv('AI_MAX_CALLS_PER_PROCESS','1');
-  const candidate={name:'白衬衫',category:'top',color:'白',warmth:'unknown',styleTags:[],warnings:[]};
-  const fetcher=vi.fn().mockResolvedValue(new Response(JSON.stringify({choices:[{message:{content:JSON.stringify({kind:'garment',candidate})}}]})));
-  vi.stubGlobal('fetch',fetcher);expect((await POST(request())).status).toBe(200);
-  const next=await POST(request());expect(next.status).toBe(429);expect(fetcher).toHaveBeenCalledTimes(1);
+ it('当前 Qwen 衣物识别使用最低推理强度，不影响可替换模型的请求',async()=>{
+  enable();vi.stubEnv('AI_MODEL','qwen/qwen3.8-max-0902');
+  const fetcher=vi.fn().mockImplementation(()=>Promise.resolve(modelResponse(candidate)));vi.stubGlobal('fetch',fetcher);
+  expect((await POST(request())).status).toBe(200);
+  expect(JSON.parse(fetcher.mock.calls[0][1].body).reasoning).toEqual({effort:'minimal'});
+  vi.stubEnv('AI_MODEL','other-vision-model');
+  expect((await POST(request())).status).toBe(200);
+  expect(JSON.parse(fetcher.mock.calls[1][1].body).reasoning).toBeUndefined();
+ });
+ it('将中文类别和空值归一化为第二轮 Schema，保留未知信息',async()=>{
+  enable();const raw={name:'  蓝色衬衫  ',category:'上衣',color:'蓝色',fit:null,warmth:'无法判断',material:null,styleTags:'简约，通勤',description:null,warnings:'仅图片无法确认材质'};
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(JSON.stringify({choices:[{message:{content:`\`\`\`json\n${JSON.stringify(raw)}\n\`\`\``}}]}))));
+  const response=await POST(request());const body=await response.json();
+  expect(response.status).toBe(200);
+  expect(body.data.candidate).toMatchObject({name:'蓝色衬衫',category:'top',color:'蓝色',fit:'不确定',warmth:'unknown',material:'不确定',styleTags:['简约','通勤'],description:'不确定',warnings:['仅图片无法确认材质']});
+ });
+ it('连续有效识别逐次调用模型且分别生成候选 ID',async()=>{
+  enable();
+  const fetcher=vi.fn().mockImplementation(()=>Promise.resolve(modelResponse(candidate)));
+  vi.stubGlobal('fetch',fetcher);const first=await (await POST(request())).json();const second=await (await POST(request())).json();
+  expect(first.ok).toBe(true);expect(second.ok).toBe(true);expect(first.data.candidate.candidateId).not.toBe(second.data.candidate.candidateId);expect(fetcher).toHaveBeenCalledTimes(2);
  });
  it('跨来源请求不可触发模型',async()=>{
   enable();const fetcher=vi.fn();vi.stubGlobal('fetch',fetcher);const form=new FormData();form.set('image',new File([stubImage],'photo.jpg',{type:'image/jpeg'}));
   const response=await POST(new Request('http://127.0.0.1:3000/api/recognition',{method:'POST',headers:{host:'127.0.0.1:3000',origin:'https://example.com'},body:form}));
   expect(response.status).toBe(400);expect(fetcher).not.toHaveBeenCalled();
  });
- it('非衣物及多主体结果清楚拒绝且不创建候选',async()=>{
-  enable(); const responses=['no_garment','ambiguous'].map(kind=>new Response(JSON.stringify({choices:[{message:{content:JSON.stringify({kind,message:'无法判断'})}}]})));
+ it('Next.js 补入匹配的本机转发头时仍按本地请求处理',async()=>{
+  const response=await POST(request(undefined,'127.0.0.1:3000','http://localhost:3000/api/recognition'));
+  expect(response.status).toBe(503);
+  expect((await response.json()).error.message).toBe('图片识别暂未配置，请手动录入。');
+ });
+ it('本机转发头指向外部主机时拒绝请求',async()=>{
+  const response=await POST(request(undefined,'example.com'));
+  expect(response.status).toBe(503);
+  expect((await response.json()).error.message).toBe('图片识别仅支持本地运行。');
+ });
+ it('不符合当前识别 Schema 的模型结果会拒绝且不创建候选',async()=>{
+  enable(); const responses=[modelResponse({...candidate,category:'spaceship'}),modelResponse({kind:'ambiguous',message:'无法判断'})];
   vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(responses[0]).mockResolvedValueOnce(responses[1]));
-  for (const code of ['NO_GARMENT','AMBIGUOUS_IMAGE']) {
+  for (const code of ['AI_INVALID_RESPONSE','AI_INVALID_RESPONSE']) {
    const response=await POST(request());const body=await response.json();
-   expect(response.status).toBe(422);expect(body.error.code).toBe(code);expect(body.data).toBeUndefined();
+   expect(response.status).toBe(502);expect(body.error.code).toBe(code);expect(body.data).toBeUndefined();
   }
  });
  it('识别超时与用户取消都会中止上游请求',async()=>{
@@ -76,7 +105,7 @@ describe('识别 HTTP 及模型边界',()=>{
   expect(response.status).toBe(413);expect((await response.json()).error.code).toBe('IMAGE_TOO_LARGE');expect(fetcher).not.toHaveBeenCalled();
  });
  it('无效模型字段不返回候选且不泄露供应商信息',async()=>{
-  enable();vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(JSON.stringify({choices:[{message:{content:JSON.stringify({kind:'garment',candidate:{name:'x',category:'spaceship'}})}}]}))));
-  const response=await POST(request());const body=await response.json(); expect(response.status).toBe(502);expect(body.error.code).toBe('MODEL_INVALID_RESPONSE');expect(JSON.stringify(body)).not.toContain('test-not-a-real-key');
+  enable();vi.stubGlobal('fetch',vi.fn().mockResolvedValue(modelResponse({name:'x',category:'spaceship'})));
+  const response=await POST(request());const body=await response.json(); expect(response.status).toBe(502);expect(body.error.code).toBe('AI_INVALID_RESPONSE');expect(JSON.stringify(body)).not.toContain('test-not-a-real-key');
  });
 });

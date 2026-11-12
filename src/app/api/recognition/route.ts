@@ -1,15 +1,21 @@
-import { RecognitionError, recognizeWithQwen, recognitionAvailable } from '@/modules/recognition/infrastructure/qwen';
+import { AIError, aiAvailable, recognizeGarment } from '@/modules/recognition/infrastructure/ai-provider';
 const MAX_BODY = 5 * 1024 * 1024, MAX_FILE = 4 * 1024 * 1024;
-const statuses: Record<string, number> = { RECOGNITION_UNAVAILABLE:503, CALL_LIMIT_REACHED:429, MODEL_TIMEOUT:504, MODEL_INVALID_RESPONSE:502, NO_GARMENT:422, AMBIGUOUS_IMAGE:422 };
+const statuses: Record<string, number> = { AI_UNAVAILABLE:503, AI_TIMEOUT:504, AI_PROVIDER_ERROR:502, AI_INVALID_RESPONSE:502 };
 export async function POST(request: Request) {
   const requestId = crypto.randomUUID();
   const failure = (code:string,message:string,status:number,retryable=false) => Response.json({ok:false,error:{code,message,retryable},requestId},{status});
-  const url = new URL(request.url), host = request.headers.get('host') ?? '';
+  const requestUrl = new URL(request.url), host = request.headers.get('host') ?? '';
   let hostname = ''; try { hostname = new URL(`http://${host}`).hostname; } catch { return failure('VALIDATION_ERROR','请求地址无效。',400); }
-  if (!['127.0.0.1','localhost'].includes(hostname) || request.headers.has('x-forwarded-host')) return failure('RECOGNITION_UNAVAILABLE','图片识别仅支持本地运行。',503);
+  const forwardedHost = request.headers.get('x-forwarded-host')?.trim().toLowerCase();
+  if (!['127.0.0.1','localhost'].includes(hostname) || (forwardedHost && forwardedHost !== host.toLowerCase())) return failure('RECOGNITION_UNAVAILABLE','图片识别仅支持本地运行。',503);
   const origin = request.headers.get('origin');
-  if (origin && origin !== url.origin) return failure('VALIDATION_ERROR','请求来源无效。',400);
-  if (!recognitionAvailable()) return failure('RECOGNITION_UNAVAILABLE','图片识别暂未配置，请手动录入。',503);
+  if (origin) {
+    try {
+      const originUrl = new URL(origin);
+      if (originUrl.protocol !== requestUrl.protocol || originUrl.host.toLowerCase() !== host.toLowerCase() || originUrl.username || originUrl.password) return failure('VALIDATION_ERROR','请求来源无效。',400);
+    } catch { return failure('VALIDATION_ERROR','请求来源无效。',400); }
+  }
+  if (!aiAvailable()) return failure('RECOGNITION_UNAVAILABLE','图片识别暂未配置，请手动录入。',503);
   if (!request.headers.get('content-type')?.startsWith('multipart/form-data;')) return failure('VALIDATION_ERROR','请选择 JPEG 图片。',400);
   if (Number(request.headers.get('content-length') ?? 0) > MAX_BODY) return failure('IMAGE_TOO_LARGE','图片过大。',413);
   if (!request.body) return failure('VALIDATION_ERROR','请选择 JPEG 图片。',400);
@@ -33,10 +39,10 @@ export async function POST(request: Request) {
       if (metadata.format !== 'jpeg' || !metadata.width || !metadata.height || metadata.width > 1600 || metadata.height > 1600) throw new Error('invalid dimensions');
       await decoder.raw().toBuffer();
     } catch { return failure('VALIDATION_ERROR','图片损坏或尺寸无效，请重新选择。',400); }
-    const candidate = await recognizeWithQwen(image,request.signal);
+    const candidate = await recognizeGarment(image,request.signal);
     return Response.json({ok:true,data:{candidate},requestId});
   } catch (error) {
-    if (error instanceof RecognitionError) return failure(error.code,error.message,statuses[error.code] ?? 502,error.code === 'MODEL_TIMEOUT');
+    if (error instanceof AIError) return failure(error.code,error.message,statuses[error.code] ?? 502,error.retryable);
     return failure('VALIDATION_ERROR','图片处理失败，请重试或手动录入。',400);
   }
 }

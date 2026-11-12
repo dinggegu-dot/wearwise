@@ -4,7 +4,7 @@ test('静态子路径导航、直接刷新和本地衣橱保存', async ({ page 
   const failed: string[]=[];
   page.on('response', response=>{if(response.status()>=400) failed.push(`${response.status()} ${response.url()}`);});
   await page.goto('/wearwise/');
-  await page.getByRole('button',{name:'使用真实衣橱'}).click();
+  await expect(page.getByText('真实衣橱 · 仅本浏览器保存')).toBeVisible();
   await page.getByRole('link',{name:'我的衣橱',exact:true}).click();
   await expect(page).toHaveURL(/\/wearwise\/wardrobe\/$/);
   await page.reload();
@@ -27,7 +27,7 @@ test('静态子路径导航、直接刷新和本地衣橱保存', async ({ page 
 
 test('静态版实际衣橱到推荐反馈并刷新恢复', async ({ page }) => {
   await page.goto('/wearwise/');
-  await page.getByRole('button',{name:'使用真实衣橱'}).click();
+  await expect(page.getByText('真实衣橱 · 仅本浏览器保存')).toBeVisible();
   await page.getByRole('link',{name:'我的衣橱',exact:true}).click();
   for (const [name,category] of [['静态白衬衫','top'],['静态牛仔裤','bottom'],['静态运动鞋','shoes']]) {
     await page.getByRole('button',{name:'＋ 添加衣物'}).click();
