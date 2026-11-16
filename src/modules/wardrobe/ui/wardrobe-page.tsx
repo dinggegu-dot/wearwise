@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createServices, illustration } from '@/composition';
 import { useMode } from '@/composition/mode-provider';
-import type { Garment, GarmentInput } from '@/modules/wardrobe';
+import { availability, type Garment, type GarmentInput } from '@/modules/wardrobe';
+import { beijingDate } from '@/shared/domain/beijing-date';
 import { prepareImage, type PreparedImage } from '@/modules/media/browser-image-processor';
 
 const labels = { top: '上衣', bottom: '下装', outerwear: '外套', dress: '连衣裙', shoes: '鞋履' } as const;
@@ -101,11 +102,19 @@ export function WardrobePage() {
     if (!window.confirm(`确定删除“${item.name}”吗？`)) return;
     try { await services.wardrobe.remove(item.id); notify(); await refresh(); } catch { setError('删除失败，请重试。'); }
   };
-  const toggle = async (item: Garment) => {
-    try { await services.wardrobe.update(item.id, { excludedPermanently: !item.excludedPermanently }, item.revision); notify(); await refresh(); }
+  // 暂时不推荐：设置恢复日期（北京时间当天 00:00 起恢复）；可提前恢复。完整详情面板由后续衣橱轮次接入。
+  const [pausing, setPausing] = useState<{ id: string; date: string }>();
+  const tomorrow = beijingDate(Date.now() + 86_400_000);
+  const pause = async (item: Garment, date: string) => {
+    try { await services.wardrobe.pause(item.id, date, item.revision); setPausing(undefined); notify(); await refresh(); }
+    catch (e) { setError(e instanceof Error ? e.message : '更新失败，衣物可能已被修改，请刷新重试。'); }
+  };
+  const resume = async (item: Garment) => {
+    try { await services.wardrobe.resume(item.id, item.revision); notify(); await refresh(); }
     catch { setError('更新失败，衣物可能已被修改，请刷新重试。'); }
   };
-  const visible = items.filter(item => item.status === 'confirmed' && (category === 'all' || item.category === category));
+  const statusText = (item: Garment) => availability(item) !== 'paused' ? '可用于穿搭推荐' : item.pause?.resumeOn ? `暂停推荐，${item.pause.resumeOn} 起恢复` : '暂停推荐，未设置恢复日期';
+  const visible = items.filter(item => category === 'all' || item.category === category);
   return <>
     <div className="page-heading"><div><span className="section-kicker">YOUR WARDROBE</span><h1>我的衣橱<span className="heading-dot">.</span></h1><p>为每一件喜欢的衣物，找到属于它的位置。</p></div><button className="primary-link" onClick={() => start()}>＋ 添加衣物</button></div>
     <p>衣物保存在当前浏览器，清理站点数据可能导致丢失。</p>
@@ -113,7 +122,7 @@ export function WardrobePage() {
     {error && !open && <div role="alert" className="wardrobe-error">{error} <button onClick={() => void refresh()}>重试</button></div>}
     <div className="wardrobe-filters" aria-label="衣物分类"><button aria-pressed={category === 'all'} onClick={() => setCategory('all')}>全部</button>{Object.entries(labels).map(([key, value]) => <button key={key} aria-pressed={category === key} onClick={() => setCategory(key as keyof typeof labels)}>{value}</button>)}</div>
     {loading ? <p>正在读取衣橱…</p> : readFailed ? null : visible.length === 0 ? <div className="empty-state"><h2>你的衣橱，值得被好好整理</h2><p>{items.length ? '这个分类还没有衣物。' : '添加第一件衣物，开始整理你的衣橱。'}</p><button className="primary-link" onClick={() => start()}>添加衣物</button></div> : <div className="wardrobe-grid">{visible.map(item => <article className="wardrobe-item" key={item.id}>
-      <GarmentImage id={item.id} image={item.imageId} load={loadImage}/><div className="wardrobe-item-content"><h2>{item.name}</h2><p>{labels[item.category]} · {item.color} · {warmths[item.warmth]}</p><p>{item.excludedPermanently ? '已排除穿搭推荐' : '可用于穿搭推荐'}</p><details><summary>查看详情</summary><p>风格：{item.styleTags.length ? item.styleTags.join('、') : '未设置'}</p><p>材质：{item.material || '未设置'}</p><p>添加时间：{new Date(item.createdAt).toLocaleDateString('zh-CN')}</p></details><div className="wardrobe-actions"><button onClick={() => start(item)}>编辑</button><button onClick={() => void toggle(item)}>{item.excludedPermanently ? '恢复推荐' : '排除推荐'}</button><button onClick={() => void remove(item)}>删除</button></div></div>
+      <GarmentImage id={item.id} image={item.imageId} load={loadImage}/><div className="wardrobe-item-content"><h2>{item.name}</h2><p>{labels[item.category]} · {item.color} · {warmths[item.warmth]}</p><p>{statusText(item)}</p><details><summary>查看详情</summary><p>风格：{item.styleTags.length ? item.styleTags.join('、') : '未设置'}</p><p>材质：{item.material || '未设置'}</p><p>添加时间：{new Date(item.createdAt).toLocaleDateString('zh-CN')}</p></details><div className="wardrobe-actions"><button onClick={() => start(item)}>编辑</button>{availability(item) === 'paused' ? <button onClick={() => void resume(item)}>恢复推荐</button> : <button onClick={() => setPausing({ id: item.id, date: tomorrow })}>暂时不推荐</button>}<button onClick={() => void remove(item)}>删除</button></div>{pausing?.id === item.id && <div className="wardrobe-actions"><label>恢复日期<input type="date" min={tomorrow} value={pausing.date} onChange={event => setPausing({ id: item.id, date: event.target.value })}/></label><button onClick={() => void pause(item, pausing.date)}>确认暂停</button><button onClick={() => setPausing(undefined)}>取消</button></div>}</div>
     </article>)}</div>}
     {open && <dialog ref={dialog} className="wardrobe-dialog" style={{ margin: 'auto' }} aria-labelledby="wardrobe-dialog-title" onCancel={event => {
       // File inputs bubble cancel when their picker is cancelled or the same file is chosen.

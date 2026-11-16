@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => { await page.addInitScript(() => localStorage.setItem('wearwise-mode', 'real')); });
 
-test('真实衣橱：取消、添加、刷新、编辑、筛选、排除和删除', async ({ page }) => {
+test('真实衣橱：取消、添加、刷新、编辑、筛选、暂停与恢复、删除', async ({ page }) => {
   await page.goto('/wardrobe');
   await page.getByRole('button', { name: '＋ 添加衣物' }).click();
   await page.getByLabel('名称').fill('取消的衣服');
@@ -22,8 +22,14 @@ test('真实衣橱：取消、添加、刷新、编辑、筛选、排除和删�
   await page.getByRole('button', { name: '确认保存' }).click();
   const updated = page.locator('article').filter({ hasText: '我的衬衫' });
   await expect(updated).toBeVisible();
-  await updated.getByRole('button', { name: '排除推荐' }).click();
-  await expect(updated.getByText('已排除穿搭推荐')).toBeVisible();
+  await updated.getByRole('button', { name: '暂时不推荐' }).click();
+  await updated.getByLabel('恢复日期').fill('2999-01-02');
+  await updated.getByRole('button', { name: '确认暂停' }).click();
+  await expect(updated.getByText('暂停推荐，2999-01-02 起恢复')).toBeVisible();
+  await page.reload();
+  await expect(updated.getByText('暂停推荐，2999-01-02 起恢复')).toBeVisible();
+  await updated.getByRole('button', { name: '恢复推荐' }).click();
+  await expect(updated.getByText('可用于穿搭推荐')).toBeVisible();
   await page.getByRole('button', { name: '下装', exact: true }).click();
   await expect(updated).toHaveCount(0);
   await page.getByRole('button', { name: '全部', exact: true }).click();

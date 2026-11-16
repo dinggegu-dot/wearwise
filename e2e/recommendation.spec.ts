@@ -32,13 +32,18 @@ for (const viewport of [{width:1440,height:900},{width:390,height:844}]) {
   await expect(restored.getByRole('button', {name:'不喜欢'})).toHaveAttribute('aria-pressed','true');
   await page.getByRole('link', {name:'我的衣橱'}).click();
   const card=page.locator('article').filter({hasText:'白衬衫'});
-  await card.getByRole('button', {name:'排除推荐'}).click();
+  await card.getByRole('button', {name:'暂时不推荐'}).click();
+  await card.getByRole('button', {name:'确认暂停'}).click();
+  await expect(card.getByText(/暂停推荐，\d{4}-\d{2}-\d{2} 起恢复/)).toBeVisible();
+  // 新规则：暂停衣物不改变已展示的搭配，旧结果与反馈保留。
   await page.getByRole('link', {name:'穿搭推荐'}).click();
-  await expect(page.locator('article').filter({hasText:'搭配 1'})).toHaveCount(0);
+  const kept=page.locator('article').filter({hasText:'搭配 1'});
+  await expect(kept).toContainText('白衬衫');
+  await expect(kept.getByRole('button', {name:'不喜欢'})).toHaveAttribute('aria-pressed','true');
 });
 }
 
-test('另一标签页修改衣橱时当前推荐立即失效', async ({ page, context }) => {
+test('另一标签页删除衣物时当前推荐保留，不被清空', async ({ page, context }) => {
   await page.goto('/wardrobe');
   for (const [name, category] of [['跨页上衣','top'],['跨页下装','bottom'],['跨页鞋','shoes']]) {
     await page.getByRole('button',{name:'＋ 添加衣物'}).click(); await page.getByLabel('名称').fill(name); await page.getByLabel('颜色').fill('白');
@@ -47,9 +52,12 @@ test('另一标签页修改衣橱时当前推荐立即失效', async ({ page, co
   await page.getByRole('link',{name:'穿搭推荐'}).click(); await page.getByRole('button',{name:'使用示例天气'}).click(); await page.getByRole('button',{name:'生成穿搭'}).click();
   await expect(page.locator('article').filter({hasText:'搭配 1'})).toBeVisible();
   const other=await context.newPage(); await other.goto('/wardrobe');
-  const card=other.locator('article').filter({hasText:'跨页上衣'}); await expect(card).toBeVisible(); await card.getByRole('button',{name:'排除推荐'}).click();
-  await expect(page.locator('article').filter({hasText:'搭配 1'})).toHaveCount(0);
-  await expect(page.getByRole('alert').filter({hasText:'衣橱已改变'})).toBeVisible();
+  const card=other.locator('article').filter({hasText:'跨页上衣'}); await expect(card).toBeVisible();
+  other.once('dialog', dialog => dialog.accept()); await card.getByRole('button',{name:'删除'}).click(); await expect(card).toHaveCount(0);
+  await page.bringToFront(); await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(page.locator('article').filter({hasText:'搭配 1'})).toContainText('跨页上衣');
+  await expect(page.getByRole('alert').filter({hasText:'衣橱已改变'})).toHaveCount(0);
+  await page.reload(); await expect(page.locator('article').filter({hasText:'搭配 1'})).toContainText('跨页上衣');
   await other.close();
 });
 
