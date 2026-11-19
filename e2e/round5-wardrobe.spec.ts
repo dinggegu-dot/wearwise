@@ -67,6 +67,9 @@ test('R5-04/05 批量混合状态、独立编辑、部分保存故障重试与�
   expect((await stored(page)).garments).toHaveLength(1);await expect(rows.nth(0).getByRole('checkbox')).toBeDisabled();
   await page.setViewportSize({width:1536,height:1024});
   await page.getByRole('dialog').evaluate(dialog=>{dialog.scrollTop=0;});
+  expect(await rows.first().locator('.wardrobe-image').evaluate(image=>image.getBoundingClientRect().height)).toBeLessThanOrEqual(100);
+  await expect(page.getByRole('heading',{name:'批量添加衣物',exact:true})).toBeInViewport();
+  await expect(page.getByRole('button',{name:'完成',exact:true})).toBeInViewport();
   await page.screenshot({path:'test-results/round5/batch-partial-desktop.png',fullPage:true});
   release();await expect(rows.nth(2).getByRole('status')).toHaveText('处理成功',{timeout:90000});
   await rows.nth(2).getByRole('checkbox').check();await page.getByRole('button',{name:'保存所选衣物'}).click();await expect(rows.nth(2).getByRole('status')).toHaveText('已加入衣橱');
