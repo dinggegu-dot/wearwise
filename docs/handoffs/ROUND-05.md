@@ -204,4 +204,22 @@ npm.cmd run test:e2e:dev -- e2e/round5-wardrobe.spec.ts --output test-results-de
 
 需要本人在Codex之外的新PowerShell窗口进行真实AI测试。本人可用隐藏输入把Key放入该窗口的临时进程环境（不存文件、不贴聊天），设置 `AI_MODEL=qwen/qwen3.8-max-0902`、`AI_TIMEOUT_MS=90000` 后自行启动应用；关闭窗口结束。不要把Key交给编程代理。
 
+以下命令只供本人复制到独立PowerShell中执行，**不要让Codex执行，不要在Codex聊天或Codex终端输入Key**。它不把Key保存到项目文件；停止应用后清除该窗口的Key变量。
+
+```powershell
+Set-Location 'C:\Users\dell\Desktop\WearWise\wearwise'
+$wearwiseSecureKey = Read-Host '在此独立窗口隐藏输入OpenRouter Key' -AsSecureString
+$wearwiseKeyPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($wearwiseSecureKey)
+try {
+  $env:OPENROUTER_API_KEY = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($wearwiseKeyPointer)
+} finally {
+  [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($wearwiseKeyPointer)
+  $wearwiseSecureKey.Dispose()
+}
+$env:AI_MODEL = 'qwen/qwen3.8-max-0902'
+$env:AI_TIMEOUT_MS = '90000'
+try { npm.cmd run dev }
+finally { Remove-Item Env:\OPENROUTER_API_KEY -ErrorAction SilentlyContinue }
+```
+
 最多6次真实请求：单件选择1张（第1次），更换另一张（第2次），批量3张（第3–5次）；仅确有失败且仍需验证时手动重试一次（第6次）。不为凑次数重试，不上传私人照片，不自动充值。检查资料准确性、手改标签保护、手工场景确认、部分保存及刷新。白底重处理本身不增加AI请求。模型不可用交04核对，不自行更换供应商或模型。
