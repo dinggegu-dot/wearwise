@@ -1,10 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+test.describe.configure({ timeout: 120000 });
+
+async function confirm(page: Page) {
+  const manual = page.getByRole('button', { name: '改为手动填写并确认' });
+  if (await manual.isVisible()) await manual.click();
+  await page.getByRole('button', { name: '确认保存' }).click();
+}
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('wearwise-mode', 'real'));
-  // Keep these existing image, storage and race tests focused on their original behavior.
-  // The separate BiRefNet page suite exercises successful real-model inference.
-  await page.route('**/models/birefnet/model_fp16.onnx', route => route.fulfill({ status: 503, body: 'model unavailable' }));
+  // Paid AI is always unavailable unless a test explicitly supplies a mock response.
+  // Photo success now requires real local BiRefNet; fallback must never be saved.
+  await page.route('**/api/capabilities', route => route.fulfill({ json: { recognition: { available: false } } }));
 });
 
 test('真实衣橱：取消、添加、刷新、编辑、筛选、暂停与恢复、删除', async ({ page }) => {
@@ -16,7 +23,7 @@ test('真实衣橱：取消、添加、刷新、编辑、筛选、暂停与恢�
   await page.getByRole('button', { name: '＋ 添加衣物' }).click();
   await page.getByLabel('名称').fill('我的白衬衫');
   await page.getByLabel('颜色').fill('白色');
-  await page.getByRole('button', { name: '确认保存' }).click();
+  await confirm(page);
   await expect(page.getByRole('heading', { name: '我的白衬衫' })).toBeVisible();
   await expect(page.getByRole('status').filter({hasText:'衣物已保存'})).toBeVisible();
   await page.reload();
@@ -24,12 +31,12 @@ test('真实衣橱：取消、添加、刷新、编辑、筛选、暂停与恢�
   await expect(card).toBeVisible();
   await card.getByRole('button', { name: '编辑' }).click();
   await page.getByLabel('名称').fill('我的衬衫');
-  await page.getByRole('button', { name: '确认保存' }).click();
+  await confirm(page);
   const updated = page.locator('article').filter({ hasText: '我的衬衫' });
   await expect(updated).toBeVisible();
   await updated.getByRole('button', { name: '暂时不推荐' }).click();
-  await updated.getByLabel('恢复日期').fill('2999-01-02');
-  await updated.getByRole('button', { name: '确认暂停' }).click();
+  await page.getByRole('dialog').getByLabel('恢复日期').fill('2999-01-02');
+  await page.getByRole('dialog').getByRole('button', { name: '确认暂停' }).click();
   await expect(updated.getByText('暂停推荐，2999-01-02 起恢复')).toBeVisible();
   await page.reload();
   await expect(updated.getByText('暂停推荐，2999-01-02 起恢复')).toBeVisible();
@@ -53,7 +60,7 @@ test('照片在确认前不入库，保存后刷新仍可读取', async ({ page 
   const file = { name: '衣服.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') };
   await page.getByRole('button', { name: '＋ 添加衣物' }).click();
   await page.getByLabel('衣物照片（可选）').setInputFiles(file);
-  await expect(page.getByAltText('照片预览')).toBeVisible();
+  await expect(page.getByAltText('照片预览')).toBeVisible({timeout:90000});
   await expect(page.getByRole('alert').filter({hasText:'图片识别暂未配置'})).toBeVisible();
   await page.getByRole('button', { name: '取消', exact: true }).click();
   await expect(page.locator('article')).toHaveCount(0);
@@ -61,8 +68,8 @@ test('照片在确认前不入库，保存后刷新仍可读取', async ({ page 
   await page.getByLabel('名称').fill('照片上衣');
   await page.getByLabel('颜色').fill('红色');
   await page.getByLabel('衣物照片（可选）').setInputFiles(file);
-  await expect(page.getByAltText('照片预览')).toBeVisible();
-  await page.getByRole('button', { name: '确认保存' }).click();
+  await expect(page.getByAltText('照片预览')).toBeVisible({timeout:90000});
+  await confirm(page);
   await expect(page.locator('article img')).toBeVisible();
   await page.reload();
   await expect(page.locator('article img')).toBeVisible();
@@ -82,9 +89,9 @@ test('浏览器正确处理带 EXIF 旋转的 JPEG', async ({page}) => {
   await page.getByRole('button',{name:'＋ 添加衣物'}).click();
   await page.getByLabel('名称').fill('旋转照片');await page.getByLabel('颜色').fill('红色');
   await page.getByLabel('衣物照片（可选）').setInputFiles({name:'rotated.jpg',mimeType:'image/jpeg',buffer:oriented});
-  const preview=page.getByAltText('照片预览');await expect(preview).toBeVisible();
+  const preview=page.getByAltText('照片预览');await expect(preview).toBeVisible({timeout:90000});
   expect(await preview.evaluate((image:HTMLImageElement)=>[image.naturalWidth,image.naturalHeight])).toEqual([20,40]);
-  await page.getByRole('button',{name:'确认保存'}).click();await expect(page.getByRole('heading',{name:'旋转照片'})).toBeVisible();
+  await confirm(page);await expect(page.getByRole('heading',{name:'旋转照片'})).toBeVisible();
   await page.reload();expect(await page.locator('article img').evaluate((image:HTMLImageElement)=>[image.naturalWidth,image.naturalHeight])).toEqual([20,40]);
 });
 
@@ -94,10 +101,10 @@ test('大图缩放、静态 WebP 及无效文件提示', async ({page}) => {
   await page.getByLabel('衣物照片（可选）').setInputFiles({name:'fake.jpg',mimeType:'image/jpeg',buffer:Buffer.from(images.png,'base64')});
   await expect(page.getByRole('alert').filter({hasText:'图片损坏或格式不受支持'})).toBeVisible();
   await page.getByLabel('衣物照片（可选）').setInputFiles({name:'wide.png',mimeType:'image/png',buffer:Buffer.from(images.png,'base64')});
-  let preview=page.getByAltText('照片预览');await expect(preview).toBeVisible();
+  let preview=page.getByAltText('照片预览');await expect(preview).toBeVisible({timeout:90000});
   expect(await preview.evaluate((image:HTMLImageElement)=>[image.naturalWidth,image.naturalHeight])).toEqual([1600,640]);
   await page.getByLabel('衣物照片（可选）').setInputFiles({name:'wide.webp',mimeType:'image/webp',buffer:Buffer.from(images.webp,'base64')});
-  preview=page.getByAltText('照片预览');await expect(preview).toBeVisible();
+  preview=page.getByAltText('照片预览');await expect(preview).toBeVisible({timeout:90000});
   await expect.poll(()=>preview.evaluate((image:HTMLImageElement)=>image.naturalWidth)).toBe(1600);
 });
 
@@ -133,7 +140,7 @@ test('10 MiB 透明 PNG 可处理，超限拒绝且临时图片 URL 回收', asy
   const exact = Buffer.alloc(10*1024*1024); png.copy(exact);
   await page.getByRole('button',{name:'＋ 添加衣物'}).click();
   await page.getByLabel('衣物照片（可选）').setInputFiles({name:'transparent.png',mimeType:'image/png',buffer:exact});
-  const preview=page.getByAltText('照片预览'); await expect(preview).toBeVisible();
+  const preview=page.getByAltText('照片预览'); await expect(preview).toBeVisible({timeout:90000});
   const pixel=await preview.evaluate((img:HTMLImageElement)=>{
     const canvas=document.createElement('canvas');canvas.width=1;canvas.height=1;
     const context=canvas.getContext('2d')!;context.drawImage(img,0,0,1,1);
@@ -159,19 +166,20 @@ test('查看详情、替换照片及首页数量随添加删除变化',async({pa
   });
   await page.getByRole('button',{name:'＋ 添加衣物'}).click();
   await page.getByLabel('名称').fill('可换照片'); await page.getByLabel('颜色').fill('红');
-  await page.getByLabel('风格标签（用逗号分隔）').fill('休闲');await page.getByLabel('材质（可选）').fill('棉');
+  await page.getByRole('checkbox',{name:'简约风',exact:true}).check();await page.getByLabel('材质（可选）').fill('棉');
   await page.getByLabel('衣物照片（可选）').setInputFiles({name:'red.png',mimeType:'image/png',buffer:Buffer.from(photos.red,'base64')});
-  await expect(page.getByAltText('照片预览')).toBeVisible();await page.getByRole('button',{name:'确认保存'}).click();
+  await expect(page.getByAltText('照片预览')).toBeVisible({timeout:90000});await confirm(page);
   let card=page.locator('article').filter({hasText:'可换照片'});await expect(card).toBeVisible();
-  await card.getByText('查看详情').click();await expect(card.getByText('风格：休闲')).toBeVisible();await expect(card.getByText('材质：棉')).toBeVisible();
-  await card.getByRole('button',{name:'编辑'}).click();
+  await card.getByText('查看详情').click();await expect(page.getByRole('dialog').getByText('简约风',{exact:true})).toBeVisible();await expect(page.getByRole('dialog').getByText('棉',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'编辑衣物',exact:true}).click();
   await page.getByLabel('材质（可选）').fill('亚麻');
   await page.getByLabel('衣物照片（可选）').setInputFiles({name:'blue.png',mimeType:'image/png',buffer:Buffer.from(photos.blue,'base64')});
-  await expect(page.getByAltText('照片预览')).toBeVisible();await page.getByRole('button',{name:'确认保存'}).click();
+  await expect(page.getByAltText('照片预览')).toBeVisible({timeout:90000});await confirm(page);
   await expect(page.getByRole('dialog')).toHaveCount(0);await page.reload();
-  card=page.locator('article').filter({hasText:'可换照片'});await card.getByText('查看详情').click();await expect(card.getByText('材质：亚麻')).toBeVisible();const image=card.locator('img');await expect(image).toBeVisible();
+  card=page.locator('article').filter({hasText:'可换照片'});await card.getByText('查看详情').click();await expect(page.getByRole('dialog').getByText('亚麻',{exact:true})).toBeVisible();const image=page.getByRole('dialog').locator('img');await expect(image).toBeVisible();
   const pixel=await image.evaluate((img:HTMLImageElement)=>{const canvas=document.createElement('canvas');canvas.width=1;canvas.height=1;const context=canvas.getContext('2d')!;context.drawImage(img,0,0,1,1);return [...context.getImageData(0,0,1,1).data];});
-  expect(pixel[2]).toBeGreaterThan(200);expect(pixel[0]).toBeLessThan(30);
+  expect(pixel[0]).toBeGreaterThan(248);expect(pixel[1]).toBeGreaterThan(248);expect(pixel[2]).toBeGreaterThan(248);
+  await page.getByRole('button',{name:'关闭弹窗'}).click();
   await page.getByRole('link',{name:'首页',exact:true}).click();await expect(page.getByText('衣橱中有 1 件衣物')).toBeVisible();
   await page.getByRole('link',{name:'我的衣橱',exact:true}).click();
   card=page.locator('article').filter({hasText:'可换照片'});page.once('dialog',dialog=>dialog.accept());await card.getByRole('button',{name:'删除'}).click();await expect(card).toHaveCount(0);
@@ -190,7 +198,7 @@ test('衣橱写入故障时保留草稿，无孤立图且可重试',async({page}
   await page.goto('/wardrobe');await page.getByRole('button',{name:'＋ 添加衣物'}).click();
   await page.getByLabel('名称').fill('故障后恢复');await page.getByLabel('颜色').fill('白');
   await page.evaluate(()=>{(window as unknown as {failNextGarmentWrite:boolean}).failNextGarmentWrite=true;});
-  await page.getByRole('button',{name:'确认保存'}).click();
+  await confirm(page);
   await expect(page.getByRole('dialog',{name:'添加衣物'})).toBeVisible();await expect(page.getByRole('dialog').getByRole('alert')).toBeVisible();
   await expect(page.locator('dialog form')).toHaveAttribute('aria-describedby','wardrobe-form-error');
   await expect(page.getByLabel('名称')).toHaveValue('故障后恢复');
@@ -199,7 +207,7 @@ test('衣橱写入故障时保留草稿，无孤立图且可重试',async({page}
     const result=await new Promise<number[]>((resolve,reject)=>{const transaction=db.transaction(['garments','media'],'readonly');const a=transaction.objectStore('garments').count();const b=transaction.objectStore('media').count();transaction.oncomplete=()=>resolve([a.result,b.result]);transaction.onerror=()=>reject(transaction.error);});db.close();return result;
   });
   expect(await dbCounts()).toEqual([0,0]);
-  await page.getByRole('button',{name:'确认保存'}).click();await expect(page.getByRole('heading',{name:'故障后恢复'})).toBeVisible();
+  await confirm(page);await expect(page.getByRole('heading',{name:'故障后恢复'})).toBeVisible();
   expect(await dbCounts()).toEqual([1,1]);
 });
 
@@ -209,12 +217,12 @@ test('模拟识别候选可修改材质并确认后保存',async({page})=>{
   await page.goto('/wardrobe');await page.getByRole('button',{name:'＋ 添加衣物'}).click();
   const png=await page.evaluate(()=>{const canvas=document.createElement('canvas');canvas.width=8;canvas.height=8;return canvas.toDataURL('image/png').split(',')[1];});
   await page.getByLabel('衣物照片（可选）').setInputFiles({name:'candidate.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
-  await expect(page.getByAltText('照片预览')).toBeVisible();
+  await expect(page.getByAltText('照片预览')).toBeVisible({timeout:90000});
   await expect(page.getByLabel('名称')).toHaveValue('模型上衣');await expect(page.getByLabel('材质（可选）')).toHaveValue('棉');
   await expect(page.locator('article')).toHaveCount(0);
   await page.getByLabel('名称').fill('确认的上衣');await page.getByLabel('材质（可选）').fill('亚麻');
-  await page.getByRole('button',{name:'确认保存'}).click();const item=page.locator('article').filter({hasText:'确认的上衣'});await expect(item).toBeVisible();
-  await item.getByText('查看详情').click();await expect(item.getByText('材质：亚麻')).toBeVisible();
+  await confirm(page);const item=page.locator('article').filter({hasText:'确认的上衣'});await expect(item).toBeVisible();
+  await item.getByText('查看详情').click();await expect(page.getByRole('dialog').getByText('亚麻',{exact:true})).toBeVisible();
 });
 
 test('切换模式会取消在途识别，晚返回候选不会写入衣橱',async({page})=>{
@@ -273,7 +281,7 @@ test('图片压缩逐档降低质量，三档仍超限则清楚失败',async({pa
   await page.goto('/wardrobe');await page.getByRole('button',{name:'＋ 添加衣物'}).click();
   const png=await page.evaluate(()=>{const canvas=document.createElement('canvas');canvas.width=8;canvas.height=8;return canvas.toDataURL('image/png').split(',')[1];});
   const file={name:'photo.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')};
-  await page.getByLabel('衣物照片（可选）').setInputFiles(file);await expect(page.getByAltText('照片预览')).toBeVisible();
+  await page.getByLabel('衣物照片（可选）').setInputFiles(file);await expect(page.getByAltText('照片预览')).toBeVisible({timeout:90000});
   expect(await page.evaluate(()=>(window as unknown as {compressionQualities:number[]}).compressionQualities)).toEqual([0.85,0.75,0.65,0.85]);
   await page.evaluate(()=>{const state=window as unknown as {compressionQualities:number[];failAll:boolean};state.compressionQualities=[];state.failAll=true;});
   await page.getByLabel('衣物照片（可选）').setInputFiles([]);await page.getByLabel('衣物照片（可选）').setInputFiles(file);
@@ -293,7 +301,7 @@ test('旧照片处理晚返回时不能覆盖新选照片',async({page})=>{
   const photos=await page.evaluate(()=>{const canvas=document.createElement('canvas');canvas.width=8;canvas.height=8;const context=canvas.getContext('2d')!;context.fillStyle='red';context.fillRect(0,0,8,8);const red=canvas.toDataURL('image/png').split(',')[1];context.fillStyle='blue';context.fillRect(0,0,8,8);return {red,blue:canvas.toDataURL('image/png').split(',')[1]};});
   const input=page.getByLabel('衣物照片（可选）');await input.setInputFiles({name:'red.png',mimeType:'image/png',buffer:Buffer.from(photos.red,'base64')});
   await expect(page.getByText(/正在处理图片并尝试移除背景/)).toBeVisible();await input.setInputFiles({name:'blue.png',mimeType:'image/png',buffer:Buffer.from(photos.blue,'base64')});
-  const preview=page.getByAltText('照片预览');await expect(preview).toBeVisible();
+  const preview=page.getByAltText('上传原图');await expect(preview).toBeVisible({timeout:90000});
   await page.waitForTimeout(1000);
   const pixel=await preview.evaluate((image:HTMLImageElement)=>{const canvas=document.createElement('canvas');canvas.width=1;canvas.height=1;const context=canvas.getContext('2d')!;context.drawImage(image,0,0,1,1);return [...context.getImageData(0,0,1,1).data];});
   expect(pixel[2]).toBeGreaterThan(200);expect(pixel[0]).toBeLessThan(30);

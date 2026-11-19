@@ -11,7 +11,7 @@ test('识别与白底处理并行，候选填入网页且用户修改后才保�
   await page.route('**/models/birefnet/model_fp16.onnx', async route => {
     modelRequested();
     await modelGate;
-    await route.fulfill({ status: 503, body: 'local model unavailable' }).catch(() => {});
+    await route.continue().catch(() => {});
   });
   await page.route('**/api/capabilities', route => route.fulfill({ status: 200, json: { recognition: { available: true } } }));
   let releaseRecognition!: () => void;
@@ -45,7 +45,7 @@ test('识别与白底处理并行，候选填入网页且用户修改后才保�
   await expect(page.locator('article')).toHaveCount(0);
 
   releaseModel();
-  await expect(page.getByAltText('照片预览')).toBeVisible();
+  await expect(page.getByAltText('照片预览')).toBeVisible({timeout:90000});
   await page.getByLabel('版型').fill('合身');
   await page.getByLabel('描述').fill('用户确认的描述');
   await page.getByRole('button', { name: '确认保存' }).click();

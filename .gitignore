@@ -5,6 +5,8 @@ out/
 !.env.example
 *.tsbuildinfo
 test-results/
+test-results-pages/
+test-results-dev/
 playwright-report/
 .DS_Store
 # BiRefNet weights are installed locally after SHA-256 verification, not staged with source.
