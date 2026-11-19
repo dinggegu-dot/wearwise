@@ -12,16 +12,17 @@ export interface DemoStore {
 export class DemoService {
   constructor(private readonly store: DemoStore) {}
   async seed(reset = false) {
+    // 标签取自统一词表 src/shared/domain/tags.ts：[风格, 场景]。
     const items = [
-      ['奶白棉 T 恤','top','奶白','light',['日常','休闲']], ['浅绿针织衫','top','浅绿','medium',['简约','日常']],
-      ['深蓝直筒牛仔裤','bottom','深蓝','medium',['休闲','日常']], ['米色西装裤','bottom','米色','medium',['简约','通勤']],
-      ['橄榄绿外套','outerwear','绿色','warm',['休闲','通勤']], ['浅米连衣裙','dress','浅米','medium',['简约','日常']],
-      ['白色运动鞋','shoes','白色','light',['运动','休闲']], ['深棕乐福鞋','shoes','深棕','medium',['通勤','简约']]
+      ['奶白棉 T 恤','top','奶白','light',['休闲'],['学习','朋友聚会']], ['浅绿针织衫','top','浅绿','medium',['简约'],['学习','上班']],
+      ['深蓝直筒牛仔裤','bottom','深蓝','medium',['休闲'],['学习','朋友聚会','户外']], ['米色西装裤','bottom','米色','medium',['简约','通勤'],['上班']],
+      ['橄榄绿外套','outerwear','绿色','warm',['休闲','通勤'],['上班','户外']], ['浅米连衣裙','dress','浅米','medium',['简约','甜美'],['约会','朋友聚会']],
+      ['白色运动鞋','shoes','白色','light',['运动','休闲'],['运动健身','户外']], ['深棕乐福鞋','shoes','深棕','medium',['通勤','简约'],['上班']]
     ] as const;
     const now = new Date().toISOString();
-    const records = items.map(([name, category, color, warmth, styleTags]) => {
+    const records = items.map(([name, category, color, warmth, styleTags, sceneTags]) => {
       const id = crypto.randomUUID(), imageId = crypto.randomUUID();
-      return { garment: { id, name, category, color, warmth, styleTags:[...styleTags], imageId,
+      return { garment: { id, name, category, color, warmth, styleTags:[...styleTags], sceneTags:[...sceneTags], styleOther:[], sceneOther:[], imageId,
         sourceType:'demo' as const, fit:'不确定', description:'', revision:1,
         createdAt:now, updatedAt:now }, media:{id:imageId, blob:illustration(category,color)} };
     });

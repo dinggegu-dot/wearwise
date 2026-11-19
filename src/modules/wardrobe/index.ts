@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { beijingDate, isDateOnly } from '@/shared/domain/beijing-date';
+import { otherNotesSchema, resolveTags, tagGroupIssues, tagListSchema } from '@/shared/domain/tags';
 
 export const categorySchema = z.enum(['top', 'bottom', 'outerwear', 'dress', 'shoes']);
 export type Category = z.infer<typeof categorySchema>;
@@ -26,7 +27,14 @@ export const garmentSchema = z.object({
   fit: z.string().trim().min(1).max(50).default(UNCERTAIN),
   warmth: warmthSchema,
   material: z.string().max(100).optional(),
-  styleTags: z.array(z.string().trim().min(1).max(30)).max(20),
+  /** 风格标签：固定词表中的值或“其他”，多选。词表见 src/shared/domain/tags.ts。 */
+  styleTags: tagListSchema,
+  /** 场景标签：表示衣物可能适合的使用情境，多选；可以为空。 */
+  sceneTags: tagListSchema.default([]),
+  /** 风格为“其他”时保留的原始识别词或说明（用户确认后）。 */
+  styleOther: otherNotesSchema.default([]),
+  /** 场景为“其他”时保留的原始识别词或说明（用户确认后）。 */
+  sceneOther: otherNotesSchema.default([]),
   /** 自然语言描述，用户确认后的版本。 */
   description: z.string().max(1000).default(''),
   /** 白底图引用：衣橱展示与平铺搭配使用的唯一图片。上传原图不保留。 */
@@ -38,10 +46,34 @@ export const garmentSchema = z.object({
   revision: z.number().int().positive().default(1),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime()
-}).strict();
+}).strict().superRefine((g, ctx) => {
+  for (const message of [...tagGroupIssues('style', g.styleTags, g.styleOther), ...tagGroupIssues('scene', g.sceneTags, g.sceneOther)]) ctx.addIssue({ code: 'custom', message });
+});
 export type Garment = z.infer<typeof garmentSchema>;
-export type GarmentInput = Pick<Garment, 'name' | 'category' | 'color' | 'warmth' | 'styleTags' | 'sourceType'> & Partial<Pick<Garment, 'material' | 'fit' | 'description'>>;
-export type GarmentPatch = Partial<Pick<Garment, 'name' | 'category' | 'color' | 'fit' | 'warmth' | 'styleTags' | 'material' | 'description'>>;
+type TagFields = 'sceneTags' | 'styleOther' | 'sceneOther';
+/**
+ * 新增衣物的输入。styleTags / sceneTags 可以直接传 AI 原始输出或页面选中的固定值：
+ * 服务会映射到固定词表，映射不到的词进入对应的 *Other 并补上“其他”。
+ */
+export type GarmentInput = Pick<Garment, 'name' | 'category' | 'color' | 'warmth' | 'styleTags' | 'sourceType'> & Partial<Pick<Garment, 'material' | 'fit' | 'description' | TagFields>>;
+export type GarmentPatch = Partial<Pick<Garment, 'name' | 'category' | 'color' | 'fit' | 'warmth' | 'styleTags' | 'material' | 'description' | TagFields>>;
+
+/**
+ * 整理一件衣物的风格与场景标签。tags 中含“其他”时，优先用本次传入的说明，否则沿用 previous 的说明；
+ * 去掉“其他”即清空对应说明。
+ */
+export function normalizeGarmentTags<T extends GarmentPatch>(input: T, previous?: Pick<Garment, 'styleTags' | 'sceneTags' | 'styleOther' | 'sceneOther'>): T {
+  const next: GarmentPatch = { ...input };
+  if (input.styleTags !== undefined || input.styleOther !== undefined) {
+    const style = resolveTags('style', input.styleTags ?? previous?.styleTags ?? [], input.styleOther ?? previous?.styleOther ?? []);
+    next.styleTags = style.tags; next.styleOther = style.other;
+  }
+  if (input.sceneTags !== undefined || input.sceneOther !== undefined) {
+    const scene = resolveTags('scene', input.sceneTags ?? previous?.sceneTags ?? [], input.sceneOther ?? previous?.sceneOther ?? []);
+    next.sceneTags = scene.tags; next.sceneOther = scene.other;
+  }
+  return next as T;
+}
 export type Availability = 'available' | 'paused' | 'deleted' | 'missing';
 export interface Media { id: string; blob: Blob }
 
@@ -97,14 +129,14 @@ export class WardrobeService {
   async add(input: GarmentInput, whiteBackground: Blob, requestId = crypto.randomUUID()) {
     const now = new Date().toISOString();
     const imageId = crypto.randomUUID();
-    const garment = garmentSchema.parse({ ...input, id: requestId, imageId, revision: 1, createdAt: now, updatedAt: now });
+    const garment = garmentSchema.parse({ ...normalizeGarmentTags({ sceneTags: [], ...input }), id: requestId, imageId, revision: 1, createdAt: now, updatedAt: now });
     return this.wardrobe.createOnce(garment, { id: imageId, blob: whiteBackground });
   }
   /** 修改资料；传入 media 即替换白底图。expectedRevision 不一致时拒绝覆盖。 */
   async update(id: string, input: GarmentPatch, expectedRevision?: number, media?: Media) {
     const previous = await this.wardrobe.get(id);
     if (!previous || previous.deletedAt) throw new Error('衣物不存在，请刷新后重试');
-    return this.wardrobe.update(id, expectedRevision ?? previous.revision, input, media);
+    return this.wardrobe.update(id, expectedRevision ?? previous.revision, normalizeGarmentTags(input, previous), media);
   }
   /** 暂时不推荐，直到北京时间 resumeOn 当天 00:00。 */
   async pause(id: string, resumeOn: string, expectedRevision?: number, now: Date = new Date()) {
