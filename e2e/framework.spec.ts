@@ -32,7 +32,8 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
       await expect(page).toHaveURL(path);
       await expect(link).toHaveAttribute('aria-current', 'page');
       await expect(page.getByRole('heading', { name: title + '.' })).toBeVisible();
-      await expect(page.getByText('功能将在后续轮次接入')).toBeVisible();
+      if (title === '穿搭灵感') await expect(page.getByText('上传灵感')).toBeVisible();
+      else await expect(page.getByText('功能将在后续轮次接入')).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     }
     await page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: '首页' }).click();

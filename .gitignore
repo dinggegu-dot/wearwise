@@ -7,3 +7,6 @@ out/
 test-results/
 playwright-report/
 .DS_Store
+# BiRefNet weights are installed locally after SHA-256 verification, not staged with source.
+public/models/birefnet/*.onnx
+spikes/birefnet/model/onnx/*.onnx

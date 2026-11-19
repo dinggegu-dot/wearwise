@@ -39,9 +39,10 @@ export class RecommendationService {
   }
   async restore() {
     const data = await this.store.restore();
-    if (!data.active || data.active.wardrobeRevision !== data.revision || !data.records.length) return [];
+    // 衣物后来被删除、暂停或修改不改变已展示的搭配（新规则）；旧搭配按快照继续展示。
+    if (!data.active || !data.records.length) return [];
     const first = data.records[0];
-    if (first.wardrobeRevision !== data.revision || first.style !== data.active.style || first.weather.city !== data.active.city || weatherFingerprint(first.weather) !== data.active.weatherFingerprint) return [];
+    if (first.style !== data.active.style || first.weather.city !== data.active.city || weatherFingerprint(first.weather) !== data.active.weatherFingerprint) return [];
     return data.records;
   }
   clearActive() { return this.store.clearActive(); }

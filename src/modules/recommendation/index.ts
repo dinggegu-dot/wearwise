@@ -1,4 +1,4 @@
-import type { Garment } from '@/modules/wardrobe';
+import { isCandidate, type Garment } from '@/modules/wardrobe';
 import type { Weather } from '@/modules/weather';
 export type Style = '日常休闲' | '简约通勤';
 export interface Outfit { garmentIds: string[]; garments: Garment[]; reason: string; warnings: string[] }
@@ -9,10 +9,8 @@ type Ranked = { items: Garment[]; warmth: number; style: number; key: string };
 export class RuleRecommendationEngine implements RecommendationEngine {
   generate(garments: Garment[], weather: Weather, style: Style, now = new Date()): RecommendationResult {
     if (!Number.isFinite(weather.apparentTemperature)) throw new Error('天气温度无效');
-    const available = garments.filter(g => {
-      if (g.excludedUntil && !Number.isFinite(Date.parse(g.excludedUntil))) throw new Error('衣物排除时间无效');
-      return g.status === 'confirmed' && !g.excludedPermanently && (!g.excludedUntil || Date.parse(g.excludedUntil) <= now.getTime());
-    });
+    // 新候选只取未删除、未暂停或已到恢复日期（北京时间）的衣物。
+    const available = garments.filter(g => isCandidate(g, now));
     const group = (category: Garment['category']) => available.filter(g => g.category === category);
     const tops = group('top'), bottoms = group('bottom'), dresses = group('dress'), shoes = group('shoes');
     const allCoats = group('outerwear'), coats = allCoats.filter(g => g.warmth !== 'unknown');

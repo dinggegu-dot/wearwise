@@ -32,7 +32,42 @@ export function WeatherPanel({ onChange, exampleOnly, initialWeather }: { onChan
     <label>选择城市 <select aria-label="选择城市" value={city} onChange={event => changeCity(event.target.value as City)}>{Object.keys(cities).map(item => <option key={item}>{item}</option>)}</select></label>
     {loading && <p role="status">正在获取天气…</p>}
     {error && <p role="alert">{error}</p>}
-    {weather && <div><p>{weather.example ? '示例天气 · ' : weather.cached ? '缓存天气 · ' : ''}{weather.city} {describeWeatherCode(weather.weatherCode)}</p><p>{weather.temperature}°C · 体感 {weather.apparentTemperature}°C</p><small>数据时间：{new Date(weather.dataTime).toLocaleString('zh-CN', {timeZone:'Asia/Shanghai'})}</small></div>}
+
+{weather && (
+  <div>
+    <p>
+      {weather.example
+        ? '示例天气 · '
+        : weather.cached
+          ? '缓存天气 · '
+          : ''}
+      {weather.city} {describeWeatherCode(weather.weatherCode)}
+    </p>
+
+    <p>
+      当前气温：{weather.temperature}°C
+    </p>
+
+    <p>
+      体感温度：{weather.apparentTemperature}°C
+    </p>
+
+    <p>
+      当天温度范围：
+      {weather.temperatureMin ?? '--'}°C
+      {' ~ '}
+      {weather.temperatureMax ?? '--'}°C
+    </p>
+
+    <small>
+      数据时间：
+      {new Date(weather.dataTime).toLocaleString('zh-CN', {
+        timeZone: 'Asia/Shanghai'
+      })}
+    </small>
+  </div>
+)}
+
     <div className="wardrobe-actions">{!demo && <button disabled={!ready || loading} onClick={() => void load(false, true)}>{weather || error ? '重新获取' : '查看天气'}</button>}<button disabled={!ready || loading} onClick={() => void load(true)}>使用示例天气</button></div>
     <small>天气来源：<a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a></small>
   </div>;
