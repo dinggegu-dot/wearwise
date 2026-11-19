@@ -14,6 +14,7 @@
 - `main`：`2d9cdefbca01ee52e1afb275c0f316faf4612cdd`；与第4轮分支的共同祖先为 `b01b526231e82b12880030c0cdf58bf0033c4dde`。未从旧 main 丢失业务代码开工。
 - #34与本分支的共同祖先为 #29 的 `63efce6d10e265ada27b539664a2723b00305da5`，不在本分支祖先链中。未 merge / cherry-pick #34。
 - PR base：`codex/round-04-recommendation`，因为 #33 仍开放。现有CI仅监听 main / round-02-data 的PR，不能把没有产品检查误记为通过，也不为触发CI更改base。
+- 已创建 [Draft PR #35](https://github.com/dinggegu-dot/wearwise/pull/35)，标题 `[M03] Round 5 - Wardrobe Management`。03分支已推送；没有合并、改main或部署。
 - 最小字段兼容独立提交：`93fe847ae6bf1e6c470f43b5738833471ace46ae`，必须由02审查。
 - 主功能提交：`946e704888faa8219540571418b67ed8c6ebca8d`；最终功能／宽屏视觉修正提交：`6264b1988e1fff04fe8b997b519b8596aae660a4`。交接文档及截图随后独立提交，完整交付head以本分支和Draft PR显示为准。
 

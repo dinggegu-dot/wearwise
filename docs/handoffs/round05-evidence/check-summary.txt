@@ -36,4 +36,3 @@ Local ONNX inference: real model, synthetic garment fixture
 ℹ pass 10
 ℹ fail 0
 ℹ skipped 0
-
