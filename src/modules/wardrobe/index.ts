@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { beijingDate, isDateOnly } from '@/shared/domain/beijing-date';
+import { readTags, validateTags } from './tag-adapter';
 
 export const categorySchema = z.enum(['top', 'bottom', 'outerwear', 'dress', 'shoes']);
 export type Category = z.infer<typeof categorySchema>;
@@ -27,6 +28,11 @@ export const garmentSchema = z.object({
   warmth: warmthSchema,
   material: z.string().max(100).optional(),
   styleTags: z.array(z.string().trim().min(1).max(30)).max(20),
+  // M03 minimum field compatibility only. No DB version/migration change; M02 reviews this commit.
+  // Optional on legacy v3 records; wardrobe UI supplies complete arrays for new writes.
+  sceneTags: z.array(z.string().trim().min(1).max(30)).max(12).optional(),
+  styleOther: z.array(z.string().trim().min(1).max(30)).max(20).optional(),
+  sceneOther: z.array(z.string().trim().min(1).max(30)).max(20).optional(),
   /** 自然语言描述，用户确认后的版本。 */
   description: z.string().max(1000).default(''),
   /** 白底图引用：衣橱展示与平铺搭配使用的唯一图片。上传原图不保留。 */
@@ -40,8 +46,8 @@ export const garmentSchema = z.object({
   updatedAt: z.string().datetime()
 }).strict();
 export type Garment = z.infer<typeof garmentSchema>;
-export type GarmentInput = Pick<Garment, 'name' | 'category' | 'color' | 'warmth' | 'styleTags' | 'sourceType'> & Partial<Pick<Garment, 'material' | 'fit' | 'description'>>;
-export type GarmentPatch = Partial<Pick<Garment, 'name' | 'category' | 'color' | 'fit' | 'warmth' | 'styleTags' | 'material' | 'description'>>;
+export type GarmentInput = Pick<Garment, 'name' | 'category' | 'color' | 'warmth' | 'styleTags' | 'sourceType'> & Partial<Pick<Garment, 'material' | 'fit' | 'description' | 'sceneTags' | 'styleOther' | 'sceneOther'>>;
+export type GarmentPatch = Partial<Pick<Garment, 'name' | 'category' | 'color' | 'fit' | 'warmth' | 'styleTags' | 'material' | 'description' | 'sceneTags' | 'styleOther' | 'sceneOther'>>;
 export type Availability = 'available' | 'paused' | 'deleted' | 'missing';
 export interface Media { id: string; blob: Blob }
 
@@ -97,14 +103,26 @@ export class WardrobeService {
   async add(input: GarmentInput, whiteBackground: Blob, requestId = crypto.randomUUID()) {
     const now = new Date().toISOString();
     const imageId = crypto.randomUUID();
-    const garment = garmentSchema.parse({ ...input, id: requestId, imageId, revision: 1, createdAt: now, updatedAt: now });
+    const fields = input.sceneTags !== undefined || input.styleOther !== undefined || input.sceneOther !== undefined ? compatibleTags(input) : input;
+    const garment = garmentSchema.parse({ ...fields, id: requestId, imageId, revision: 1, createdAt: now, updatedAt: now });
     return this.wardrobe.createOnce(garment, { id: imageId, blob: whiteBackground });
   }
   /** 修改资料；传入 media 即替换白底图。expectedRevision 不一致时拒绝覆盖。 */
   async update(id: string, input: GarmentPatch, expectedRevision?: number, media?: Media) {
     const previous = await this.wardrobe.get(id);
     if (!previous || previous.deletedAt) throw new Error('衣物不存在，请刷新后重试');
-    return this.wardrobe.update(id, expectedRevision ?? previous.revision, input, media);
+    // Untouched groups retain their raw legacy values. A touched group is normalized in one place.
+    const patch = { ...input };
+    for (const kind of ['style', 'scene'] as const) {
+      const tagsKey = `${kind}Tags` as const, otherKey = `${kind}Other` as const;
+      if (input[tagsKey] === undefined && input[otherKey] === undefined) continue;
+      const tags = input[tagsKey] ?? previous[tagsKey] ?? [];
+      const other = input[otherKey] ?? (tags.includes('其他') ? previous[otherKey] ?? [] : []);
+      const normalized = readTags({ [tagsKey]: tags, [otherKey]: other });
+      validateTags(normalized);
+      patch[tagsKey] = normalized[tagsKey]; patch[otherKey] = normalized[otherKey];
+    }
+    return this.wardrobe.update(id, expectedRevision ?? previous.revision, patch, media);
   }
   /** 暂时不推荐，直到北京时间 resumeOn 当天 00:00。 */
   async pause(id: string, resumeOn: string, expectedRevision?: number, now: Date = new Date()) {
@@ -124,4 +142,9 @@ export class WardrobeService {
     if (!previous || previous.deletedAt) throw new Error('衣物不存在，请刷新后重试');
     return previous;
   }
+}
+
+function compatibleTags<T extends GarmentInput>(input: T): T {
+  const normalized = readTags(input); validateTags(normalized);
+  return { ...input, ...normalized };
 }
