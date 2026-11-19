@@ -1,11 +1,18 @@
 import { z } from 'zod';
 import { AIError, aiAvailable, recommend } from '@/modules/recognition/infrastructure/ai-provider';
-import { garmentSchema, isCandidate } from '@/modules/wardrobe';
+import {
+  garmentSchema,
+  isCandidate,
+  categorySchema
+} from '@/modules/wardrobe';
 import { weatherSnapshotSchema } from '@/modules/session/schema';
+import { readRecommendationKnowledge } from '@/modules/recommendation/knowledge';
+
+export const runtime = 'nodejs';
 
 // The caller supplies only enabled conditions. Unknown keys cannot reach the model.
 const text = (max: number) => z.string().trim().min(1).max(max);
-const knowledgeSchema = z.object({ version: text(100).optional(), rules: z.array(text(500)).min(1).max(100) }).strict();
+
 const preferenceSchema = z.object({ text: z.string().trim().max(500), imageIds: z.array(text(100)).max(6) }).strict()
   .refine(value => !!value.text || value.imageIds.length > 0);
 const conditionsSchema = z.object({
@@ -15,10 +22,30 @@ const conditionsSchema = z.object({
   scene: text(100).optional(),
   feedback: z.array(z.object({ choice: z.enum(['like', 'dislike']), reason: text(500) }).strict()).max(30).optional(),
 }).strict();
+
+const operationSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('swap-outfit'),
+    currentGarmentIds: z.array(text(100)).min(1).max(8)
+  }).strict(),
+
+  z.object({
+    kind: z.literal('swap-item'),
+    currentGarmentIds: z.array(text(100)).min(1).max(8),
+    targetGarmentId: text(100),
+    targetCategory: categorySchema
+  }).strict(),
+
+  z.object({
+    kind: z.literal('feedback-swap'),
+    currentGarmentIds: z.array(text(100)).min(1).max(8)
+  }).strict()
+]);
+
 const inputSchema = z.object({
   wardrobe: z.array(garmentSchema).min(1).max(200),
-  knowledge: knowledgeSchema,
   conditions: conditionsSchema,
+  operation: operationSchema.optional()
 }).strict();
 
 const MAX_BODY = 26 * 1024 * 1024;
@@ -68,7 +95,20 @@ export async function POST(request: Request) {
     const { value, images } = await readBody(request);
     const parsed = inputSchema.safeParse(value);
     if (!parsed.success) return fail('VALIDATION_ERROR', '推荐输入格式无效。', 400);
-    const { wardrobe, knowledge, conditions } = parsed.data;
+    const { wardrobe, conditions, operation } = parsed.data;
+
+let knowledge: Awaited<ReturnType<typeof readRecommendationKnowledge>>;
+
+try {
+  knowledge = await readRecommendationKnowledge();
+} catch {
+  return fail(
+    'KNOWLEDGE_UNAVAILABLE',
+    '搭配知识文件暂时无法读取，请稍后重试。',
+    500,
+    true
+  );
+}
     const ids = conditions.preference?.imageIds ?? [];
     if (new Set(ids).size !== ids.length || ids.length !== images.size || ids.some(id => !images.has(id)))
       return fail('VALIDATION_ERROR', '本次喜好参考图须与启用的图片逐一对应。', 400);
@@ -84,10 +124,23 @@ export async function POST(request: Request) {
     const modelConditions = conditions.preference
       ? { ...conditions, preference: { text: conditions.preference.text, referenceImageCount: referenceImages.length } }
       : conditions;
-    const result = await recommend({ wardrobe: modelWardrobe, knowledge, conditions: modelConditions, referenceImages }, request.signal);
+    const result = await recommend({
+    wardrobe: modelWardrobe,
+    knowledge,
+    conditions: modelConditions,
+    operation,
+    referenceImages
+    }, request.signal);
     if (result.garmentIds.some(id => !allowed.has(id)) || new Set(result.garmentIds).size !== result.garmentIds.length)
       return fail('AI_INVALID_RESPONSE', '推荐结果包含无效或重复衣物。', 502);
-    return Response.json({ ok: true, data: result, requestId });
+    return Response.json({
+  ok: true,
+  data: {
+    ...result,
+    knowledgeVersion: knowledge.version
+  },
+  requestId
+});
   } catch (e) {
     if (e instanceof AIError) return fail(e.code, e.message, e.code === 'AI_TIMEOUT' ? 504 : e.code === 'AI_UNAVAILABLE' ? 503 : 502, e.retryable);
     if (e instanceof InputError) return fail('VALIDATION_ERROR', e.message, 400);

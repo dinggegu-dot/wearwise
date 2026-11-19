@@ -5,16 +5,52 @@ afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 describe('天气服务', () => {
   it('正确解析天气时间和温度单位', async () => {
     const observed = Math.floor(Date.now()/1000);
-    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({current_units:{temperature_2m:'°C',apparent_temperature:'°C'},current:{time:observed,temperature_2m:20,apparent_temperature:19,weather_code:3}})));
+    const fetcher = vi.fn().mockResolvedValue(
+  new Response(JSON.stringify({
+    current_units: {
+      temperature_2m: '°C',
+      apparent_temperature: '°C'
+    },
+    current: {
+      time: observed,
+      temperature_2m: 20,
+      apparent_temperature: 19,
+      weather_code: 3
+    },
+    daily: {
+      temperature_2m_min: [15],
+      temperature_2m_max: [25]
+    }
+  }))
+);
     vi.stubGlobal('fetch', fetcher);
     const result = await new OpenMeteoProvider().current('上海');
-    expect(result).toMatchObject({ city:'上海', temperature:20, apparentTemperature:19, weatherCode:3, example:false, dataTime:new Date(observed*1000).toISOString() });
+    expect(result).toMatchObject({ city:'上海', temperature:20, apparentTemperature:19, weatherCode:3, example:false, dataTime:new Date(observed*1000).toISOString(), temperatureMin: 15, temperatureMax: 25 });
     expect(fetcher.mock.calls[0][0]).toContain('latitude=31.2304');
   });
   it('过旧或明显超前的观测时间不能伪装为实时天气',async()=>{
     const now=Math.floor(Date.now()/1000);
     for(const time of [now-3*60*60-10,now+15*60+10]) {
-      vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(JSON.stringify({current_units:{temperature_2m:'°C',apparent_temperature:'°C'},current:{time,temperature_2m:20,apparent_temperature:19}}))));
+      vi.stubGlobal(
+  'fetch',
+  vi.fn().mockResolvedValue(
+    new Response(JSON.stringify({
+      current_units: {
+        temperature_2m: '°C',
+        apparent_temperature: '°C'
+      },
+      current: {
+        time,
+        temperature_2m: 20,
+        apparent_temperature: 19
+      },
+      daily: {
+        temperature_2m_min: [15],
+        temperature_2m_max: [25]
+      }
+    }))
+  )
+);
       await expect(new OpenMeteoProvider().current('上海')).rejects.toThrow('观测时间异常');
     }
   });
@@ -48,4 +84,73 @@ describe('天气服务', () => {
     expect(provider.current).toHaveBeenCalledTimes(3);
   });
   it('WMO 未知代码不会显示晴天', () => { expect(describeWeatherCode(0)).toBe('晴朗'); expect(describeWeatherCode(999)).toBe('天气状况未知'); });
+});
+
+it('同一城市同一北京时间日期超过五分钟仍复用缓存', async () => {
+  let clock = new Date('2026-11-18T00:00:00+08:00');
+
+  const provider: WeatherProvider = {
+    current: vi.fn(async city => ({
+      city,
+      temperature: 20,
+      apparentTemperature: 19,
+      temperatureMin: 15,
+      temperatureMax: 25,
+      dataTime: clock.toISOString(),
+      fetchedAt: clock.toISOString(),
+      example: false,
+      source: 'open-meteo' as const
+    }))
+  };
+
+  const service = new WeatherService(
+    provider,
+    undefined,
+    () => clock
+  );
+
+  await service.current('北京');
+
+  // 模拟时间过去六分钟。
+  clock = new Date(clock.getTime() + 6 * 60 * 1000);
+
+  const result = await service.current('北京');
+
+  expect(result.cached).toBe(true);
+  expect(provider.current).toHaveBeenCalledTimes(1);
+});
+
+it('北京时间跨日后必须重新获取天气', async () => {
+  let clock = new Date('2026-11-18T15:59:00.000Z');
+
+  const provider: WeatherProvider = {
+    current: vi.fn(async city => ({
+      city,
+      temperature: 20,
+      apparentTemperature: 19,
+      temperatureMin: 15,
+      temperatureMax: 25,
+      dataTime: clock.toISOString(),
+      fetchedAt: clock.toISOString(),
+      example: false,
+      source: 'open-meteo' as const
+    }))
+  };
+
+  const service = new WeatherService(
+    provider,
+    undefined,
+    () => clock
+  );
+
+  // 北京时间 11 月 18 日 23:59。
+  await service.current('北京');
+
+  // 北京时间 11 月 19 日 00:01。
+  clock = new Date('2026-11-18T16:01:00.000Z');
+
+  const result = await service.current('北京');
+
+  expect(result.cached).not.toBe(true);
+  expect(provider.current).toHaveBeenCalledTimes(2);
 });

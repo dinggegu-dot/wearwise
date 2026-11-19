@@ -16,10 +16,15 @@ const routes = [
     const form = new FormData(); form.set('image', new File([fixture], 'inspiration.jpg', { type: 'image/jpeg' }));
     return new Request('http://127.0.0.1:3000/api/inspiration/analyze', { method: 'POST', body: form });
   } },
-  { name: '推荐', post: recommend, request: () => new Request('http://127.0.0.1:3000/api/recommendation', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ wardrobe: [testGarment('garment-1')], knowledge: { rules: ['颜色协调'] }, conditions: {} }),
-  }) },
+
+{ name: '推荐', post: recommend, request: () => new Request('http://127.0.0.1:3000/api/recommendation', {
+  method: 'POST', headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({
+    wardrobe: [testGarment('garment-1')],
+    conditions: {},
+  }),
+}) },
+
 ];
 
 beforeEach(() => {

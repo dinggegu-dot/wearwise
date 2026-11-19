@@ -69,8 +69,55 @@ export async function recognizeGarment(image:Blob,signal?:AbortSignal):Promise<R
  catch(e){if(e instanceof AIError)throw e;throw new AIError('AI_INVALID_RESPONSE','衣物识别结果不符合数据格式。');}
 }
 export async function analyzeInspiration(image:Blob,signal?:AbortSignal):Promise<InspirationAnalysis>{try{return inspirationSchema.parse(json(await adapter.complete('inspiration','分析穿搭灵感，只输出 JSON：name,tags([{text,kind(color|style|fit|layering|scene)}]),analysis。不要推断用户喜好。',image,signal)));}catch(e){if(e instanceof AIError)throw e;throw new AIError('AI_INVALID_RESPONSE','灵感分析结果不符合数据格式。');}}
-export async function recommend(input:{wardrobe:unknown;knowledge:unknown;conditions:unknown;referenceImages?:readonly Blob[]},signal?:AbortSignal):Promise<StructuredRecommendation>{
- const {referenceImages,...modelInput}=input;
- try{return recommendationSchema.parse(json(await adapter.complete('recommendation',`仅根据以下 JSON 输入推荐，返回 garmentIds 和 reason，不得创造衣物。参考图片仅表达本次喜好，图中服饰不能成为候选；只能返回 wardrobe 中的衣物 ID。${JSON.stringify(modelInput)}`,referenceImages,signal)));}
- catch(e){if(e instanceof AIError)throw e;throw new AIError('AI_INVALID_RESPONSE','推荐结果不符合数据格式。');}
+export async function recommend(
+  input: {
+    wardrobe: unknown;
+    knowledge: unknown;
+    conditions: unknown;
+    operation?: unknown;
+    referenceImages?: readonly Blob[];
+  },
+  signal?: AbortSignal
+): Promise<StructuredRecommendation> {
+  const { referenceImages, ...modelInput } = input;
+
+  const prompt = `
+你是 WearWise 穿搭推荐助手。
+
+严格遵守输入中的 wardrobe、knowledge、conditions 和 operation。
+
+操作规则：
+
+1. 没有 operation 时，生成一套完整的新搭配。
+2. swap-outfit：必须与 currentGarmentIds 组成不同的衣物组合，可以保留部分衣物。
+3. swap-item：只能替换 targetGarmentId 对应的衣物，必须保留其他所有衣物 ID，替换衣物必须属于 targetCategory。
+4. feedback-swap：根据 conditions.feedback 中按顺序提供的有效反馈生成不同搭配，较晚的明确修正优先。
+5. 所有衣物必须来自 wardrobe。
+6. 不得返回重复 ID。
+7. 只输出 JSON，包含 garmentIds 和 reason。
+
+以下是本次推荐输入：
+
+${JSON.stringify(modelInput)}
+`;
+
+  try {
+    return recommendationSchema.parse(
+      json(
+        await adapter.complete(
+          'recommendation',
+          prompt,
+          referenceImages,
+          signal
+        )
+      )
+    );
+  } catch (e) {
+    if (e instanceof AIError) throw e;
+
+    throw new AIError(
+      'AI_INVALID_RESPONSE',
+      '推荐结果不符合数据格式。'
+    );
+  }
 }

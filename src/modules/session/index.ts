@@ -172,6 +172,29 @@ export class SessionService {
 
   // —— 首页今日穿搭（与推荐页独立）——
   readHome() { return this.store.readHome(); }
+
+  /**
+   * 首页专用上下文。
+   *
+   * 固定读取：
+   * 1. 首页当前结果；
+   * 2. 全部有效长期偏好；
+   * 3. 当前可用衣橱。
+   *
+   * 不读取推荐页设置草稿、临时喜好、
+   * 场景、天气开关或单次反馈。
+   */
+  async homeContext(now = new Date()) {
+    const { home, current } = await this.store.readHome();
+
+    return {
+      home,
+      current,
+      longTerm: await this.preferences.listActive(),
+      candidates: await this.wardrobe.candidates(now)
+    };
+  }
+
   /** 首页固定使用长期记忆与当前城市当天天气，不读推荐页开关、喜好、场景或单次反馈。 */
   async commitHome(input: { kind: 'generate' | AdjustmentKind; weather: WeatherSnapshot; expectedResultId?: string; targetGarmentId?: string; result: ResultDraft }, now = new Date()) {
     if (input.weather.date !== beijingDate(now)) throw new Error('天气不是今天的数据，请重新获取。');
