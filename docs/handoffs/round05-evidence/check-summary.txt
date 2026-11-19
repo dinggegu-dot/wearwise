@@ -1,0 +1,39 @@
+WearWise M03 Round 5 — actual check summaries
+2026-11-20 Asia/Shanghai
+Real OpenRouter calls: 0
+Local ONNX inference: real model, synthetic garment fixture
+
+修改前单元 [baseline-unit.log]
+ Test Files  22 passed | 1 skipped (23)
+      Tests  157 passed | 1 skipped (158)
+
+修改前浏览器 [baseline-e2e.log]
+  5 failed
+  37 passed (3.9m)
+
+最终单元 [final-unit.log]
+ Test Files  24 passed | 1 skipped (25)
+      Tests  174 passed | 1 skipped (175)
+
+全量浏览器（边界修正前） [final-e2e.log]
+  5 failed
+  42 passed (9.9m)
+
+边界修正后衣橱专项 [final-wardrobe-e2e.log]
+  24 passed (4.2m)
+
+最终宽屏修正后R5浏览器 [final-visual.log]
+  5 passed (44.7s)
+
+开发模式浏览器 [dev-e2e.log]
+  5 passed (2.2m)
+
+静态浏览器 [pages-e2e.log]
+  3 passed (22.7s)
+
+团队采集脚本 [collector.log]
+ℹ tests 10
+ℹ pass 10
+ℹ fail 0
+ℹ skipped 0
+
