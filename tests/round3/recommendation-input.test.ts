@@ -27,6 +27,20 @@ describe('第 3 轮推荐输入边界', () => {
   beforeEach(() => { vi.stubEnv('OPENROUTER_API_KEY', 'test-key'); vi.stubEnv('AI_MODEL', 'test-model'); });
   afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
+  it('把新版衣物场景和本次喜好固定标签传给模型，不发送关闭条件', async () => {
+    const fetcher = vi.fn().mockResolvedValue(modelResponse({ garmentIds: ['shirt-1'], reason: '适合上班' }));
+    vi.stubGlobal('fetch', fetcher);
+    const input = { wardrobe: [testGarment('shirt-1', { styleTags: ['简约风'], sceneTags: ['上班'], styleOther: [], sceneOther: [] })], conditions: { preference: { text: '', imageIds: [], styleTags: ['简约风'] }, scene: { selected: '上班', custom: '' } } };
+    const response = await POST(request(input));
+    expect(response.status).toBe(200);
+    const prompt = JSON.parse(fetcher.mock.calls[0][1].body).messages[0].content[0].text as string;
+    expect(prompt).toContain('"sceneTags":["上班"]');
+    expect(prompt).toContain('"styleTags":["简约风"]');
+    expect(prompt).toContain('"selected":"上班"');
+    expect(prompt).not.toContain('"weather":');
+    expect(prompt).not.toContain('"memory":');
+  });
+
   it('完整验证第二轮衣物，仅把允许字段与已启用条件发送给模型', async () => {
     const fetcher = vi.fn().mockResolvedValue(modelResponse({ garmentIds: ['shirt-1'], reason: '颜色协调' }));
     vi.stubGlobal('fetch', fetcher);
