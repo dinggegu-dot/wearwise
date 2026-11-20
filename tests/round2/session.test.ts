@@ -16,7 +16,7 @@ describe('R02 设置草稿与已应用条件', () => {
     const { session } = services();
     const draft = await session.getSettingsDraft();
     expect(draft).toMatchObject({ memory: true, weather: true, preference: { enabled: false, text: '', imageIds: [], styleTags: [] }, scene: { enabled: false, selected: null, custom: '' } });
-    const off = applyDraft({ ...defaultSettingsDraft(), weather: false, preference: { enabled: false, text: '保留但关闭', imageIds: [], styleTags: ['简约'] }, scene: { enabled: true, selected: null, custom: '  ' } }, null);
+    const off = applyDraft({ ...defaultSettingsDraft(), weather: false, preference: { enabled: false, text: '保留但关闭', imageIds: [], styleTags: ['简约风'] }, scene: { enabled: true, selected: null, custom: '  ' } }, null);
     expect(off).toMatchObject({ weather: null, preference: null, scene: null });
     expect(() => applyDraft(defaultSettingsDraft(), null)).toThrow('天气暂时无法获取');
   });

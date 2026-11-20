@@ -1,107 +1,119 @@
 # 衣物风格／场景标签字段约定（第 2 轮补充）
 
 - 负责人：02
-- 依据：《WearWise 网页功能概述》第 4 版（`docs/project/source/WearWise 网页功能概述4.docx`，main `2d9cdef`）及 2026-11-16 标签投票（PR #31）
-- 分支：`codex/round-02-tags`，基于第 2 轮固定提交 `63efce6`。01 已确认采用单独分支、单独 PR，合并顺序为 #29 → 本 PR
-- 注意：仓库中的 `WEB-FUNCTION-OVERVIEW.md` 仍是旧版，标签规则以第 4 版 docx 为准
+- 依据：
+  - 《WearWise 网页功能概述》第 4 版（`docs/project/source/WearWise 网页功能概述4.docx`）
+  - 2026-11-16 标签投票（PR #31）
+  - **第 5 轮 PR #35 确认的 OUTFIT-TIPS V1.2 词表与字段**（`codex/round-05-wardrobe` 中的 `src/modules/wardrobe/tag-adapter.ts`、`docs/handoffs/ROUND-05.md`）。三者不一致时以第 5 轮为准。
+- 分支：`codex/round-02-tags`，基于第 2 轮固定提交 `63efce6`。按 01 的决定单独成 PR #34，合并顺序为 #29 → #34。
+- 注意：仓库里的 `WEB-FUNCTION-OVERVIEW.md` 仍是旧版，请以第 4 版 docx 为准。
 
-## 1. 已确定与待确认
+## 1. 已确定的内容
 
-| 项目 | 状态 | 本约定的处理 |
-|---|---|---|
-| 风格、场景分两组，均可多选 | 已确定 | `styleTags`、`sceneTags` 两个数组 |
-| 统一词表，候选、识别映射、保存校验共用 | 已确定 | 唯一词表文件 `src/shared/domain/tags.ts` |
-| 场景至少覆盖学习、上班、约会、朋友聚会、运动健身、户外 | 已确定（写的是“至少”） | 先放这 6 项 |
-| 风格超过 6 个，补充中性、甜美、亚文化 | **完整名单待 06 确认** | 先放 10 项占位，见第 2 节 |
-| 映射不到时输出“其他”，保留原始识别词或说明 | 已确定 | `styleOther`、`sceneOther` 保存原文 |
-| “其他”≠“不确定”，不自动扩充公共词表 | 已确定 | “其他”只与说明一起保存，词表不变 |
-| 本阶段不开放用户自定义标签 | 已确定 | 保存时只接受词表中的值或“其他” |
-| 本次场景选一项还是多项 | v4 未写明 | 先按**单选＋自填**，如需多选再调整 |
-
-词表定稿后**只替换 `tags.ts` 中的数组内容**，字段名和结构不变，页面与识别接线不用重做。
+| 项目 | 约定 |
+|---|---|
+| 风格 | V1.2 共 9 种：中性风、甜美风、亚文化风、简约风、优雅风、复古风、街头风、运动休闲风、学院风 |
+| 场景 | 6 种：学习、上班、约会、朋友聚会、运动健身、户外 |
+| 字段 | `styleTags`、`sceneTags`、`styleOther`、`sceneOther`，都是字符串数组 |
+| 多选 | 风格、场景各自独立多选 |
+| 其他 | “其他”只是填写说明的入口，不算第 10 种风格或第 7 种场景；说明保存原始识别词 |
+| 不确定 | “不确定”≠“其他”。不确定、未知、unknown、uncertain、无法判断这类词一律丢弃，对应选择保持为空 |
+| 自定义 | 本阶段不开放，保存时只接受词表里的值或“其他” |
+| 本次场景 | 先按**单选＋自填**实现。v4 没写明单选还是多选，如果需要多选再调整 |
 
 ## 2. 统一词表 `src/shared/domain/tags.ts`
 
-```ts
-STYLE_TAGS = ['简约','休闲','通勤','正式','运动','街头','复古','甜美','中性','亚文化'] // 占位，待 06 确认
-SCENE_TAGS = ['学习','上班','约会','朋友聚会','运动健身','户外']
-OTHER_TAG  = '其他'
-```
+这是唯一的词表文件。衣橱、识别、推荐都从这里读取候选、映射规则和校验，不允许各页面各写一套。
 
-导出内容：
+导出的名称与第 5 轮 `tag-adapter.ts` 一致，可以直接替换：
 
 | 名称 | 用途 |
 |---|---|
-| `STYLE_TAGS`、`SCENE_TAGS` | 页面候选项（上传确认、编辑、推荐页喜好与场景） |
-| `mapTag(kind, 词)` | 单个词映射到固定值，映射不到返回 `undefined` |
-| `resolveTags(kind, 词列表, 原说明?)` | 整理成 `{ tags, other }`，映射不到的进入 `other` 并补上“其他” |
-| `styleChoiceSchema`、`sceneChoiceSchema` | 推荐页只能选固定值时使用的校验 |
+| `STYLE_TAGS`、`SCENE_TAGS`、`OTHER_TAG` | 页面候选项 |
+| `TagKind`、`WardrobeTags` | 类型 |
+| `mapTag(kind, 词)` | 中文名、V1.2 英文名或无歧义同义词 → 固定值；映射不到返回 `undefined` |
+| `resolveTags(kind, 词列表, 已有说明?)` | 整理成 `{ tags, other }`：映射不到的进 `other`，不确定类的词丢弃，已有说明原样保留，有说明时补上“其他” |
+| `readTags(记录)` | 读取任意记录（包括旧版、缺字段的）的四个字段，返回整理后的结果，不改原记录 |
+| `validateTags(四个字段)` | 不合规时抛出中文提示 |
+| `styleChoiceSchema`、`sceneChoiceSchema` | 推荐页只能选固定值时用的校验 |
 
-同义映射只收录没有歧义的词，例如：极简→简约、休闲风→休闲、聚会→朋友聚会、健身→运动健身。“日常”这类拿不准的词不硬归类，进入“其他”。
+映射规则：
+- **英文名**：Neutral Style、Sweet Style、Subculture Style、Minimalist Style、Elegant Style、Vintage Style、Streetwear、Athleisure、Preppy Style；Study、Work、Date、Friends Gathering、Fitness and Sports、Outdoor。大小写不限。
+- **同义词**：中性 / 甜美 / 亚文化 / 简约 / 极简 / 极简风 / 优雅 / 复古 / 街头 / 运动休闲 / 学院 → 对应的“××风”；工作 → 上班；聚会 → 朋友聚会；健身、运动 → 运动健身。
+- **不硬归类**：“日常”“休闲”“通勤”等拿不准的词进“其他”。
 
 ## 3. 衣物资料
 
 ```ts
 {
-  styleTags:  string[]  // 固定风格值，或包含 '其他'
-  sceneTags:  string[]  // 固定场景值，或包含 '其他'；可以为空
-  styleOther: string[]  // 风格为“其他”时的原始识别词或说明
-  sceneOther: string[]  // 场景为“其他”时的原始识别词或说明
-  // 其余字段不变：name、category、color、fit、warmth、material、description……
+  styleTags:  string[]  // 固定风格值，可含 '其他'
+  sceneTags:  string[]  // 固定场景值，可含 '其他'，可以为空
+  styleOther: string[]  // 风格“其他”的原始识别词或说明
+  sceneOther: string[]  // 场景“其他”的原始识别词或说明
+  // 其余字段不变
 }
 ```
 
-保存时的校验规则：
+保存时的校验：
+- 每组最多 12 个标签、20 条说明，每条说明 1–30 字。
+- 选了“其他”就必须有说明，有说明就必须选“其他”。
+- 只能选固定值，不能重复。
 
-- 标签只能是词表中的值或“其他”，不能重复。
-- 选了“其他”就必须有说明；没选“其他”就不能有说明。
-- 单组最多 12 个标签、20 条说明，每条说明不超过 30 字。
-
-**服务会自动整理**：`wardrobe.add()` 和 `wardrobe.update()` 可以直接传 AI 原始词或页面选中的值，服务按 `resolveTags` 整理后再保存。
+`wardrobe.add()` / `wardrobe.update()` 会先整理再校验。不合规时抛出中文提示，例如“选择‘其他’时请填写对应说明；不确定时请清空选择。”
 
 ```ts
-await wardrobe.add({ ...资料, styleTags: ['复古风', 'Y2K'], sceneTags: ['上班', '聚会', '音乐节'] }, 白底图);
-// → styleTags ['复古','其他']，styleOther ['Y2K']
-//   sceneTags ['上班','朋友聚会','其他']，sceneOther ['音乐节']
+await wardrobe.add({ ...资料, styleTags: ['Minimalist Style', 'Y2K'], sceneTags: ['Work', '音乐节'] }, 白底图);
+// → styleTags ['简约风','其他']，styleOther ['Y2K']
+//   sceneTags ['上班','其他']，sceneOther ['音乐节']
 
-await wardrobe.update(id, { styleTags: ['简约', '其他'] });  // 保留“其他”：沿用原说明
-await wardrobe.update(id, { styleTags: ['简约'] });          // 删除“其他”：说明同时清空
-await wardrobe.update(id, { name: '新名字' });               // 未传标签：两组标签都不变
+await wardrobe.update(id, { name: '改名' });                 // 没传标签：两组都不变
+await wardrobe.update(id, { styleTags: ['简约风', '其他'] }); // 仍选着“其他”：沿用原说明
+await wardrobe.update(id, { styleTags: ['学院风'] });         // 去掉“其他”：风格说明清空，场景不变
 ```
 
-## 4. 给 03（第 5 轮衣橱页面）
+## 4. 给 03（第 5 轮，PR #35）
 
-- **候选项**：上传确认、批量中的每一件、编辑弹窗都从 `STYLE_TAGS`、`SCENE_TAGS` 取，风格和场景分两个多选区域。
-- **AI 结果自动填入**：把识别得到的词交给 `resolveTags` 得到 `{ tags, other }`，作为初始选中项和“其他”说明。
-- **“其他”的展示**：选中项中有“其他”时，在旁边显示 `styleOther` / `sceneOther` 的原文供用户确认。用户可以改选成固定值、增选或删除。
-- **保存**：传用户最终选中的 `styleTags` / `sceneTags`；如果用户改过说明，同时传 `styleOther` / `sceneOther`。
-- **详情页**：风格、场景分组展示，有“其他”时附原文。
-- **不提供**自由输入新标签（本阶段不开放自定义）。
+#34 合入后，把 `src/modules/wardrobe/tag-adapter.ts` 改成只转出统一模块，页面代码不用改：
+
+```ts
+export { STYLE_TAGS, SCENE_TAGS, OTHER_TAG, mapTag, resolveTags, readTags, validateTags } from '@/shared/domain/tags';
+export type { TagKind, WardrobeTags } from '@/shared/domain/tags';
+```
+
+`src/modules/wardrobe/index.ts` 中第 5 轮的最小兼容改动（`93fe847`）可以撤掉，改用 #34 的版本，这两份改动的功能是一样的。差别在于：
+- #34 的四个字段读取时缺省为 `[]`，不再是 `undefined`。
+- 数据库升到 v4，旧衣物在迁移时整理一次。
+
+`tests/round5/tags-data.test.ts` 中这两项会随之变化：
+- `does not migrate…`：原来断言 `verno` 为 3、`sceneTags` 为 `undefined`，现在分别是 4 和 `[]`。
+- 旧标签：迁移时就整理成固定值和“其他”，不再等到读取时转换。
+
+其余断言已在 #34 的 `tests/round2/tags.test.ts` 中照搬并通过。
 
 ## 5. 给 04（衣物识别）
 
 识别候选建议输出：
 
 ```json
-{ "styleTags": ["复古", "其他"], "styleOther": ["Y2K"],
+{ "styleTags": ["复古风", "其他"], "styleOther": ["Y2K"],
   "sceneTags": ["上班", "其他"], "sceneOther": ["音乐节"] }
 ```
 
-- 提示词要列出两份词表，要求模型优先选择词表里的词。
-- 如果模型输出了词表外的词，按原样传给页面也可以，保存时服务会转成“其他”并保留原文。
-- 无法判断风格或场景时输出空数组，不要输出“不确定”，也不要为了填满字段而编造。“其他”只用于“看得出来，但词表里没有”的情况。
-- 本次喜好参考图的解析结果：风格标签只能用 `STYLE_TAGS` 里的词，对应不上的内容写进说明文字，不进标签区。
+- 提示词里列出两份词表的中文名或英文名，要求模型优先从中选择。
+- 词表外的词原样传给页面也可以，保存时服务会转成“其他”并保留原文。
+- 判断不了时输出空数组，不要输出“不确定”，也不要编造。
+- 本次喜好参考图的解析结果只能用 `STYLE_TAGS` 中的值，对应不上的内容写进说明文字。
 
 ## 6. 给 05（推荐）
 
-- 衣物：新增 `sceneTags`。v4 要求场景标签**只用于辅助判断**，衣物没有同名场景标签时不能一律排除。
-- 本次场景草稿：`{ enabled, selected: 固定场景 | null, custom: 自填文字 }`。
-- 本次喜好草稿：新增 `styleTags`，只能是固定风格值，可以为空。
+- 衣物新增 `sceneTags`。场景标签**只用于辅助判断**，衣物没有同名场景标签时不能一律排除。
+- 本次场景草稿：`{ enabled, selected: 固定场景 | null, custom: 自填 }`。
+- 本次喜好草稿：新增 `styleTags`（固定风格值），可以不传，不传时按空处理。
 - 本轮已应用条件：
   - `preference: { text, imageIds, styleTags } | null`：只选了标签也算有内容。
-  - `scene: { selected, custom } | null`：两项都为空时为 `null`。
-- `sceneText(scene)` 生成依据文字，例如“户外（去爬山）”。`basis.scene` 仍是这段文字。
-- 搭配快照新增 `sceneTags`。快照只用于展示，保留当时的标签原文，**不按现行词表校验**。
+  - `scene: { selected, custom } | null`。
+- `sceneText(scene)` 生成依据文字，例如“户外（去爬山）”；`basis.scene` 仍是这段文字。
+- 搭配快照新增 `sceneTags`，按当时原样保存，不按现行词表校验。
 
 ## 7. 旧数据迁移（IndexedDB v3 → v4）
 
@@ -109,27 +121,27 @@ await wardrobe.update(id, { name: '新名字' });               // 未传标签�
 
 | 数据 | 处理 |
 |---|---|
-| 衣物 `styleTags`（旧自由文本） | 能映射的转为固定值，映射不到的进入 `styleOther` 并补“其他”。例：`['日常','休闲']` → `['休闲','其他']` ＋ `['日常']` |
-| 衣物缺 `sceneTags` 等字段 | 补空数组 |
+| 衣物旧 `styleTags`（自由文本） | 按词表整理。例：`['日常','简约']` → `['简约风','其他']`，说明 `['日常']` |
+| 第 5 轮已经写入四个字段的衣物 | 原样保留，不降格 |
+| 缺字段 | 补 `[]` |
+| 超长或超量的旧文字 | 截到 30 字，数量截到上限 |
 | 推荐页草稿 `scene.value` | 能对应固定场景的放进 `selected`，否则原文放进 `custom` |
-| 本轮已应用 `scene`（旧字符串） | 同上；本次喜好补 `styleTags: []` |
-| 新旧搭配结果、永久反馈里的快照 | 不改写。读取时缺 `sceneTags` 的按空数组处理 |
+| 本轮已应用的 `scene`（旧字符串） | 同上；本次喜好补 `styleTags: []` |
+| 搭配结果、永久反馈里的快照 | 不改写；读取时缺 `sceneTags` 按 `[]` 处理 |
 
 ## 8. 测试
 
 `tests/round2/tags.test.ts` 覆盖以下内容：
-
-- 词表数量。
-- 同义映射。
-- “其他”与说明必须配套。
-- 新增、编辑时的整理。
-- 推荐页喜好标签与场景。
-- v3→v4 迁移：衣物、草稿、本轮条件、旧快照、永久反馈。
-
-原有测试已同步改为新结构。
+- V1.2 词表。
+- 英文和同义词映射。
+- “不确定”的处理。
+- “其他”与说明的配套校验。
+- 新增、编辑和重开数据库后的持久化。
+- 推荐页的喜好标签和场景。
+- v3→v4 迁移：包括第 5 轮四字段数据、草稿、本轮条件、旧快照、永久反馈。
 
 ## 9. 本 PR 不包含
 
-- 衣橱页面的标签界面：第 5 轮由 03 完成。现有页面只是能继续保存，没有新增界面。
+- 衣橱页面：第 5 轮由 03 完成。
 - 识别提示词与识别候选字段：由 04 调整。
-- 推荐页界面、推荐对场景的使用：由 05 完成。
+- 推荐页界面以及推荐对场景的使用：由 05 完成。

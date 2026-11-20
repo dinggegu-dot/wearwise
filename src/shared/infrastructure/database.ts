@@ -7,7 +7,7 @@ import type { Preference } from '@/modules/preferences';
 import type { OutfitResult } from '@/modules/session/schema';
 import { DexieUnitOfWork } from '@/shared/infrastructure/unit-of-work';
 import { beijingDate, beijingMidnight } from '@/shared/domain/beijing-date';
-import { mapTag, resolveTags } from '@/shared/domain/tags';
+import { MAX_NOTE_LENGTH, MAX_OTHER_NOTES, MAX_TAGS, mapTag, resolveTags } from '@/shared/domain/tags';
 import { stateKeys } from '@/modules/session/schema';
 
 export interface StateRecord { key: string; value: unknown }
@@ -86,14 +86,19 @@ async function migrateToV3(tx: Transaction) {
 
 /**
  * 将 v3 衣物标签改写为 v4 结构。不删除任何衣物，也不丢弃旧标签原文：
- * 能映射到固定词表的转为固定值，映射不到的进入“其他”并保留原文，缺场景字段补为空。
+ * 能映射到固定词表的转为固定值，映射不到的进入“其他”并保留原文，“不确定”类的词丢弃，缺字段补为空。
+ * 第 5 轮兼容层在 v3 中已写入的四个字段（如 ['简约风','其他'] + ['Y2K']）原样保留，不降格。
+ * 超长的旧文字截到 30 字，超量的截到上限，保证迁移后的记录都能通过校验。
  */
 export function upgradeGarmentTags(item: Record<string, unknown>) {
   const words = (value: unknown) => Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
-  const style = resolveTags('style', words(item.styleTags), words(item.styleOther));
-  const scene = resolveTags('scene', words(item.sceneTags), words(item.sceneOther));
-  item.styleTags = style.tags; item.styleOther = style.other;
-  item.sceneTags = scene.tags; item.sceneOther = scene.other;
+  for (const kind of ['style', 'scene'] as const) {
+    const resolved = resolveTags(kind, words(item[`${kind}Tags`]), words(item[`${kind}Other`]));
+    const other = [...new Set(resolved.other.map(s => s.slice(0, MAX_NOTE_LENGTH)))].slice(0, MAX_OTHER_NOTES);
+    const fixed = resolved.tags.filter(t => t !== '其他').slice(0, MAX_TAGS - (other.length ? 1 : 0));
+    item[`${kind}Tags`] = other.length ? [...fixed, '其他'] : fixed;
+    item[`${kind}Other`] = other;
+  }
   return item;
 }
 

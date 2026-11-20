@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { beijingDate, isDateOnly } from '@/shared/domain/beijing-date';
-import { otherNotesSchema, resolveTags, tagGroupIssues, tagListSchema } from '@/shared/domain/tags';
+import { OTHER_TAG, otherNotesSchema, resolveTags, tagGroupIssues, tagListSchema, validateTags } from '@/shared/domain/tags';
 
 export const categorySchema = z.enum(['top', 'bottom', 'outerwear', 'dress', 'shoes']);
 export type Category = z.infer<typeof categorySchema>;
@@ -59,19 +59,25 @@ export type GarmentInput = Pick<Garment, 'name' | 'category' | 'color' | 'warmth
 export type GarmentPatch = Partial<Pick<Garment, 'name' | 'category' | 'color' | 'fit' | 'warmth' | 'styleTags' | 'material' | 'description' | TagFields>>;
 
 /**
- * 整理一件衣物的风格与场景标签。tags 中含“其他”时，优先用本次传入的说明，否则沿用 previous 的说明；
- * 去掉“其他”即清空对应说明。
+ * 整理一件衣物的风格与场景标签，并校验（不合规时抛出中文提示）。
+ * - 未传入的标签组保持不变。
+ * - 传入的组：标签用本次传入值，否则沿用 previous；说明用本次传入值，
+ *   未传说明时，只有仍选着“其他”才沿用原说明，去掉“其他”即清空。
  */
-export function normalizeGarmentTags<T extends GarmentPatch>(input: T, previous?: Pick<Garment, 'styleTags' | 'sceneTags' | 'styleOther' | 'sceneOther'>): T {
+export function normalizeGarmentTags<T extends GarmentPatch>(input: T, previous?: Partial<Pick<Garment, 'styleTags' | 'sceneTags' | 'styleOther' | 'sceneOther'>>): T {
   const next: GarmentPatch = { ...input };
-  if (input.styleTags !== undefined || input.styleOther !== undefined) {
-    const style = resolveTags('style', input.styleTags ?? previous?.styleTags ?? [], input.styleOther ?? previous?.styleOther ?? []);
-    next.styleTags = style.tags; next.styleOther = style.other;
+  for (const kind of ['style', 'scene'] as const) {
+    const tagsKey = `${kind}Tags` as const, otherKey = `${kind}Other` as const;
+    if (input[tagsKey] === undefined && input[otherKey] === undefined) continue;
+    const tags = input[tagsKey] ?? previous?.[tagsKey] ?? [];
+    const notes = input[otherKey] ?? (tags.includes(OTHER_TAG) ? previous?.[otherKey] ?? [] : []);
+    const resolved = resolveTags(kind, tags, notes);
+    next[tagsKey] = resolved.tags; next[otherKey] = resolved.other;
   }
-  if (input.sceneTags !== undefined || input.sceneOther !== undefined) {
-    const scene = resolveTags('scene', input.sceneTags ?? previous?.sceneTags ?? [], input.sceneOther ?? previous?.sceneOther ?? []);
-    next.sceneTags = scene.tags; next.sceneOther = scene.other;
-  }
+  validateTags({
+    styleTags: next.styleTags ?? previous?.styleTags ?? [], styleOther: next.styleOther ?? previous?.styleOther ?? [],
+    sceneTags: next.sceneTags ?? previous?.sceneTags ?? [], sceneOther: next.sceneOther ?? previous?.sceneOther ?? []
+  });
   return next as T;
 }
 export type Availability = 'available' | 'paused' | 'deleted' | 'missing';
