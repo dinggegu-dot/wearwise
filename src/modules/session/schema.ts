@@ -1,14 +1,19 @@
 import { z } from 'zod';
 import { categorySchema, warmthSchema } from '@/modules/wardrobe';
 import { isDateOnly } from '@/shared/domain/beijing-date';
+import { sceneChoiceSchema, styleChoiceSchema } from '@/shared/domain/tags';
 
 const dateOnly = z.string().refine(isDateOnly, '日期格式应为 YYYY-MM-DD');
 export const citySchema = z.enum(['深圳', '广州', '上海', '北京', '成都', '杭州']);
 
-/** 结果中每件衣物在生成当时的展示快照。衣物后来被删除或修改，旧搭配仍按此展示。 */
+/**
+ * 结果中每件衣物在生成当时的展示快照。衣物后来被删除或修改，旧搭配仍按此展示。
+ * 快照只用于展示，标签按当时原样保存、不按现行词表校验；旧快照缺场景字段时按空读取。
+ */
 export const garmentSnapshotSchema = z.object({
   id: z.string().min(1), name: z.string().min(1), category: categorySchema, color: z.string().min(1),
   fit: z.string().min(1), warmth: warmthSchema, material: z.string().optional(), styleTags: z.array(z.string()),
+  sceneTags: z.array(z.string()).default([]),
   imageId: z.string().min(1)
 }).strict();
 export type GarmentSnapshot = z.infer<typeof garmentSnapshotSchema>;
@@ -78,8 +83,16 @@ export type OutfitSnapshot = z.infer<typeof outfitSnapshotSchema>;
 export const settingsDraftSchema = z.object({
   memory: z.boolean(),
   weather: z.boolean(),
-  preference: z.object({ enabled: z.boolean(), text: z.string().max(500), imageIds: z.array(z.string().min(1)).max(6) }).strict(),
-  scene: z.object({ enabled: z.boolean(), value: z.string().max(100) }).strict(),
+  /**
+   * 本次喜好：一个开关，两种入口共用同一个文字区和标签区。
+   * styleTags 为固定风格词表中的值（参考图解析结果或用户手动选择，用户可增删）。
+   */
+  preference: z.object({
+    enabled: z.boolean(), text: z.string().max(500), imageIds: z.array(z.string().min(1)).max(6),
+    styleTags: z.array(styleChoiceSchema).max(12).default([])
+  }).strict(),
+  /** 本次场景：从固定场景词表中选一项，并可自行填写补充；自填内容不创建公共标签。 */
+  scene: z.object({ enabled: z.boolean(), selected: sceneChoiceSchema.nullable(), custom: z.string().max(100) }).strict(),
   updatedAt: z.string().datetime()
 }).strict();
 export type SettingsDraft = z.infer<typeof settingsDraftSchema>;
@@ -88,8 +101,8 @@ export type SettingsDraft = z.infer<typeof settingsDraftSchema>;
 export const appliedConditionsSchema = z.object({
   memory: z.boolean(),
   weather: weatherSnapshotSchema.nullable(),
-  preference: z.object({ text: z.string(), imageIds: z.array(z.string().min(1)) }).strict().nullable(),
-  scene: z.string().min(1).nullable(),
+  preference: z.object({ text: z.string(), imageIds: z.array(z.string().min(1)), styleTags: z.array(styleChoiceSchema).default([]) }).strict().nullable(),
+  scene: z.object({ selected: sceneChoiceSchema.nullable(), custom: z.string() }).strict().nullable(),
   appliedAt: z.string().datetime()
 }).strict();
 export type AppliedConditions = z.infer<typeof appliedConditionsSchema>;

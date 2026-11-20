@@ -37,7 +37,7 @@ describe('R02 数据库 v2 → v3 迁移', () => {
   it('不清空衣橱：衣物、白底图、旧反馈与旧推荐全部保留并改写为新结构', async () => {
     const name = `wearwise-test-${crypto.randomUUID()}`; await legacyDatabase(name);
     const db = new WearWiseDatabase(name); opened.push(db);
-    await db.open(); expect(db.verno).toBe(3);
+    await db.open(); expect(db.verno).toBe(4);
     const wardrobe = new WardrobeService(new DexieWardrobeRepository(db), new DexieMediaRepository(db));
     expect(await db.garments.count()).toBe(6);
     const all = Object.fromEntries((await db.garments.toArray()).map(g => [g.id, g]));

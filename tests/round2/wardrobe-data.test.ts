@@ -7,8 +7,8 @@ afterEach(cleanup);
 describe('R02 衣物资料、暂停与删除', () => {
   it('保存版型、厚薄、材质、风格、描述与白底图引用；无法判断的写“不确定”', async () => {
     const { wardrobe } = services();
-    const saved = await wardrobe.add(garment('灰色卫衣', 'top', { fit: '宽松', material: '棉', styleTags: ['休闲'], description: '落肩宽松卫衣' }), new Blob(['white-bg']));
-    expect(saved).toMatchObject({ fit: '宽松', warmth: 'medium', material: '棉', styleTags: ['休闲'], description: '落肩宽松卫衣' });
+    const saved = await wardrobe.add(garment('灰色卫衣', 'top', { fit: '宽松', material: '棉', styleTags: ['运动休闲风'], description: '落肩宽松卫衣' }), new Blob(['white-bg']));
+    expect(saved).toMatchObject({ fit: '宽松', warmth: 'medium', material: '棉', styleTags: ['运动休闲风'], description: '落肩宽松卫衣' });
     expect(await (await wardrobe.image(saved.imageId))?.text()).toBe('white-bg');
     const unsure = await wardrobe.add(garment('未知', 'bottom', { warmth: 'unknown' }), new Blob(['x']));
     expect(unsure.fit).toBe('不确定'); expect(unsure.description).toBe('');

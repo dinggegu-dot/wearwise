@@ -15,8 +15,8 @@ describe('R02 设置草稿与已应用条件', () => {
   it('首次默认：记忆开、天气开、本次喜好与场景关且空；关闭或开启但为空按空处理', async () => {
     const { session } = services();
     const draft = await session.getSettingsDraft();
-    expect(draft).toMatchObject({ memory: true, weather: true, preference: { enabled: false, text: '', imageIds: [] }, scene: { enabled: false, value: '' } });
-    const off = applyDraft({ ...defaultSettingsDraft(), weather: false, preference: { enabled: false, text: '保留但关闭', imageIds: [] }, scene: { enabled: true, value: '  ' } }, null);
+    expect(draft).toMatchObject({ memory: true, weather: true, preference: { enabled: false, text: '', imageIds: [], styleTags: [] }, scene: { enabled: false, selected: null, custom: '' } });
+    const off = applyDraft({ ...defaultSettingsDraft(), weather: false, preference: { enabled: false, text: '保留但关闭', imageIds: [], styleTags: ['简约风'] }, scene: { enabled: true, selected: null, custom: '  ' } }, null);
     expect(off).toMatchObject({ weather: null, preference: null, scene: null });
     expect(() => applyDraft(defaultSettingsDraft(), null)).toThrow('天气暂时无法获取');
   });
@@ -32,7 +32,7 @@ describe('R02 设置草稿与已应用条件', () => {
 describe('R02 铁律 1：只有生成成功才开启新一轮', () => {
   it('修改草稿、更新城市、换整套、换单件都不改变轮次与已应用条件', async () => {
     const { session, ids, round } = await started();
-    await session.saveSettingsDraft({ ...(await session.getSettingsDraft()), scene: { enabled: true, value: '约会' } });
+    await session.saveSettingsDraft({ ...(await session.getSettingsDraft()), scene: { enabled: true, selected: '约会', custom: '' } });
     await session.setCity('北京');
     await session.commitAdjustment({ expectedRoundId: round.roundId, kind: 'swap-outfit', result: { garmentIds: [ids.T2, ids.B2, ids.S2], reason: '换一套' } });
     const after = await session.commitAdjustment({ expectedRoundId: round.roundId, kind: 'swap-item', targetGarmentId: ids.T2, result: { garmentIds: [ids.T1, ids.B2, ids.S2], reason: '换上衣' } });
@@ -64,11 +64,11 @@ describe('R02 铁律 1：只有生成成功才开启新一轮', () => {
     await session.saveFeedback({ expectedRoundId: round.roundId, resultId: round.currentResultId, choice: 'like', reason: '', scope: 'once' });
     const { current } = await session.readRound();
     await session.saveFeedbackDraft({ roundId: round.roundId, resultId: current!.id, choice: null, reason: '写了一半', scope: 'once' });
-    await session.saveSettingsDraft({ ...(await session.getSettingsDraft()), scene: { enabled: true, value: '上班' } });
+    await session.saveSettingsDraft({ ...(await session.getSettingsDraft()), scene: { enabled: true, selected: '上班', custom: '' } });
     const next = await session.commitNewRound({ weather: await todayWeather(), result: { garmentIds: [ids.T1, ids.B1, ids.S2], reason: '新一轮' } });
     expect(next.roundId).not.toBe(round.roundId);
     expect(next).toMatchObject({ adjustments: [], feedback: [] });
-    expect(next.applied.scene).toBe('上班');
+    expect(next.applied.scene).toEqual({ selected: '上班', custom: '' });
     const view = await session.readRound();
     expect(view.results.map(r => r.reason)).toEqual(['新一轮']);
     expect(view.current?.basis.label).toContain('上班');
