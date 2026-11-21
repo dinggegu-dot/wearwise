@@ -6,7 +6,7 @@
 
 ## 固定版本与提交来源
 
-- 代码固定版本：[19bc7c384b5f590b8506ae4bee92814bf13f1c5a](https://github.com/dinggegu-dot/wearwise/commit/19bc7c384b5f590b8506ae4bee92814bf13f1c5a)。后续文档提交不改变此代码树；完整交付head以PR #35为准。
+- 原整合代码基线：[19bc7c384b5f590b8506ae4bee92814bf13f1c5a](https://github.com/dinggegu-dot/wearwise/commit/19bc7c384b5f590b8506ae4bee92814bf13f1c5a)。2026-11-21追加AI说明折叠／文案优化及同步E2E断言修正；修正前的代码固定版本不再是最新代码树。完整交付head以PR #35为准。
 - 分支：codex/round-05-wardrobe；upstream：origin/codex/round-05-wardrobe；PR base继续为 codex/round-04-recommendation。
 - 原交付：fe99dc4b7e6cbb5466f293fe06c5ac9360b176c3，原提交全部保留。
 - 04来源：[PR #36](https://github.com/dinggegu-dot/wearwise/pull/36)，7f3aa112dcccf3bac96d8d1aacaea3154e8b78dc，用合并提交8f354ce纳入。
@@ -68,7 +68,21 @@ Node真实模式使用 POST /api/background/remove、openrouter-background-clien
 
 **未声明已人工通过：** 批量部分保存、故障重试／付费API超时、自动到期时区边界、所有图片质量情形、跨浏览器独立验收、正式云端生产部署与CI。相关自动化测试仍按下节报告，不能替代上述真人实测。
 
-**R5 UI验收后修正：** 实测发现原界面把AI warnings逐条直接铺开，出现material、outerwear、sceneTags等开发字段名，上传说明冗长。已缩短白底／AI成功提示，改为默认折叠的“查看 AI 判断说明”，对常见字段名进行展示层中文映射；精简图片格式、原图留存与云端费用说明，保留失败告警、原始warnings、两类手动重试按钮及处理／保存逻辑。该UI修正提交后仍需运行项目回归测试和浏览器复查，不能沿用下文修正前的测试统计冒充新代码测试通过。
+**R5 UI验收后修正：** 实测发现原界面把AI warnings逐条直接铺开，出现material、outerwear、sceneTags等开发字段名，上传说明冗长。已缩短白底／AI成功提示，改为默认折叠的“查看 AI 判断说明”，对常见字段名进行展示层中文映射；精简图片格式、原图留存与云端费用说明，保留失败告警、原始warnings、两类手动重试按钮及处理／保存逻辑。该UI修正的最新实际验证结果见下方“UI修复后本地复验”；下文原自动化记录保留原日期与性质，不冒充本次新执行的全量验证。
+
+## UI修复后本地回归复验（2026-11-21，03负责人）
+
+负责人在桌面仓库更新至本轮修复分支后，以自己的Windows PowerShell实际运行并提供终端截图：
+
+| 检查 | 修复后真实结果 |
+| --- | --- |
+| `npm.cmd test -- --maxWorkers=2` | **202 passed，1 skipped**；27个测试文件通过、1个原有测试文件跳过；耗时5.48秒 |
+| `npm.cmd run build` | **成功**；Next.js生成13/13静态页面、完成优化与构建；含/wardrobe及/api/recognition、/api/background/remove路由 |
+| `npm.cmd run test:e2e -- e2e/round5-wardrobe.spec.ts e2e/round5-online.spec.ts e2e/wardrobe.spec.ts e2e/wardrobe-parallel.spec.ts e2e/persistence.spec.ts` | **24/24 passed**，耗时30.2秒，0失败 |
+
+首轮UI修改后专项E2E曾为22通过、2失败；定位均为测试对旧文案及旧版直接展开warnings的断言。已按新UI语义修复 `e2e/round5-online.spec.ts` 和 `e2e/wardrobe-parallel.spec.ts` 的UI断言（保留并行、无效白底、重试次数、修改保护和数据库持久化等业务断言），再次运行相同24项后全部通过。**不能把该轮通过表述为项目全量E2E或Github Actions CI成功。**
+
+此处为截图证实的本地验证；修复后尚未独立重跑GitHub Pages专项、全量天气测试或由07做跨模块终验。新增视觉折叠说明的正式人工浏览器观察可在第6轮交接时再次确认；E2E已经包含展开说明及警告内容可见的检查。
 
 ## 实际自动化验证
 
