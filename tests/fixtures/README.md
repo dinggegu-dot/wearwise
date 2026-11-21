@@ -6,3 +6,5 @@
 - 需要新素材时写明来源、许可、预期分类和用途。不要提交私人照片、密钥、浏览器数据库或真实账户截图。UI 示例是设计参考，测试图片从本目录或测试代码生成。
 - [`birefnet/`](birefnet/) 是独立 BiRefNet 浏览器 Spike 的合成 SVG 夹具，覆盖清晰主体、细边缘、低对比和无衣物背景；由项目测试夹具手工绘制，不含真实人物或私人照片。Spike 设计与指标见 [`docs/spikes/BiRefNet-browser-spike.md`](../../docs/spikes/BiRefNet-browser-spike.md)。
 - 切回真实模式可用“添加衣物”手动初始化测试数据。请在独立 Chrome 测试档案和同一个地址下操作；Git 克隆不会复制 IndexedDB。
+
+- `synthetic-white-shirt.png` 为程序绘制的 64×64 白底红色色块夹具，不含照片。Node 衣橱 E2E 用它模拟在线白底返回，验证解码、重试、保存与竞态；不代表真实模型抠图质量。

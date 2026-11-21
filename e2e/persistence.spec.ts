@@ -1,3 +1,4 @@
+import { mockBackground } from './helpers/background';
 import { chromium, test, expect } from '@playwright/test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -11,7 +12,8 @@ test('隔离 Chrome 用户目录关闭并重开后衣物和图片仍可读取', 
   try {
     let page = context.pages()[0] ?? await context.newPage();
     await page.goto(`${baseURL}/wardrobe`);
-    // A new photo must have a genuinely processed white background before persistence.
+    // Mock online processing; persistent profile is isolated from user data.
+    await mockBackground(page);
     await page.route('**/api/capabilities', route => route.fulfill({ json: { recognition: { available: false } } }));
     await expect(page.getByText('真实衣橱 · 仅本浏览器保存')).toBeVisible();
     await page.getByRole('button', {name:'＋ 添加衣物'}).click();

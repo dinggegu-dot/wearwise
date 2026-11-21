@@ -102,7 +102,7 @@ export function BatchEditor({ services, mode, category, onClose, onSaved, setLoc
       const files = Array.from(event.target.files ?? []); event.target.value = ''; if (!files.length) return;
       try { queue.add(files, category); setError(''); } catch (error) { setError(error instanceof Error ? error.message : '无法选择图片。'); }
     }}/></label>
-    <p className="muted upload-hint">{hint}{mode === 'real' ? ' 选择后自动调用应用的 AI 识别，请检查每件结果后勾选保存。' : ' 示例模式使用手动确认，不调用真实 AI。'}</p>
+    <p className="muted upload-hint">{hint}{mode === 'real' && process.env.NEXT_PUBLIC_RUNTIME_TARGET !== 'pages' ? ' 选择后分别调用在线白底处理和 AI 识别，请逐件对照原图检查后勾选保存。' : ' 当前使用本机白底与手动确认资料。'}</p>
     {error && <p role="alert" className="inline-error">{error}</p>}
     {!tasks.length && <div className="batch-empty">选择照片，开始整理这一批衣物。</div>}
     <div className="batch-list">{tasks.map(task => <article className="batch-row" key={task.id} data-task-id={task.id}>

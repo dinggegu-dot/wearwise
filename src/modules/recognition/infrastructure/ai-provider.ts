@@ -2,7 +2,7 @@ import 'server-only';
 import { z } from 'zod';
 import { UNCERTAIN, categorySchema, warmthSchema } from '@/modules/wardrobe';
 import { recognitionCandidateSchema, type RecognitionCandidate } from '@/modules/recognition';
-import { STYLE_TAGS, SCENE_TAGS, OTHER_TAG, resolveTags } from '@/modules/wardrobe/tag-adapter';
+import { STYLE_TAGS, SCENE_TAGS, OTHER_TAG, resolveTags } from '@/shared/domain/tags';
 
 const inspirationSchema = z.object({ name:z.string().trim().min(1).max(100), tags:z.array(z.object({text:z.string().trim().min(1).max(30),kind:z.enum(['color','style','fit','layering','scene'])}).strict()).max(30), analysis:z.string().trim().min(1).max(2000) }).strict();
 const preferenceDraftSchema = z.object({ text:z.string().trim().min(1).max(500), styleTags:z.array(z.string().trim().min(1).max(30)).max(12) });

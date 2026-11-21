@@ -131,7 +131,7 @@ describe('数据库 v3 → v4 迁移', () => {
     const g = (id: string, extra: Record<string, unknown>) => ({ id, name: id, category: 'top', color: '白', fit: '不确定', warmth: 'medium', styleTags: [], description: '', imageId: `img-${id}`, sourceType: 'photo', revision: 1, createdAt: t, updatedAt: t, ...extra });
     await old.table('garments').bulkAdd([
       g('a', { styleTags: ['日常', '简约'] }),
-      g('b', {}),
+      g('b', { pause: { since: t, resumeOn: '2026-11-02' } }),
       g('c', { styleTags: ['复古'], deletedAt: t }),
       g('r5', { styleTags: ['学院风', OTHER_TAG], styleOther: ['Y2K'], sceneTags: ['约会'], sceneOther: [] })
     ]);
@@ -160,6 +160,13 @@ describe('数据库 v3 → v4 迁移', () => {
     expect(view.current?.snapshots[0]).toMatchObject({ name: 'a（旧名）', styleTags: ['日常'], sceneTags: [] });
     const [feedback] = await ctx.preferences.listActive('feedback');
     expect(feedback.feedback?.outfit.snapshots[0]).toMatchObject({ styleTags: ['日常'], sceneTags: [] });
-    for (const id of ['img-a', 'img-r5']) expect(await ctx.wardrobe.image(id)).toBeDefined();
+    for (const id of ['img-a', 'img-b', 'img-c', 'img-r5']) expect(await (await ctx.wardrobe.image(id))?.text()).toBe(id);
+    expect((await ctx.wardrobe.candidates(new Date(t))).map(g => g.id)).not.toContain('b');
+    expect((await ctx.wardrobe.candidates(new Date('2026-11-01T16:00:00Z'))).map(g => g.id)).toContain('b');
+    await ctx.wardrobe.resume('b');
+    expect((await ctx.wardrobe.get('b'))?.pause).toBeUndefined();
+    expect((await db.results.get('res1'))?.snapshots[0]).toEqual(snapshot);
+    db.close(); await db.open();
+    expect((await ctx.session.readRound()).round?.roundId).toBe('r1');
   });
 });

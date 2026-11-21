@@ -4,7 +4,7 @@ import { cleanup, garment, services } from '../round2/helpers';
 import { OTHER_TAG, SCENE_TAGS, STYLE_TAGS, readTags, resolveTags, validateTags } from '@/modules/wardrobe/tag-adapter';
 
 afterEach(cleanup);
-describe('M03 V1.2 tag boundary and minimum field compatibility', () => {
+describe('M03 shared V1.2 tags and v4 data integration', () => {
   it('has exactly the confirmed 9 styles and 6 scenes, maps only unambiguous synonyms', () => {
     expect(STYLE_TAGS).toHaveLength(9); expect(SCENE_TAGS).toHaveLength(6);
     expect(resolveTags('style', ['Minimalist Style','极简','学院风','日常','不确定','unknown'])).toEqual({ tags: ['简约风','学院风',OTHER_TAG], other: ['日常'] });
@@ -28,15 +28,15 @@ describe('M03 V1.2 tag boundary and minimum field compatibility', () => {
     expect(next.styleOther).toEqual([]); expect(next.sceneOther).toEqual(['音乐节']);
     expect(await ctx.db.media.count()).toBe(1);
   });
-  it('does not migrate, rewrite or clear raw legacy records when reading or editing unrelated fields', async () => {
+  it('normalizes legacy input under v4 and preserves tags and images on unrelated edits', async () => {
     const ctx = services();
     const old = await ctx.wardrobe.add(garment('旧衣物','top', { styleTags: ['日常','简约'] }), new Blob(['old']));
-    expect(ctx.db.verno).toBe(3); expect(old.sceneTags).toBeUndefined();
+    expect(ctx.db.verno).toBe(4); expect(old.sceneTags).toEqual([]);
     const raw = await ctx.db.garments.get(old.id);
     expect(readTags(old)).toMatchObject({ styleTags: ['简约风','其他'], styleOther: ['日常'] });
     expect(await ctx.db.garments.get(old.id)).toEqual(raw);
     const updated = await ctx.wardrobe.update(old.id, { color: '白色' }, old.revision);
-    expect(updated.styleTags).toEqual(['日常','简约']); expect(updated.imageId).toBe(old.imageId);
+    expect(updated.styleTags).toEqual(['简约风','其他']); expect(updated.styleOther).toEqual(['日常']); expect(updated.imageId).toBe(old.imageId);
   });
   it('keeps revision protection and existing stored image if an update fails', async () => {
     const ctx = services(); const old = await ctx.wardrobe.add(garment('旧衣物','top'), new Blob(['old']));

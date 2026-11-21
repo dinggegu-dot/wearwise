@@ -1,3 +1,4 @@
+import { mockBackground } from './helpers/background';
 import { test, expect, type Page } from '@playwright/test';
 test.describe.configure({ timeout: 120000 });
 
@@ -8,9 +9,10 @@ async function confirm(page: Page) {
 }
 
 test.beforeEach(async ({ page }) => {
+  await mockBackground(page);
   await page.addInitScript(() => localStorage.setItem('wearwise-mode', 'real'));
   // Paid AI is always unavailable unless a test explicitly supplies a mock response.
-  // Photo success now requires real local BiRefNet; fallback must never be saved.
+  // Node photo flow uses a simulated online image result; failures must never be saved.
   await page.route('**/api/capabilities', route => route.fulfill({ json: { recognition: { available: false } } }));
 });
 
@@ -300,7 +302,7 @@ test('旧照片处理晚返回时不能覆盖新选照片',async({page})=>{
   await page.goto('/wardrobe');await page.getByRole('button',{name:'＋ 添加衣物'}).click();
   const photos=await page.evaluate(()=>{const canvas=document.createElement('canvas');canvas.width=8;canvas.height=8;const context=canvas.getContext('2d')!;context.fillStyle='red';context.fillRect(0,0,8,8);const red=canvas.toDataURL('image/png').split(',')[1];context.fillStyle='blue';context.fillRect(0,0,8,8);return {red,blue:canvas.toDataURL('image/png').split(',')[1]};});
   const input=page.getByLabel('衣物照片（可选）');await input.setInputFiles({name:'red.png',mimeType:'image/png',buffer:Buffer.from(photos.red,'base64')});
-  await expect(page.getByText(/正在处理图片并尝试移除背景/)).toBeVisible();await input.setInputFiles({name:'blue.png',mimeType:'image/png',buffer:Buffer.from(photos.blue,'base64')});
+  await expect(page.getByRole('status').filter({hasText:'正在处理图片并移除背景'})).toBeVisible();await input.setInputFiles({name:'blue.png',mimeType:'image/png',buffer:Buffer.from(photos.blue,'base64')});
   const preview=page.getByAltText('上传原图');await expect(preview).toBeVisible({timeout:90000});
   await page.waitForTimeout(1000);
   const pixel=await preview.evaluate((image:HTMLImageElement)=>{const canvas=document.createElement('canvas');canvas.width=1;canvas.height=1;const context=canvas.getContext('2d')!;context.drawImage(image,0,0,1,1);return [...context.getImageData(0,0,1,1).data];});

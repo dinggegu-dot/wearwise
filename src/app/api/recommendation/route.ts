@@ -7,7 +7,7 @@ import {
 } from '@/modules/wardrobe';
 import { weatherSnapshotSchema } from '@/modules/session/schema';
 import { readRecommendationKnowledge } from '@/modules/recommendation/knowledge';
-import { STYLE_TAGS, SCENE_TAGS } from '@/modules/wardrobe/tag-adapter';
+import { STYLE_TAGS, SCENE_TAGS } from '@/shared/domain/tags';
 
 export const runtime = 'nodejs';
 

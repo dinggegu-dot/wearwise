@@ -53,11 +53,12 @@ function createDraft(
     preference: {
       enabled: false,
       text: '',
-      imageIds: []
+      imageIds: [],
+      styleTags: []
     },
     scene: {
       enabled: false,
-      value: ''
+      selected: null, custom: ''
     },
     updatedAt: now.toISOString(),
     ...overrides
@@ -167,11 +168,12 @@ describe('RecommendationCoreService', () => {
         preference: {
           enabled: false,
           text: '这段文字不能发送',
-          imageIds: []
+          imageIds: [],
+          styleTags: []
         },
         scene: {
           enabled: false,
-          value: '这个场景不能发送'
+          selected: null, custom: '这个场景不能发送'
         }
       })
     );
@@ -197,6 +199,28 @@ describe('RecommendationCoreService', () => {
       }),
       now
     );
+  });
+
+  it('喜好只有固定标签也发送，场景保留固定值与自填', async () => {
+    const mocks = createMocks(createDraft({
+      preference: { enabled: true, text: '', imageIds: [], styleTags: ['学院风'] },
+      scene: { enabled: true, selected: '学习', custom: '图书馆' }
+    }));
+    await mocks.service.generateNewRound();
+    expect(vi.mocked(requestAIRecommendation).mock.calls[0][0].conditions).toEqual({
+      preference: { text: '', imageIds: [], styleTags: ['学院风'] },
+      scene: { selected: '学习', custom: '图书馆' }
+    });
+  });
+
+  it.each(['style', 'scene'] as const)('生成期间修改 %s 条件会拒绝提交', async kind => {
+    const draft = createDraft();
+    const mocks = createMocks(draft);
+    mocks.session.getSettingsDraft.mockResolvedValue(kind === 'style'
+      ? { ...draft, preference: { ...draft.preference, styleTags: ['学院风'] } }
+      : { ...draft, scene: { ...draft.scene, selected: '学习', custom: '图书馆' } });
+    await expect(mocks.service.generateNewRound()).rejects.toThrow();
+    expect(mocks.session.commitNewRound).not.toHaveBeenCalled();
   });
 
   it('长期记忆开启时，只发送有效长期偏好', async () => {
@@ -231,7 +255,7 @@ describe('RecommendationCoreService', () => {
       createDraft({
         scene: {
           enabled: false,
-          value: '正式商务会议'
+          selected: null, custom: '正式商务会议'
         }
       })
     );
@@ -250,7 +274,7 @@ describe('RecommendationCoreService', () => {
       createDraft({
         scene: {
           enabled: true,
-          value: '日常通勤'
+          selected: null, custom: '日常通勤'
         }
       })
     );
@@ -261,7 +285,7 @@ describe('RecommendationCoreService', () => {
       requestAIRecommendation
     ).mock.calls[0][0];
 
-    expect(input.conditions.scene).toBe('日常通勤');
+    expect(input.conditions.scene).toEqual({ selected: null, custom: '日常通勤' });
   });
 
   it('本次喜好开启时发送用户最终确认的文字', async () => {
@@ -270,7 +294,8 @@ describe('RecommendationCoreService', () => {
         preference: {
           enabled: true,
           text: '喜欢简约、低饱和度搭配',
-          imageIds: []
+          imageIds: [],
+          styleTags: []
         }
       })
     );
@@ -283,7 +308,8 @@ describe('RecommendationCoreService', () => {
 
     expect(input.conditions.preference).toEqual({
       text: '喜欢简约、低饱和度搭配',
-      imageIds: []
+      imageIds: [],
+      styleTags: []
     });
   });
 
@@ -294,7 +320,8 @@ it('喜好开启且有参考图时，读取 Blob 并传给 AI', async () => {
       preference: {
         enabled: true,
         text: '喜欢简约风格',
-        imageIds: ['reference-1']
+        imageIds: ['reference-1'],
+        styleTags: []
       }
     })
   );
@@ -318,7 +345,8 @@ it('喜好开启且有参考图时，读取 Blob 并传给 AI', async () => {
 
   expect(input.conditions.preference).toEqual({
     text: '喜欢简约风格',
-    imageIds: ['reference-1']
+    imageIds: ['reference-1'],
+    styleTags: []
   });
 
   expect(input.referenceImages?.get('reference-1')).toBe(image);

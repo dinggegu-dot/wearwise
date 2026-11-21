@@ -46,7 +46,7 @@ describe('single/bulk task lifecycle', () => {
     const ai = gate<RecognitionCandidate>();
     const queue = new UploadTasks({ prepare: async (_f,_s,validated) => { validated?.(image()); return image(); }, recognize: async () => ai.promise, save: async (_d,_w,id) => saved(id) });
     const [id] = queue.add([photo()], 'top'); queue.edit(id,'name','用户名称'); queue.edit(id,'styleTags',[]); queue.edit(id,'sceneTags',['学习']);
-    ai.resolve(candidate()); await ready(queue);
+    ai.resolve({ ...candidate(), styleOther: ['Y2K'], sceneTags: ['上班','其他'], sceneOther: ['音乐节'] }); await ready(queue);
     expect(queue.snapshot()[0].draft).toMatchObject({ name:'用户名称',styleTags:[],sceneTags:['学习'],styleOther:[],color:'白色',category:'outerwear' });
     queue.retry(id,true); await ready(queue); expect(queue.snapshot()[0].draft.styleTags).toEqual([]); queue.dispose();
   });

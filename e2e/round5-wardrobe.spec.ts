@@ -1,9 +1,11 @@
+import { mockBackground } from './helpers/background';
 import { expect, test, type Page } from '@playwright/test';
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
 test.describe.configure({ timeout: 120000 });
 
 test.beforeEach(async ({ page }) => {
+  await mockBackground(page);
   await page.addInitScript(() => localStorage.setItem('wearwise-mode','real'));
   await page.route('**/api/capabilities', route => route.fulfill({ json: { recognition: { available: false } } }));
 });
@@ -51,7 +53,7 @@ test('R5-04/05 批量混合状态、独立编辑、部分保存故障重试与�
   });
   await page.route('**/api/capabilities',route=>route.fulfill({json:{recognition:{available:true}}}));
   let count=0, release!:()=>void; const gate=new Promise<void>(resolve=>{release=resolve;});
-  await page.route('**/api/recognition',async route=>{ const index=++count;if(index===2)await gate;await route.fulfill({json:{ok:true,data:{candidate:{candidateId:crypto.randomUUID(),name:`批量衣物${index}`,category:'top',color:'红色',fit:'宽松',warmth:'medium',material:'不确定',styleTags:['Minimalist Style'],description:'模拟AI候选，真实本机白底图',warnings:[]}}}}).catch(()=>{}); });
+  await page.route('**/api/recognition',async route=>{ const index=++count;if(index===2)await gate;await route.fulfill({json:{ok:true,data:{candidate:{candidateId:crypto.randomUUID(),name:`批量衣物${index}`,category:'top',color:'红色',fit:'宽松',warmth:'medium',material:'不确定',styleTags:['Minimalist Style'],sceneTags:['Work','其他'],styleOther:['Y2K'],sceneOther:['音乐节'],description:'模拟AI候选和在线白底响应',warnings:[]}}}}).catch(()=>{}); });
   await page.goto('/wardrobe');await page.getByRole('button',{name:'批量添加',exact:true}).click();
   const sample=path.resolve('tests/fixtures/synthetic-shirt.jpg');
   const payload = {name:'synthetic-shirt.jpg',mimeType:'image/jpeg',buffer:readFileSync(sample)};
@@ -75,12 +77,12 @@ test('R5-04/05 批量混合状态、独立编辑、部分保存故障重试与�
   await rows.nth(2).getByRole('checkbox').check();await page.getByRole('button',{name:'保存所选衣物'}).click();await expect(rows.nth(2).getByRole('status')).toHaveText('已加入衣橱');
   await rows.nth(1).getByRole('button',{name:'重试',exact:true}).click();await expect(rows.nth(1).getByRole('status')).toHaveText('处理失败');await rows.nth(1).getByRole('button',{name:'移除',exact:true}).click();
   await page.getByRole('button',{name:'完成',exact:true}).click();await page.reload();const data=await stored(page);expect(data.garments).toHaveLength(2);expect(data.media).toBe(2);expect(new Set(data.garments.map(g=>g.id)).size).toBe(2);
-  expect(data.garments.find(g=>g.name==='批量确认上衣')).toMatchObject({styleTags:['简约风'],sceneTags:['学习']});
+  expect(data.garments.find(g=>g.name==='批量确认上衣')).toMatchObject({styleTags:['简约风','其他'],styleOther:['Y2K'],sceneTags:['上班','其他','学习'],sceneOther:['音乐节']});
 });
 
 test('R5-09 文件选择取消、弹窗关闭与Object URL释放',async({page})=>{
   await page.addInitScript(()=>{const make=URL.createObjectURL.bind(URL),drop=URL.revokeObjectURL.bind(URL),urls=new Set<string>();(window as unknown as {round5Urls:Set<string>}).round5Urls=urls;URL.createObjectURL=value=>{const url=make(value);urls.add(url);return url;};URL.revokeObjectURL=url=>{urls.delete(url);drop(url);};});
-  await page.route('**/models/birefnet/model_fp16.onnx',route=>route.fulfill({status:503,body:'test unavailable'}));
+  await page.route('**/api/background/remove',route=>route.fulfill({status:503,json:{error:{message:'白底处理失败：模拟上游不可用'}}}));
   await page.goto('/wardrobe');await page.getByRole('button',{name:'＋ 添加衣物'}).click();await page.getByLabel('名称').fill('保留草稿');
   await page.getByLabel('衣物照片（可选）').setInputFiles(path.resolve('tests/fixtures/synthetic-shirt.jpg'));await expect(page.getByRole('alert').filter({hasText:'白底处理失败'})).toBeVisible();
   await page.getByLabel('衣物照片（可选）').dispatchEvent('cancel');await expect(page.getByRole('dialog')).toBeVisible();await expect(page.getByLabel('名称')).toHaveValue('保留草稿');
@@ -91,11 +93,11 @@ test('R5-06 换图失败和取消保留旧记录，保存故障保留新草稿�
   await page.addInitScript(()=>{const put=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(value,key){const w=window as unknown as {failRound5Update?:boolean};if(this.name==='garments'&&w.failRound5Update){w.failRound5Update=false;throw new DOMException('injected update quota','QuotaExceededError');}return put.call(this,value,key);};});
   await page.goto('/wardrobe');await page.getByRole('button',{name:'＋ 添加衣物'}).click();await page.getByLabel('名称').fill('保护原衣物');await page.getByRole('checkbox',{name:'学院风',exact:true}).check();await page.getByRole('button',{name:'确认保存'}).click();
   const old=(await stored(page)).garments[0];const card=page.locator('.wardrobe-grid article').filter({hasText:'保护原衣物'});
-  const unavailable=(route:import('@playwright/test').Route)=>route.fulfill({status:503,body:'test model missing'});
-  await page.route('**/models/birefnet/model_fp16.onnx',unavailable);await card.getByRole('button',{name:'编辑',exact:true}).click();
+  const unavailable=(route:import('@playwright/test').Route)=>route.fulfill({status:503,json:{error:{message:'白底处理失败：模拟上游不可用'}}});
+  await page.route('**/api/background/remove',unavailable);await card.getByRole('button',{name:'编辑',exact:true}).click();
   const sample=path.resolve('tests/fixtures/synthetic-shirt.jpg');await page.getByLabel('衣物照片（可选）').setInputFiles(sample);await expect(page.getByRole('alert').filter({hasText:'白底处理失败'})).toBeVisible();await expect(page.getByRole('button',{name:'确认保存'})).toBeDisabled();expect((await stored(page)).garments[0]).toEqual(old);
   await page.getByRole('button',{name:'取消',exact:true}).click();expect((await stored(page)).garments[0]).toEqual(old);
-  await page.unroute('**/models/birefnet/model_fp16.onnx',unavailable);await card.getByRole('button',{name:'编辑',exact:true}).click();await page.getByLabel('衣物照片（可选）').setInputFiles(sample);await expect(page.getByAltText('照片预览')).toBeVisible({timeout:90000});await page.getByRole('button',{name:'改为手动填写并确认'}).click();await page.getByLabel('名称').fill('确认新图片');
+  await page.unroute('**/api/background/remove',unavailable);await card.getByRole('button',{name:'编辑',exact:true}).click();await page.getByLabel('衣物照片（可选）').setInputFiles(sample);await expect(page.getByAltText('照片预览')).toBeVisible({timeout:90000});await page.getByRole('button',{name:'改为手动填写并确认'}).click();await page.getByLabel('名称').fill('确认新图片');
   await page.evaluate(()=>{(window as unknown as {failRound5Update:boolean}).failRound5Update=true;});await page.getByRole('button',{name:'确认保存'}).click();await expect(page.getByRole('alert').filter({hasText:'保存失败'})).toBeVisible();await expect(page.getByLabel('名称')).toHaveValue('确认新图片');expect((await stored(page)).garments[0]).toEqual(old);expect((await stored(page)).media).toBe(1);
   await page.getByRole('button',{name:'确认保存'}).click();await expect(page.getByRole('dialog')).toHaveCount(0);await page.reload();const after=await stored(page);expect(after.garments[0]).toMatchObject({name:'确认新图片',styleTags:['学院风']});expect(after.garments[0].imageId).not.toBe(old.imageId);expect(after.media).toBe(1);
 });

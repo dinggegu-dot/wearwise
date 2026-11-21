@@ -106,8 +106,8 @@ export class UploadTasks {
       const { candidateId: _id, warnings, ...fields } = candidate;
       const normalized = readTags(fields);
       const proposed: Partial<WardrobeDraft> = { ...fields, styleTags: normalized.styleTags, styleOther: normalized.styleOther };
-      // M04's current candidate has no scene fields. Absence must not erase a
-      // saved/manual scene group when replacing an image with this older API.
+      // Legacy candidates without scene fields must not erase a saved/manual
+      // scene group. The current M04 contract supplies both scene arrays.
       if ('sceneTags' in fields || 'sceneOther' in fields) Object.assign(proposed, { sceneTags: normalized.sceneTags, sceneOther: normalized.sceneOther });
       const next = { ...task.draft };
       for (const key of Object.keys(proposed) as (keyof WardrobeDraft)[]) {

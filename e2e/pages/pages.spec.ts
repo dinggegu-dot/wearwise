@@ -65,7 +65,7 @@ test('静态网站加载固定 BiRefNet 模型，白底图片保存后刷新仍�
   const model = await readFile(path.resolve('out/models/birefnet/model_fp16.onnx'));
   expect(model.length).toBe(98484532);
   expect(createHash('sha256').update(model).digest('hex')).toBe('eff9216bb2f9d3f023d9c2b7196845a7485739ab1f231593633e4d2344ffc516');
-  await expect(page.getByText('已在本机完成白底抠图。')).toBeVisible({ timeout: 90000 });
+  await expect(page.getByRole('status').filter({ hasText: '白底结果已返回' })).toBeVisible({ timeout: 90000 });
   const whiteCorner = (selector: string) => page.locator(selector).evaluate((image: HTMLImageElement) => {
     const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1;
     const context = canvas.getContext('2d')!; context.drawImage(image, 0, 0);

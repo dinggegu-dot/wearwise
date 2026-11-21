@@ -1,3 +1,4 @@
+import { backgroundResult } from './helpers/background';
 import { expect, test } from '@playwright/test';
 import path from 'node:path';
 
@@ -8,10 +9,10 @@ test('识别与白底处理并行，候选填入网页且用户修改后才保�
   const modelGate = new Promise<void>(resolve => { releaseModel = resolve; });
   let modelRequested!: () => void;
   const modelSeen = new Promise<void>(resolve => { modelRequested = resolve; });
-  await page.route('**/models/birefnet/model_fp16.onnx', async route => {
+  await page.route('**/api/background/remove', async route => {
     modelRequested();
     await modelGate;
-    await route.continue().catch(() => {});
+    await backgroundResult(route).catch(() => {});
   });
   await page.route('**/api/capabilities', route => route.fulfill({ status: 200, json: { recognition: { available: true } } }));
   let releaseRecognition!: () => void;
@@ -33,7 +34,7 @@ test('识别与白底处理并行，候选填入网页且用户修改后才保�
   await page.getByLabel('衣物照片（可选）').setInputFiles(path.resolve('tests/fixtures/synthetic-shirt.jpg'));
   await modelSeen;
   await recognitionSeen;
-  // The remote request starts even while the local background model is held back.
+  // Recognition starts independently while the online image editing response is held back.
   await expect(page.getByRole('status').filter({ hasText: '正在处理图片' })).toBeVisible();
   await page.getByLabel('名称').fill('用户自己的名称');
   releaseRecognition();
