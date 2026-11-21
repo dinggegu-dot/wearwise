@@ -11,7 +11,7 @@ const opened: WearWiseDatabase[]=[];
 afterEach(async()=>{for(const db of opened.splice(0))await db.delete();});
 describe('领域边界',()=>{
  it('模型 provider 可替换并仍经过候选校验',async()=>{
-  const provider: RecognitionProvider={recognize:vi.fn(async()=>({candidateId:crypto.randomUUID(),name:'上衣',category:'top' as const,color:'白',fit:'不确定',warmth:'unknown' as const,material:'不确定',styleTags:[],description:'不确定',warnings:[]}))};
+  const provider: RecognitionProvider={recognize:vi.fn(async()=>({candidateId:crypto.randomUUID(),name:'上衣',category:'top' as const,color:'白',fit:'不确定',warmth:'unknown' as const,material:'不确定',styleTags:[],sceneTags:[],styleOther:[],sceneOther:[],description:'不确定',warnings:[]}))};
   expect((await new RecognitionService(provider).recognize(new Blob(['test']))).name).toBe('上衣');expect(provider.recognize).toHaveBeenCalledOnce();
  });
  it('衣橱存储可替换，应用服务不绑定 Dexie',async()=>{
@@ -34,7 +34,7 @@ describe('领域边界',()=>{
  });
  it('衣橱事务可连续删除引用并清理图片，过程中失败可回滚',async()=>{
   const db=new WearWiseDatabase(`wearwise-test-${crypto.randomUUID()}`);opened.push(db);const uow=new DexieUnitOfWork(db);
-  const now=new Date().toISOString();const garment:Garment={id:'a',name:'上衣',category:'top',color:'白',warmth:'unknown',styleTags:[],imageId:'photo',sourceType:'manual',fit:'不确定',description:'',revision:1,createdAt:now,updatedAt:now};
+  const now=new Date().toISOString();const garment:Garment={id:'a',name:'上衣',category:'top',color:'白',warmth:'unknown',styleTags:[],sceneTags:[],styleOther:[],sceneOther:[],imageId:'photo',sourceType:'manual',fit:'不确定',description:'',revision:1,createdAt:now,updatedAt:now};
   await uow.write('wardrobe',async tx=>{await tx.media.add({id:'photo',blob:new Blob(['x'])});await tx.garments.add(garment);await tx.meta.put({key:'wardrobeRevision',value:1});});
   await uow.write('wardrobe',async tx=>{const previous=await tx.garments.get('a');expect(previous).toBeDefined();await tx.garments.remove('a');if(!await tx.garments.referencesImage('photo'))await tx.media.remove('photo');await tx.meta.put({key:'wardrobeRevision',value:2});});
   expect(await db.garments.count()).toBe(0);expect(await db.media.count()).toBe(0);expect((await db.meta.get('wardrobeRevision'))?.value).toBe(2);

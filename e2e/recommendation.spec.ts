@@ -33,7 +33,7 @@ for (const viewport of [{width:1440,height:900},{width:390,height:844}]) {
   await page.getByRole('link', {name:'我的衣橱'}).click();
   const card=page.locator('article').filter({hasText:'白衬衫'});
   await card.getByRole('button', {name:'暂时不推荐'}).click();
-  await card.getByRole('button', {name:'确认暂停'}).click();
+  await page.getByRole('dialog').getByRole('button', {name:'确认暂停'}).click();
   await expect(card.getByText(/暂停推荐，\d{4}-\d{2}-\d{2} 起恢复/)).toBeVisible();
   // 新规则：暂停衣物不改变已展示的搭配，旧结果与反馈保留。
   await page.getByRole('link', {name:'穿搭推荐'}).click();

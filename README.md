@@ -8,6 +8,8 @@
 
 第 3 轮 04 → 05 的当前交接记录是[本地草稿](docs/handoffs/ROUND-03.md)，尚未固定提交 SHA，不能作为接收方正式基线。
 
+**第 5 轮（03 我的衣橱）**：已将02正式标签与IndexedDB v4、04真实识别与在线白底整合到 [第五轮开发分支](https://github.com/dinggegu-dot/wearwise/tree/codex/round-05-wardrobe)，交付见 [PR #35](https://github.com/dinggegu-dot/wearwise/pull/35) 与 [第五轮交接](docs/handoffs/ROUND-05.md)。2026-11-21由负责人在本地Node真实模式完成人工联调：单件OpenRouter识别及白底、单件保存刷新、标签回显、两件批量录入、编辑、暂停／恢复／删除和损坏图片提示均有实测通过记录；批量部分保存和付费请求异常重试未做真实人工完整覆盖。AI判断说明已改为默认折叠。**该分支尚未合入main，GitHub Pages静态版不提供真实云端AI。**
+
 ## 团队和 AI 的共同材料
 
 [网页功能概述](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/WEB-FUNCTION-OVERVIEW.md) · [推荐依据与记忆规则](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/RECOMMENDATION-MEMORY-RULES.md) · [12 轮次排班](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/ROUND-SCHEDULE.md) · [UI 示例](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/UI-REFERENCE.md) · [交接模板](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/handoffs/ROUND-HANDOFF-TEMPLATE.md)
@@ -76,6 +78,8 @@ npm run test:e2e
 - `e2e`：基础 Chrome 端到端检查。
 
 GitHub Pages 发布静态页面。发布工作流会下载并校验固定 BiRefNet Lite 模型，静态网站可在浏览器本机完成白底抠图；OpenRouter 图片识别、灵感分析和模型推荐仍需要服务端，静态版不提供这些接口。模型来源、大小、SHA-256 和安装方法见 [模型交付说明](docs/spikes/BiRefNet-model-delivery.md)。
+
+在独立的第 3 轮修订分支，本地 Node 模式的白底图片编辑已选用 OpenRouter `bytedance-seed/seedream-5-0-flash`；服务端配置见 `.env.example`，真实对比与限制见 [修订交接记录](docs/handoffs/ROUND-03-REVISION.md)。GitHub Pages 静态版仍使用 BiRefNet，部署在线白底接口需要受保护的服务端。
 
 ## 许可
 

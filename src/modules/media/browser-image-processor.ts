@@ -1,5 +1,4 @@
 // 改编自 Closet Kit 的浏览器 Canvas 图片处理；许可与来源见 THIRD_PARTY_NOTICES.md。
-import { removeBiRefNetBackground } from './birefnet-background-remover';
 
 export interface PreparedImage { blob: Blob; width: number; height: number; mime: 'image/jpeg'; backgroundRemoval?: 'removed' | 'fallback' }
 const fail = () => { throw new Error('图片损坏或格式不受支持，请选择静态 JPEG、PNG 或 WebP 图片。'); };
@@ -57,7 +56,7 @@ async function jpegBlob(canvas: HTMLCanvasElement, signal?: AbortSignal): Promis
   throw new Error('图片处理后仍然过大，请选择其他图片。');
 }
 
-export async function prepareImage(file: File, signal?: AbortSignal, onValidatedImage?: (image: PreparedImage) => void): Promise<PreparedImage> {
+export async function prepareImage(file: File, signal?: AbortSignal, onValidatedImage?: (image: PreparedImage) => void, onlineRemover?: (image: Blob, signal?: AbortSignal) => Promise<Blob>): Promise<PreparedImage> {
   stopped(signal);
   if (!file.size || file.size > 10 * 1024 * 1024) throw new Error('图片大小须在 10 MB 以内。');
   const metadata = inspectImage(new Uint8Array(await file.arrayBuffer())); stopped(signal);
@@ -77,9 +76,30 @@ export async function prepareImage(file: File, signal?: AbortSignal, onValidated
     const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('图片处理不可用。');
     ctx.drawImage(image, 0, 0, width, height);
     // Recognition can start with the validated original while local background removal runs.
-    if (onValidatedImage) onValidatedImage({ blob: await jpegBlob(canvas, signal), width, height, mime: 'image/jpeg' });
+    const validated = await jpegBlob(canvas, signal);
+    if (onValidatedImage) onValidatedImage({ blob: validated, width, height, mime: 'image/jpeg' });
+    if (onlineRemover) {
+      const edited = await onlineRemover(validated, signal);
+      stopped(signal);
+      const editedUrl = URL.createObjectURL(edited);
+      try {
+        const output = await new Promise<HTMLImageElement>((resolve, reject) => {
+          const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error('在线白底结果无法解码。')); img.src = editedUrl;
+        });
+        stopped(signal);
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, height);
+        // Image models may choose a standard output ratio. Fit without stretching the garment.
+        const scale = Math.min(width / output.naturalWidth, height / output.naturalHeight);
+        const fittedWidth = Math.round(output.naturalWidth * scale);
+        const fittedHeight = Math.round(output.naturalHeight * scale);
+        ctx.drawImage(output, Math.round((width - fittedWidth) / 2), Math.round((height - fittedHeight) / 2), fittedWidth, fittedHeight);
+        return { blob: await jpegBlob(canvas, signal), width, height, mime: 'image/jpeg', backgroundRemoval: 'removed' };
+      } finally { URL.revokeObjectURL(editedUrl); }
+    }
     let backgroundRemoval: PreparedImage['backgroundRemoval'] = 'fallback';
     try {
+      const { removeBiRefNetBackground } = await import('./birefnet-background-remover');
       const cutout = await removeBiRefNetBackground(canvas, width, height, signal);
       stopped(signal);
       ctx.clearRect(0, 0, width, height); ctx.drawImage(cutout.canvas, 0, 0);

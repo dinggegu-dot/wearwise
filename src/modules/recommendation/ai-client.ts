@@ -12,8 +12,9 @@ export interface AIRecommendationConditions {
   preference?: {
     text: string;
     imageIds: string[];
+    styleTags?: string[];
   };
-  scene?: string;
+  scene?: string | { selected: string | null; custom: string };
   feedback?: Array<{
     choice: 'like' | 'dislike';
     reason: string;

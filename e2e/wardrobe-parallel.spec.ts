@@ -1,3 +1,4 @@
+import { backgroundResult } from './helpers/background';
 import { expect, test } from '@playwright/test';
 import path from 'node:path';
 
@@ -8,10 +9,10 @@ test('识别与白底处理并行，候选填入网页且用户修改后才保�
   const modelGate = new Promise<void>(resolve => { releaseModel = resolve; });
   let modelRequested!: () => void;
   const modelSeen = new Promise<void>(resolve => { modelRequested = resolve; });
-  await page.route('**/models/birefnet/model_fp16.onnx', async route => {
+  await page.route('**/api/background/remove', async route => {
     modelRequested();
     await modelGate;
-    await route.fulfill({ status: 503, body: 'local model unavailable' }).catch(() => {});
+    await backgroundResult(route).catch(() => {});
   });
   await page.route('**/api/capabilities', route => route.fulfill({ status: 200, json: { recognition: { available: true } } }));
   let releaseRecognition!: () => void;
@@ -33,11 +34,11 @@ test('识别与白底处理并行，候选填入网页且用户修改后才保�
   await page.getByLabel('衣物照片（可选）').setInputFiles(path.resolve('tests/fixtures/synthetic-shirt.jpg'));
   await modelSeen;
   await recognitionSeen;
-  // The remote request starts even while the local background model is held back.
+  // Recognition starts independently while the online image editing response is held back.
   await expect(page.getByRole('status').filter({ hasText: '正在处理图片' })).toBeVisible();
   await page.getByLabel('名称').fill('用户自己的名称');
   releaseRecognition();
-  await expect(page.getByText('AI 识别结果已填入表单，请检查并修改后确认保存。')).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'AI 识别完成，请核对表单信息后保存。' })).toBeVisible();
   await expect(page.getByLabel('名称')).toHaveValue('用户自己的名称');
   await expect(page.getByLabel('颜色')).toHaveValue('蓝色');
   await expect(page.getByLabel('版型')).toHaveValue('宽松');
@@ -45,7 +46,7 @@ test('识别与白底处理并行，候选填入网页且用户修改后才保�
   await expect(page.locator('article')).toHaveCount(0);
 
   releaseModel();
-  await expect(page.getByAltText('照片预览')).toBeVisible();
+  await expect(page.getByAltText('照片预览')).toBeVisible({timeout:90000});
   await page.getByLabel('版型').fill('合身');
   await page.getByLabel('描述').fill('用户确认的描述');
   await page.getByRole('button', { name: '确认保存' }).click();

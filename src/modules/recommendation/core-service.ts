@@ -13,7 +13,7 @@ import {
   type HomeState
 } from '@/modules/session';
 
-import { requestAIRecommendation } from './ai-client';
+import { requestAIRecommendation, type AIRecommendationConditions } from './ai-client';
 
 export class RecommendationCoreError extends Error {
   constructor(
@@ -111,7 +111,9 @@ function sameConditions(a: SettingsDraft, b: SettingsDraft): boolean {
     JSON.stringify(a.preference.imageIds) ===
       JSON.stringify(b.preference.imageIds) &&
     a.scene.enabled === b.scene.enabled &&
-    a.scene.value === b.scene.value
+    a.scene.selected === b.scene.selected &&
+    a.scene.custom === b.scene.custom &&
+    JSON.stringify(a.preference.styleTags) === JSON.stringify(b.preference.styleTags)
   );
 }
 
@@ -290,15 +292,7 @@ export class RecommendationCoreService {
     const applied = applyDraft(draft, weatherSnapshot, now);
 
     // 5. 构造允许发送给模型的条件。
-    const conditions: {
-      memory?: string[];
-      weather?: WeatherSnapshot;
-      preference?: {
-        text: string;
-        imageIds: string[];
-      };
-      scene?: string;
-    } = {};
+    const conditions: AIRecommendationConditions = {};
 
     if (applied.memory && longTerm.length > 0) {
       conditions.memory = longTerm.map(item => {
@@ -317,7 +311,8 @@ export class RecommendationCoreService {
     if (applied.preference) {
       conditions.preference = {
         text: applied.preference.text,
-        imageIds: [...applied.preference.imageIds]
+        imageIds: [...applied.preference.imageIds],
+        styleTags: [...applied.preference.styleTags]
       };
     }
 
@@ -480,19 +475,7 @@ if (!expectedRoundId) {
     const allowed = new Set(liveCandidates.map(g => g.id));
 
     // 3. 组织本轮已经应用的条件。
-    const conditions: {
-      memory?: string[];
-      weather?: WeatherSnapshot;
-      preference?: {
-        text: string;
-        imageIds: string[];
-      };
-      scene?: string;
-      feedback?: Array<{
-        choice: 'like' | 'dislike';
-        reason: string;
-      }>;
-    } = {};
+    const conditions: AIRecommendationConditions = {};
 
     if (applied.memory && longTerm.length > 0) {
       conditions.memory = longTerm.map(item => {
@@ -511,7 +494,8 @@ if (!expectedRoundId) {
     if (applied.preference) {
       conditions.preference = {
         text: applied.preference.text,
-        imageIds: [...applied.preference.imageIds]
+        imageIds: [...applied.preference.imageIds],
+        styleTags: [...applied.preference.styleTags]
       };
     }
 
@@ -759,19 +743,7 @@ if (!expectedRoundId) {
     }
 
     // 4. 只组织已应用条件，不读取左侧尚未应用的草稿。
-    const conditions: {
-      memory?: string[];
-      weather?: WeatherSnapshot;
-      preference?: {
-        text: string;
-        imageIds: string[];
-      };
-      scene?: string;
-      feedback?: Array<{
-        choice: 'like' | 'dislike';
-        reason: string;
-      }>;
-    } = {};
+    const conditions: AIRecommendationConditions = {};
 
     if (applied.memory && longTerm.length > 0) {
       conditions.memory = longTerm.map(item => {
@@ -790,7 +762,8 @@ if (!expectedRoundId) {
     if (applied.preference) {
       conditions.preference = {
         text: applied.preference.text,
-        imageIds: [...applied.preference.imageIds]
+        imageIds: [...applied.preference.imageIds],
+        styleTags: [...applied.preference.styleTags]
       };
     }
 

@@ -4,7 +4,7 @@ import { RuleRecommendationEngine } from '@/modules/recommendation';
 import type { Garment } from '@/modules/wardrobe';
 import type { Weather } from '@/modules/weather';
 const now = '2026-01-01T00:00:00.000Z';
-function item(id: string, category: Garment['category'], patch: Partial<Garment> = {}): Garment { return { id,name:id,category,color:'白',warmth:'medium',styleTags:['日常'],imageId:id,sourceType:'manual',fit:'不确定',description:'',revision:1,createdAt:now,updatedAt:now,...patch }; }
+function item(id: string, category: Garment['category'], patch: Partial<Garment> = {}): Garment { return { id,name:id,category,color:'白',warmth:'medium',styleTags:['日常'],sceneTags:[],styleOther:[],sceneOther:[],imageId:id,sourceType:'manual',fit:'不确定',description:'',revision:1,createdAt:now,updatedAt:now,...patch }; }
 function weather(temp: number): Weather { return {city:'深圳',temperature:temp,apparentTemperature:temp,dataTime:now,fetchedAt:now,example:true}; }
 const engine = new RuleRecommendationEngine();
 describe('穿搭规则', () => {

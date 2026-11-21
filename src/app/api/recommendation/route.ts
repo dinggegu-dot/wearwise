@@ -7,19 +7,21 @@ import {
 } from '@/modules/wardrobe';
 import { weatherSnapshotSchema } from '@/modules/session/schema';
 import { readRecommendationKnowledge } from '@/modules/recommendation/knowledge';
+import { STYLE_TAGS, SCENE_TAGS } from '@/shared/domain/tags';
 
 export const runtime = 'nodejs';
 
 // The caller supplies only enabled conditions. Unknown keys cannot reach the model.
 const text = (max: number) => z.string().trim().min(1).max(max);
 
-const preferenceSchema = z.object({ text: z.string().trim().max(500), imageIds: z.array(text(100)).max(6) }).strict()
-  .refine(value => !!value.text || value.imageIds.length > 0);
+const preferenceSchema = z.object({ text: z.string().trim().max(500), imageIds: z.array(text(100)).max(6), styleTags: z.array(z.enum(STYLE_TAGS)).max(12).optional() }).strict()
+  .refine(value => !!value.text || value.imageIds.length > 0 || !!value.styleTags?.length);
+const selectedSceneSchema = z.object({ selected: z.enum(SCENE_TAGS).nullable(), custom: z.string().trim().max(100) }).strict();
 const conditionsSchema = z.object({
   memory: z.array(text(500)).max(100).optional(),
   weather: weatherSnapshotSchema.optional(),
   preference: preferenceSchema.optional(),
-  scene: text(100).optional(),
+  scene: z.union([text(100), selectedSceneSchema]).optional(),
   feedback: z.array(z.object({ choice: z.enum(['like', 'dislike']), reason: text(500) }).strict()).max(30).optional(),
 }).strict();
 
@@ -119,10 +121,10 @@ try {
       return fail('VALIDATION_ERROR', '推荐衣橱包含重复、已删除或暂停的衣物。', 400);
     const allowed = new Set(wardrobe.map(item => item.id));
     // Do not send database metadata or pause history to the model.
-    const modelWardrobe = wardrobe.map(({ id, name, category, color, fit, warmth, material, styleTags }) =>
-      ({ id, name, category, color, fit, warmth, material, styleTags }));
+    const modelWardrobe = wardrobe.map(({ id, name, category, color, fit, warmth, material, styleTags, sceneTags, styleOther, sceneOther }) =>
+      ({ id, name, category, color, fit, warmth, material, styleTags, sceneTags, styleOther, sceneOther }));
     const modelConditions = conditions.preference
-      ? { ...conditions, preference: { text: conditions.preference.text, referenceImageCount: referenceImages.length } }
+      ? { ...conditions, preference: { text: conditions.preference.text, styleTags: conditions.preference.styleTags ?? [], referenceImageCount: referenceImages.length } }
       : conditions;
     const result = await recommend({
     wardrobe: modelWardrobe,

@@ -2,6 +2,7 @@ import type { Weather, City } from '@/modules/weather';
 import type { Garment, WardrobeService } from '@/modules/wardrobe';
 import type { Preference, PreferenceService } from '@/modules/preferences';
 import { beijingDate } from '@/shared/domain/beijing-date';
+import type { z } from 'zod';
 import {
   settingsDraftSchema, weatherSnapshotSchema, type AppliedConditions, type FeedbackDraft, type GarmentSnapshot, type HomeState,
   type OutfitResult, type RoundFeedback, type RoundState, type SettingsDraft, type Surface, type WeatherSnapshot
@@ -45,8 +46,8 @@ export interface SessionStore {
 
 export const defaultSettingsDraft = (now = new Date()): SettingsDraft => ({
   memory: true, weather: true,
-  preference: { enabled: false, text: '', imageIds: [] },
-  scene: { enabled: false, value: '' },
+  preference: { enabled: false, text: '', imageIds: [], styleTags: [] },
+  scene: { enabled: false, selected: null, custom: '' },
   updatedAt: now.toISOString()
 });
 
@@ -64,14 +65,23 @@ export function toWeatherSnapshot(weather: Weather & { temperatureMin?: number |
 export function applyDraft(draft: SettingsDraft, weather: WeatherSnapshot | null, now = new Date()): AppliedConditions {
   if (draft.weather && !weather) throw new Error('天气暂时无法获取，请重试。');
   if (draft.weather && weather && weather.date !== beijingDate(now)) throw new Error('天气不是今天的数据，请重新获取。');
-  const text = draft.preference.text.trim(), scene = draft.scene.value.trim();
+  const text = draft.preference.text.trim(), custom = draft.scene.custom.trim();
+  const styleTags = [...new Set(draft.preference.styleTags)];
   return {
     memory: draft.memory,
     weather: draft.weather ? weather : null,
-    preference: draft.preference.enabled && (text || draft.preference.imageIds.length) ? { text, imageIds: [...draft.preference.imageIds] } : null,
-    scene: draft.scene.enabled && scene ? scene : null,
+    preference: draft.preference.enabled && (text || draft.preference.imageIds.length || styleTags.length) ? { text, imageIds: [...draft.preference.imageIds], styleTags } : null,
+    scene: draft.scene.enabled && (draft.scene.selected || custom) ? { selected: draft.scene.selected, custom } : null,
     appliedAt: now.toISOString()
   };
+}
+
+/** 本次场景的展示文字，如“朋友聚会”“朋友聚会（去爬山）”“去爬山”。 */
+export function sceneText(scene: AppliedConditions['scene']) {
+  if (!scene) return null;
+  const custom = scene.custom.trim();
+  if (scene.selected && custom) return `${scene.selected}（${custom}）`;
+  return scene.selected ?? (custom || null);
 }
 
 /** 生成依据文字：只写实际采用的条件，日期精确到天。 */
@@ -86,7 +96,7 @@ export function basisLabel(input: { weather: WeatherSnapshot | null; scene: stri
 
 const layerOf: Record<Garment['category'], number> = { shoes: 0, bottom: 1, dress: 1, top: 2, outerwear: 3 };
 export function snapshotOf(g: Garment): GarmentSnapshot {
-  return { id: g.id, name: g.name, category: g.category, color: g.color, fit: g.fit, warmth: g.warmth, ...(g.material ? { material: g.material } : {}), styleTags: [...g.styleTags], imageId: g.imageId };
+  return { id: g.id, name: g.name, category: g.category, color: g.color, fit: g.fit, warmth: g.warmth, ...(g.material ? { material: g.material } : {}), styleTags: [...g.styleTags], sceneTags: [...g.sceneTags], imageId: g.imageId };
 }
 export function buildResult(surface: Surface, roundId: string | null, garments: Garment[], draft: ResultDraft, basis: OutfitResult['basis'], now = new Date()): OutfitResult {
   const byId = new Map(garments.map(g => [g.id, g]));
@@ -108,7 +118,8 @@ export class SessionService {
   // —— 推荐页设置区草稿 ——
   async getSettingsDraft() { return (await this.store.getSettingsDraft()) ?? defaultSettingsDraft(); }
   /** 修改草稿不生成、不清除本轮数据。 */
-  saveSettingsDraft(draft: Omit<SettingsDraft, 'updatedAt'>) { return this.store.saveSettingsDraft(settingsDraftSchema.parse({ ...draft, updatedAt: new Date().toISOString() })); }
+  /** 本次喜好未传 styleTags 时按空处理。 */
+  async saveSettingsDraft(draft: Omit<z.input<typeof settingsDraftSchema>, 'updatedAt'>) { return this.store.saveSettingsDraft(settingsDraftSchema.parse({ ...draft, updatedAt: new Date().toISOString() })); }
   /** 本次喜好参考图：只作为本轮条件或草稿，不进入灵感库。 */
   addReferenceImage(blob: Blob) { return this.store.addReferenceImage(blob); }
 
@@ -123,7 +134,7 @@ export class SessionService {
     const applied = applyDraft(draft, input.weather, now);
     const roundId = crypto.randomUUID();
     const memory = input.memoryUsed ?? applied.memory;
-    const basis = { label: basisLabel({ weather: applied.weather, scene: applied.scene, preference: !!applied.preference, memory }), memory, weather: applied.weather, preference: !!applied.preference, scene: applied.scene, ...(input.result.knowledgeVersion ? { knowledgeVersion: input.result.knowledgeVersion } : {}) };
+    const basis = { label: basisLabel({ weather: applied.weather, scene: sceneText(applied.scene), preference: !!applied.preference, memory }), memory, weather: applied.weather, preference: !!applied.preference, scene: sceneText(applied.scene), ...(input.result.knowledgeVersion ? { knowledgeVersion: input.result.knowledgeVersion } : {}) };
     const result = buildResult('recommendations', roundId, await this.store.snapshotGarments(input.result.garmentIds), input.result, basis, now);
     return this.store.commitNewRound({ roundId, applied, result }, now);
   }
@@ -132,7 +143,7 @@ export class SessionService {
     const { round } = await this.store.readRound();
     if (!round || round.roundId !== input.expectedRoundId) throw new Error('本轮已变化，请刷新后重试。');
     const a = round.applied;
-    const basis = { label: basisLabel({ weather: a.weather, scene: a.scene, preference: !!a.preference, memory: a.memory }), memory: a.memory, weather: a.weather, preference: !!a.preference, scene: a.scene, ...(input.result.knowledgeVersion ? { knowledgeVersion: input.result.knowledgeVersion } : {}) };
+    const basis = { label: basisLabel({ weather: a.weather, scene: sceneText(a.scene), preference: !!a.preference, memory: a.memory }), memory: a.memory, weather: a.weather, preference: !!a.preference, scene: sceneText(a.scene), ...(input.result.knowledgeVersion ? { knowledgeVersion: input.result.knowledgeVersion } : {}) };
     const result = buildResult('recommendations', round.roundId, await this.store.snapshotGarments(input.result.garmentIds), input.result, basis, now);
     return this.store.commitAdjustment({ expectedRoundId: input.expectedRoundId, kind: input.kind, targetGarmentId: input.targetGarmentId, result }, now);
   }

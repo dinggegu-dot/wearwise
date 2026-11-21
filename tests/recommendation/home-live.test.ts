@@ -52,11 +52,12 @@ describe('首页推荐：真实端到端联调', () => {
         preference: {
           enabled: true,
           text: '只属于推荐页：喜欢夸张的荧光色',
-          imageIds: []
+          imageIds: [],
+          styleTags: []
         },
         scene: {
           enabled: true,
-          value: '只属于推荐页：舞台演出'
+          selected: null, custom: '只属于推荐页：舞台演出'
         }
       });
 

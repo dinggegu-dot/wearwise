@@ -1,5 +1,4 @@
 import { defineConfig } from '@playwright/test';
-import { chromium } from 'playwright';
 
 export default defineConfig({
   testDir: './e2e',
@@ -11,13 +10,13 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:3004',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    launchOptions: { executablePath: chromium.executablePath() },
+    channel: 'chrome',
   },
   webServer: {
     command: 'npm run start -- --port 3004',
     url: 'http://127.0.0.1:3004',
     reuseExistingServer: false,
     timeout: 90000,
-    env: { NEXT_TELEMETRY_DISABLED: '1' },
+    env: { NEXT_TELEMETRY_DISABLED: '1', OPENROUTER_API_KEY: '', DASHSCOPE_API_KEY: '', AI_ENABLE: '0' },
   },
 });
