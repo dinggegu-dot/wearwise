@@ -3,6 +3,7 @@ import type { createServices, Mode } from '@/composition';
 import { illustration } from '@/composition';
 import type { Category, Garment } from '..';
 import { prepareImage } from '@/modules/media/browser-image-processor';
+import { removeBackgroundOnline } from '@/modules/media/openrouter-background-client';
 import { blankDraft, checkedDraft, draftFromGarment, type WardrobeDraft } from '../draft';
 import { UploadTasks } from '../upload-tasks';
 import { BlobImage, Modal, SavedImage, TagSummary, WardrobeFields, type EditDraft } from './wardrobe-fields';
@@ -12,7 +13,9 @@ type Services = ReturnType<typeof createServices>;
 type EditorProps = { services: Services; mode: Mode; category: Category; item?: Garment; onClose: () => void; onSaved: (category?: Category) => Promise<void>; setLocked: (value: boolean) => void };
 function useQueue(services: Services, mode: Mode, item?: Garment) {
   const [queue] = useState(() => new UploadTasks({
-    prepare: prepareImage,
+    prepare: (file, signal, validated) => mode === 'real' && process.env.NEXT_PUBLIC_RUNTIME_TARGET !== 'pages'
+      ? prepareImage(file, signal, validated, removeBackgroundOnline)
+      : prepareImage(file, signal, validated),
     recognize: mode === 'real' && process.env.NEXT_PUBLIC_RUNTIME_TARGET !== 'pages' ? (blob, signal) => services.recognition.recognize(blob, signal) : undefined,
     save: (draft, white, requestId) => item
       ? services.wardrobe.update(item.id, draft, item.revision, { id: requestId, blob: white })
@@ -66,7 +69,7 @@ export function WardrobeEditor({ services, mode, category, item, onClose, onSave
         {task ? <UploadPanel task={task} queue={queue} disabled={busy}/> : item ? <><SavedImage imageId={item.imageId} load={loadImage} alt="已保存的衣物照片"/><p className="muted">原始照片未保存；如需重新处理白底图，请重新选择照片。</p></> : <div className="photo-empty"><span>＋</span><b>为衣物拍一张清晰的照片</b><p>也可以手动填写资料</p></div>}
         <label className="photo-picker">{task || item ? '更换图片' : '衣物照片（可选）'}<input aria-label="衣物照片（可选）" type="file" disabled={busy} accept="image/jpeg,image/png,image/webp" onChange={event => { choose(event.target.files?.[0]); event.target.value = ''; }}/></label>
         <p className="muted upload-hint">{hint}</p>
-        {mode === 'real' && <p className="muted upload-hint">选择照片后同时进行本机白底处理和 AI 识别。识别会将照片发送至应用配置的 OpenRouter，可能产生调用费用。</p>}
+        {mode === 'real' && process.env.NEXT_PUBLIC_RUNTIME_TARGET !== 'pages' && <p className="muted upload-hint">选择照片后会将图片发送至应用配置的 OpenRouter，分别进行白底处理和衣物识别，可能产生两次调用费用。</p>}
         {task && item && <button type="button" className="secondary-button" disabled={busy} onClick={() => { setDraft(task.draft); queue.remove(task.id); }}>放弃新图片，保留原有白底图</button>}
       </div>
       <WardrobeFields draft={current} edit={edit} disabled={busy}/>
@@ -105,7 +108,7 @@ export function BatchEditor({ services, mode, category, onClose, onSaved, setLoc
     <div className="batch-list">{tasks.map(task => <article className="batch-row" key={task.id} data-task-id={task.id}>
       <BlobImage blob={task.white?.blob ?? task.file} alt={`${task.draft.name || task.filename}预览`}/>
       <div className="batch-info"><h3>{task.draft.name || task.filename}</h3><p className={task.status === 'failed' ? 'inline-error' : 'success-text'} role="status">{statusLabels[task.status]}</p>
-        {task.status === 'processing' && <small>{task.preparing ? '本机白底处理中' : '正在识别资料'}…</small>}
+        {task.status === 'processing' && <small>{task.preparing ? '白底处理中' : '正在识别资料'}…</small>}
         {task.imageError && <p className="inline-error">{task.imageError}</p>}{task.recognitionError && <p className="inline-error">{task.recognitionError}</p>}{task.saveError && <p className="inline-error" role="alert">{task.saveError}</p>}
       </div>
       <div className="batch-row-actions">

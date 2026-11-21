@@ -52,7 +52,15 @@ describe('识别 HTTP 及模型边界',()=>{
   vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(JSON.stringify({choices:[{message:{content:`\`\`\`json\n${JSON.stringify(raw)}\n\`\`\``}}]}))));
   const response=await POST(request());const body=await response.json();
   expect(response.status).toBe(200);
-  expect(body.data.candidate).toMatchObject({name:'蓝色衬衫',category:'top',color:'蓝色',fit:'不确定',warmth:'unknown',material:'不确定',styleTags:['简约','通勤'],description:'不确定',warnings:['仅图片无法确认材质']});
+  expect(body.data.candidate).toMatchObject({name:'蓝色衬衫',category:'top',color:'蓝色',fit:'不确定',warmth:'unknown',material:'不确定',styleTags:['简约风','其他'],styleOther:['通勤'],sceneTags:[],sceneOther:[],description:'不确定',warnings:['仅图片无法确认材质']});
+ });
+ it('风格和场景分别映射固定词表，并保留其他说明而不编造未知场景',async()=>{
+  enable();
+  const raw={...candidate,styleTags:['Minimalist Style','Y2K','不确定'],sceneTags:['Work','音乐节','未知'],styleOther:[],sceneOther:[]};
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValue(modelResponse(raw)));
+  const response=await POST(request());const body=await response.json();
+  expect(response.status).toBe(200);
+  expect(body.data.candidate).toMatchObject({styleTags:['简约风','其他'],styleOther:['Y2K'],sceneTags:['上班','其他'],sceneOther:['音乐节']});
  });
  it('连续有效识别逐次调用模型且分别生成候选 ID',async()=>{
   enable();

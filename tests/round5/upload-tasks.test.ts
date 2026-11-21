@@ -6,7 +6,7 @@ import type { Garment } from '@/modules/wardrobe';
 import { blankDraft } from '@/modules/wardrobe/draft';
 const image = (backgroundRemoval: 'removed' | 'fallback' = 'removed'): PreparedImage => ({ blob: new Blob(['white'], { type: 'image/jpeg' }), width: 10, height: 10, mime: 'image/jpeg', backgroundRemoval });
 const photo = (name = 'photo.jpg') => new File(['photo'], name, { type: 'image/jpeg' });
-const candidate = (name = 'AI名称'): RecognitionCandidate => ({ candidateId: crypto.randomUUID(), name, category: 'outerwear', color: '白色', fit: '宽松', warmth: 'medium', material: '不确定', styleTags: ['Minimalist Style'], description: '描述', warnings: [] });
+const candidate = (name = 'AI名称'): RecognitionCandidate => ({ candidateId: crypto.randomUUID(), name, category: 'outerwear', color: '白色', fit: '宽松', warmth: 'medium', material: '不确定', styleTags: ['Minimalist Style'], sceneTags: [], styleOther: [], sceneOther: [], description: '描述', warnings: [] });
 function gate<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>(done => { resolve = done; }); return { promise, resolve }; }
 const saved = (id: string) => ({ id } as Garment);
 const ready = async (q: UploadTasks, count = 1) => vi.waitFor(() => expect(q.snapshot().filter(t => t.status === 'ready')).toHaveLength(count));
@@ -55,7 +55,8 @@ describe('single/bulk task lifecycle', () => {
     const queue = new UploadTasks({ prepare: async (_f,_s,validated) => { validated?.(image()); return image(); }, recognize: async () => ai.promise, save: vi.fn() });
     const [id] = queue.add([photo()], 'top');
     queue.seed(id, { ...blankDraft(), sceneTags: ['学习','其他'], sceneOther: ['音乐节'] }, new Set());
-    ai.resolve(candidate()); await ready(queue);
+    const { sceneTags: _sceneTags, sceneOther: _sceneOther, ...legacy } = candidate();
+    ai.resolve(legacy as RecognitionCandidate); await ready(queue);
     expect(queue.snapshot()[0].draft).toMatchObject({ sceneTags: ['学习','其他'], sceneOther: ['音乐节'], styleTags: ['简约风'] }); queue.dispose();
   });
   it('replacement ignores the old request even when its provider ignores AbortSignal', async () => {

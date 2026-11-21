@@ -77,6 +77,8 @@ npm run test:e2e
 
 GitHub Pages 发布静态页面。发布工作流会下载并校验固定 BiRefNet Lite 模型，静态网站可在浏览器本机完成白底抠图；OpenRouter 图片识别、灵感分析和模型推荐仍需要服务端，静态版不提供这些接口。模型来源、大小、SHA-256 和安装方法见 [模型交付说明](docs/spikes/BiRefNet-model-delivery.md)。
 
+在独立的第 3 轮修订分支，本地 Node 模式的白底图片编辑已选用 OpenRouter `bytedance-seed/seedream-5-0-flash`；服务端配置见 `.env.example`，真实对比与限制见 [修订交接记录](docs/handoffs/ROUND-03-REVISION.md)。GitHub Pages 静态版仍使用 BiRefNet，部署在线白底接口需要受保护的服务端。
+
 ## 许可
 
 暂未指定开源许可证；如需复用或分发，请联系项目所有者。

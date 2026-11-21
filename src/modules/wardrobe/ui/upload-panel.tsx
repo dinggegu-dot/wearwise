@@ -4,8 +4,8 @@ import type { UploadTask, UploadTasks } from '../upload-tasks';
 export function UploadPanel({ task, queue, disabled = false }: { task: UploadTask; queue: UploadTasks; disabled?: boolean }) {
   return <section className="upload-panel" aria-label="图片处理与识别">
     <div className="photo-comparison"><figure><figcaption>上传图片 · 仅本次预览</figcaption><BlobImage blob={task.file} alt="上传原图"/></figure><figure><figcaption>白底结果</figcaption><BlobImage blob={task.white?.blob} alt="照片预览"/></figure></div>
-    {task.preparing && <p role="status">正在处理图片并尝试移除背景（首次加载约94 MiB本机模型）…</p>}
-    {task.white && !task.imageError && !task.preparing && <p className="success-text" role="status">已在本机完成白底抠图。</p>}
+    {task.preparing && <p role="status">正在处理图片并移除背景…</p>}
+    {task.white && !task.imageError && !task.preparing && <p className="success-text" role="status">白底处理完成，请检查颜色、图案和边缘。</p>}
     {task.imageError && <p className="inline-error" role="alert">{task.imageError}</p>}
     {task.recognizing && <p role="status">AI 正在识别衣物信息…</p>}
     {task.recognized && <p role="status">AI 识别结果已填入表单，请检查并修改后确认保存。</p>}
