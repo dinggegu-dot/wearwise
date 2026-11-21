@@ -73,6 +73,11 @@
 .photo-comparison .wardrobe-image { height:200px;border:1px solid #e5e7df; }
 .upload-panel>p { font-size:13px;line-height:1.7; }
 .upload-panel .wardrobe-actions button { font-size:13px;padding:6px 10px; }
+.recognition-notes { margin:10px 0;color:#606b5b;font-size:13px;line-height:1.65; }
+.recognition-notes summary { cursor:pointer;user-select:none;padding:4px 0;font-weight:500; }
+.recognition-notes summary:focus-visible { outline:2px solid #57794a;outline-offset:2px;border-radius:3px; }
+.recognition-notes ul { margin:6px 0 10px;padding-left:20px; }
+.recognition-notes li + li { margin-top:5px; }
 .tag-summary { display:grid;gap:10px;margin:16px 0;font-size:14px; }
 .tag-summary>div { display:flex;align-items:baseline;flex-wrap:wrap;gap:6px; }
 .detail-name { font-size:23px;margin:14px 0; }
