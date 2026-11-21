@@ -38,7 +38,7 @@ test('识别与白底处理并行，候选填入网页且用户修改后才保�
   await expect(page.getByRole('status').filter({ hasText: '正在处理图片' })).toBeVisible();
   await page.getByLabel('名称').fill('用户自己的名称');
   releaseRecognition();
-  await expect(page.getByText('AI 识别结果已填入表单，请检查并修改后确认保存。')).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'AI 识别完成，请核对表单信息后保存。' })).toBeVisible();
   await expect(page.getByLabel('名称')).toHaveValue('用户自己的名称');
   await expect(page.getByLabel('颜色')).toHaveValue('蓝色');
   await expect(page.getByLabel('版型')).toHaveValue('宽松');
