@@ -7,6 +7,8 @@ import type { Preference } from '@/modules/preferences';
 import type { OutfitResult } from '@/modules/session/schema';
 import { DexieUnitOfWork } from '@/shared/infrastructure/unit-of-work';
 import { beijingDate, beijingMidnight } from '@/shared/domain/beijing-date';
+import { MAX_NOTE_LENGTH, MAX_OTHER_NOTES, MAX_TAGS, mapTag, resolveTags } from '@/shared/domain/tags';
+import { stateKeys } from '@/modules/session/schema';
 
 export interface StateRecord { key: string; value: unknown }
 
@@ -14,6 +16,7 @@ export interface StateRecord { key: string; value: unknown }
  * IndexedDB schema 历史：
  * v1 衣物/图片/旧反馈/旧推荐；v2 增加 meta、推荐批次与修订号；
  * v3（第 2 轮）衣物增加版型/描述/暂停/软删除，去掉上传原图；新增灵感、长期偏好、搭配结果与推荐过程状态。
+ * v4（标签投票）衣物风格改为固定词表 + “其他”说明，新增场景标签；推荐页本次喜好增加风格标签，本次场景分为固定选项与自填。
  */
 export class WearWiseDatabase extends Dexie {
   garments!: Table<Garment, string>;
@@ -36,6 +39,10 @@ export class WearWiseDatabase extends Dexie {
       garments: 'id, category', media: 'id', feedback: 'outfitId', outfits: 'id, batchId, createdAt', meta: 'key',
       inspirations: 'id, createdAt', preferences: 'id, group', results: 'id, surface, roundId', state: 'key'
     }).upgrade(migrateToV3);
+    this.version(4).stores({
+      garments: 'id, category', media: 'id', feedback: 'outfitId', outfits: 'id, batchId, createdAt', meta: 'key',
+      inspirations: 'id, createdAt', preferences: 'id, group', results: 'id, surface, roundId', state: 'key'
+    }).upgrade(migrateToV4);
   }
 }
 
@@ -75,6 +82,54 @@ async function migrateToV3(tx: Transaction) {
   for (const g of await tx.table('garments').toArray()) used.add(g.imageId);
   for (const o of await tx.table('outfits').toArray()) for (const s of o.garmentSnapshots ?? []) used.add(s.imageId);
   for (const id of sourceImages) if (!used.has(id)) await tx.table('media').delete(id);
+}
+
+/**
+ * 将 v3 衣物标签改写为 v4 结构。不删除任何衣物，也不丢弃旧标签原文：
+ * 能映射到固定词表的转为固定值，映射不到的进入“其他”并保留原文，“不确定”类的词丢弃，缺字段补为空。
+ * 第 5 轮兼容层在 v3 中已写入的四个字段（如 ['简约风','其他'] + ['Y2K']）原样保留，不降格。
+ * 超长的旧文字截到 30 字，超量的截到上限，保证迁移后的记录都能通过校验。
+ */
+export function upgradeGarmentTags(item: Record<string, unknown>) {
+  const words = (value: unknown) => Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
+  for (const kind of ['style', 'scene'] as const) {
+    const resolved = resolveTags(kind, words(item[`${kind}Tags`]), words(item[`${kind}Other`]));
+    const other = [...new Set(resolved.other.map(s => s.slice(0, MAX_NOTE_LENGTH)))].slice(0, MAX_OTHER_NOTES);
+    const fixed = resolved.tags.filter(t => t !== '其他').slice(0, MAX_TAGS - (other.length ? 1 : 0));
+    item[`${kind}Tags`] = other.length ? [...fixed, '其他'] : fixed;
+    item[`${kind}Other`] = other;
+  }
+  return item;
+}
+
+type LegacyScene = string | null | undefined | { selected?: unknown; custom?: unknown; value?: unknown; enabled?: unknown };
+/** 旧本次场景（一个字符串）拆成固定选项与自填：能对应固定场景的放入 selected，否则原文保留为自填。 */
+export function upgradeScene(value: LegacyScene) {
+  if (value && typeof value === 'object' && 'selected' in value) return value;
+  const text = (typeof value === 'string' ? value : typeof value?.value === 'string' ? value.value : '').trim();
+  const selected = mapTag('scene', text) ?? null;
+  return { selected, custom: selected ? '' : text };
+}
+type Pref = { styleTags?: unknown } | null | undefined;
+const withStyleTags = (p: Pref) => p ? { ...p, styleTags: Array.isArray(p.styleTags) ? p.styleTags : [] } : p;
+
+async function migrateToV4(tx: Transaction) {
+  await tx.table('garments').toCollection().modify((item: Record<string, unknown>) => { upgradeGarmentTags(item); });
+  // 推荐页草稿与本轮已应用条件：旧场景字符串拆分，本次喜好补空标签。
+  const state = tx.table('state');
+  const draft = await state.get(stateKeys.settingsDraft) as { key: string; value: { preference?: Pref; scene?: LegacyScene & { enabled?: boolean } } } | undefined;
+  if (draft?.value) {
+    const scene = draft.value.scene;
+    const enabled = typeof scene === 'object' && scene !== null && typeof scene.enabled === 'boolean' ? scene.enabled : false;
+    await state.put({ key: draft.key, value: { ...draft.value, preference: withStyleTags(draft.value.preference), scene: { enabled, ...upgradeScene(scene) } } });
+  }
+  const round = await state.get(stateKeys.round) as { key: string; value: { applied?: { preference?: Pref; scene?: LegacyScene } } } | undefined;
+  if (round?.value?.applied) {
+    const applied = round.value.applied;
+    const scene = applied.scene == null || applied.scene === '' ? null : upgradeScene(applied.scene);
+    await state.put({ key: round.key, value: { ...round.value, applied: { ...applied, preference: withStyleTags(applied.preference), scene } } });
+  }
+  // 搭配快照（新旧结果、永久反馈）只用于展示：标签保留当时原文，缺少的场景字段由读取时按空补齐，不在此改写。
 }
 
 /** 检查图片是否仍被任何衣物（含已删除）、旧/新搭配快照、永久反馈、灵感或推荐设置引用。须在包含这些表的事务内调用。 */

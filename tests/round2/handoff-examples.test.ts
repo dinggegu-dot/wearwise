@@ -18,7 +18,7 @@ describe('交给 04：保存 AI 处理结果的调用方式', () => {
     // 输入：AI 识别后经用户确认的字段。无法判断的文字字段写 UNCERTAIN（“不确定”），厚薄写 'unknown'。
     const saved = await wardrobe.add({
       name: '米白针织开衫', category: 'outerwear', color: '米白', fit: '宽松', warmth: 'medium',
-      material: UNCERTAIN, styleTags: ['简约', '通勤'], description: '短款圆领针织开衫，前襟五粒扣',
+      material: UNCERTAIN, styleTags: ['简约风'], sceneTags: ['上班'], description: '短款圆领针织开衫，前襟五粒扣',
       sourceType: 'photo'
     }, whiteBackground, requestId);
     // 返回：完整衣物记录（id === requestId、imageId 为白底图引用、revision 1）。
