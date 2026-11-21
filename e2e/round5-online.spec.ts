@@ -38,7 +38,9 @@ test('在线白底 HTTP 200 无效结果不能保存；只重试白底并持久�
   await page.getByRole('button', { name: '重新处理白底图' }).click();
   await expect(page.getByAltText('上传原图')).toBeVisible();
   await expect(page.getByAltText('照片预览')).toBeVisible();
-  await expect(page.getByRole('status').filter({ hasText: '纽扣、抽绳、拉链' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: '白底处理完成' })).toBeVisible();
+  await expect(page.locator('details.recognition-notes')).not.toHaveAttribute('open', '');
+  await page.getByText('查看 AI 判断说明').click();
   await expect(page.getByText('请确认纽扣细节')).toBeVisible();
   await expect(page.getByRole('checkbox', { name: '简约风', exact: true })).toBeChecked();
   await expect(page.getByRole('checkbox', { name: '上班', exact: true })).toBeChecked();
