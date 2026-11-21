@@ -25,7 +25,7 @@ function useQueue(services: Services, mode: Mode, item?: Garment) {
   const tasks = useSyncExternalStore(queue.subscribe, queue.snapshot, queue.snapshot);
   return { queue, tasks };
 }
-const hint = '每张照片对应一件衣物。支持静态 JPEG、PNG、WebP，每张最多10 MB。原图只在本次预览；保存后仅保留白底图和确认信息。';
+const hint = '支持 JPG、PNG、WebP，每张不超过 10 MB；原图仅用于本次处理，保存后保留白底图与确认信息。';
 export function WardrobeEditor({ services, mode, category, item, onClose, onSaved, setLocked }: EditorProps) {
   const { queue, tasks } = useQueue(services, mode, item);
   const task = tasks[0];
@@ -69,7 +69,7 @@ export function WardrobeEditor({ services, mode, category, item, onClose, onSave
         {task ? <UploadPanel task={task} queue={queue} disabled={busy}/> : item ? <><SavedImage imageId={item.imageId} load={loadImage} alt="已保存的衣物照片"/><p className="muted">原始照片未保存；如需重新处理白底图，请重新选择照片。</p></> : <div className="photo-empty"><span>＋</span><b>为衣物拍一张清晰的照片</b><p>也可以手动填写资料</p></div>}
         <label className="photo-picker">{task || item ? '更换图片' : '衣物照片（可选）'}<input aria-label="衣物照片（可选）" type="file" disabled={busy} accept="image/jpeg,image/png,image/webp" onChange={event => { choose(event.target.files?.[0]); event.target.value = ''; }}/></label>
         <p className="muted upload-hint">{hint}</p>
-        {mode === 'real' && process.env.NEXT_PUBLIC_RUNTIME_TARGET !== 'pages' && <p className="muted upload-hint">选择照片后会将图片发送至应用配置的 OpenRouter，分别进行白底处理和衣物识别，可能产生两次调用费用。</p>}
+        {mode === 'real' && process.env.NEXT_PUBLIC_RUNTIME_TARGET !== 'pages' && <p className="muted upload-hint">上传照片会通过 OpenRouter 进行云端白底与识别，通常每张涉及两次付费请求。</p>}
         {task && item && <button type="button" className="secondary-button" disabled={busy} onClick={() => { setDraft(task.draft); queue.remove(task.id); }}>放弃新图片，保留原有白底图</button>}
       </div>
       <WardrobeFields draft={current} edit={edit} disabled={busy}/>
@@ -102,7 +102,7 @@ export function BatchEditor({ services, mode, category, onClose, onSaved, setLoc
       const files = Array.from(event.target.files ?? []); event.target.value = ''; if (!files.length) return;
       try { queue.add(files, category); setError(''); } catch (error) { setError(error instanceof Error ? error.message : '无法选择图片。'); }
     }}/></label>
-    <p className="muted upload-hint">{hint}{mode === 'real' && process.env.NEXT_PUBLIC_RUNTIME_TARGET !== 'pages' ? ' 选择后分别调用在线白底处理和 AI 识别，请逐件对照原图检查后勾选保存。' : ' 当前使用本机白底与手动确认资料。'}</p>
+    <p className="muted upload-hint">{hint}{mode === 'real' && process.env.NEXT_PUBLIC_RUNTIME_TARGET !== 'pages' ? ' 每张会进行云端白底与识别，可能产生费用；请逐件核对后保存。' : ' 当前使用本机白底与手动确认资料。'}</p>
     {error && <p role="alert" className="inline-error">{error}</p>}
     {!tasks.length && <div className="batch-empty">选择照片，开始整理这一批衣物。</div>}
     <div className="batch-list">{tasks.map(task => <article className="batch-row" key={task.id} data-task-id={task.id}>
