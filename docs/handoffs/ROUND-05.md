@@ -1,5 +1,107 @@
 # WearWise 第5轮衣橱管理交接
 
+03 → 第6轮04。更新日期：2026-11-21（Asia/Shanghai）。
+
+本次在原第5轮上完成02正式标签／IndexedDB v4与04新版识别／在线白底整合，保留原页面和录入管理功能，继续交付同一分支及 [PR #35](https://github.com/dinggegu-dot/wearwise/pull/35)。这是代码交付；未部署新的云端服务，也未合并团队PR。
+
+## 固定版本与提交来源
+
+- 代码固定版本：[19bc7c384b5f590b8506ae4bee92814bf13f1c5a](https://github.com/dinggegu-dot/wearwise/commit/19bc7c384b5f590b8506ae4bee92814bf13f1c5a)。后续文档提交不改变此代码树；完整交付head以PR #35为准。
+- 分支：codex/round-05-wardrobe；upstream：origin/codex/round-05-wardrobe；PR base继续为 codex/round-04-recommendation。
+- 原交付：fe99dc4b7e6cbb5466f293fe06c5ac9360b176c3，原提交全部保留。
+- 04来源：[PR #36](https://github.com/dinggegu-dot/wearwise/pull/36)，7f3aa112dcccf3bac96d8d1aacaea3154e8b78dc，用合并提交8f354ce纳入。
+- 02来源：[PR #34](https://github.com/dinggegu-dot/wearwise/pull/34)，2902072f43dfb7545f0fc83f65c72a536d6a7038（包含其两个原提交），用合并提交6b5b3e3纳入。衣物服务冲突采用02正式版本，移除03重复兼容实现。
+- 顺序为原第5轮 → 合入04修订 → 合入02标签 → 兼容修正，未cherry-pick重复业务代码、未重写历史或强推。
+
+执行时#29、#30、#33、#34、#35、#36均开放且未合并。#29为63efce6，#30为962d79e，#33为f8aa1b3，均已在原第5轮祖先链中。远程main仍为2d9cdefbca01ee52e1afb275c0f316faf4612cdd，未修改。推送前再次核对远程#34/#35/#36 head没有并发变化。
+
+实际操作目录为 C:/Users/dell/Desktop/WearWise/wearwise。另核实 Documents/Codex/WearWise/wearwise 也存在且位于原fe99dc4，未改动它、未重新克隆。参考资料为桌面WearWise同级的wearwise-round5-reference。已对照原Guide、概述V4文本、UI02系列及正式上游交接；外部OUTFIT-TIPS与仓库V1.2文本一致。旧指南的等待接口限制由本次用户授权及正式上游版本取代。
+
+## 完成的衣橱行为
+
+| 范围 | 当前交付 |
+| --- | --- |
+| 列表和管理 | 五类筛选、计数、列表、详情、编辑、标签回显、暂停到期／提前恢复、软删除；暂停计数保留，删除不进入新候选 |
+| 单件与批量 | 同一个UploadTasks队列及prepareImage入口；每图一件、最多12张，逐项处理、编辑、勾选、部分保存、独立失败重试、已保存防重复 |
+| 图片和确认 | Node真实模式分别请求原图识别与在线白底；原图和结果对照，用户检查后保存；换图、旧衣物编辑换图、放弃新图、失败、取消和关闭均沿用原状态保护 |
+| 持久化和保护 | 正式02服务保存白底Blob及确认资料，requestId幂等、revision冲突保护、事务失败无孤立图；旧图片引用与旧搭配快照保留，不清空Session |
+| 用户修改与异步 | 应用AI时检查用户修改的字段，Tags／Other同组保护；任务身份、sequence及AbortController阻止换图、重试和关闭后的晚到结果写入 |
+| UI | 保留原卡片、详情／编辑弹窗、单件对照和批量部分保存布局；1536px桌面及390／320px移动端自动检查无横向溢出 |
+
+## 正式标签、共享Schema与迁移
+
+唯一词表为 src/shared/domain/tags.ts。tag-adapter.ts只转出共享模块；识别提示词和推荐API直接使用共享模块。新增、编辑、详情、批量、AI回填及服务校验不维护第二套词表。
+
+四字段 styleTags、sceneTags、styleOther、sceneOther 全部为字符串数组。
+
+- 风格9项：中性风、甜美风、亚文化风、简约风、优雅风、复古风、街头风、运动休闲风、学院风。
+- 场景6项：学习、上班、约会、朋友聚会、运动健身、户外。
+- 未知明确原词进入对应Other并关联“其他”；不确定类词丢弃。每组最多12个标签、20条说明，每条1–30字；服务统一归一化和校验。
+- v4采用02迁移：旧自由文本整理、缺字段补空数组、第5轮已写四字段保留；媒体Blob不清空，暂停与软删除状态保留。旧结果／永久反馈快照不按新词表重写，缺场景字段读取为[]。
+- 旧Session草稿和已应用场景迁为{ selected, custom }，喜好补styleTags。已验证旧结果、永久反馈、Session及图片引用仍可读取；原v3“不迁移”测试改为v4正式契约，保留数据与图片保护断言。
+- 必要的第4轮接口衔接：RecommendationCoreService传递喜好标签和场景对象，并将新字段纳入生成期间的条件变更检查。只选喜好标签也会传递，关闭条件仍不发送；未替换推荐页面或宣称其AI接线完成。
+
+## 04识别与在线白底
+
+复用04原实现，没有新建AI服务：识别返回name、category、color、fit、warmth、material、四个标签数组、description、warnings。候选由用户修改确认；不确定值保留，不依据外观编造成分或功能。
+
+Node真实模式使用 POST /api/background/remove、openrouter-background-client/server；识别继续走 POST /api/recognition。识别从已校验的原图开始，白底请求独立执行；白底重试只重试图片通道。单件、批量和旧衣物换图共用相同实现。
+
+正式配置为 OPENROUTER_BACKGROUND_MODEL=bytedance-seed/seedream-5-0-flash；识别模型使用服务端AI_MODEL。白底结果须通过类型／大小检查及浏览器解码才产生可保存结果，HTTP 200文字或损坏图片都不能保存，失败不把原图冒充白底。界面提示对照检查颜色、图案、领口、纽扣、抽绳、拉链和边缘；结果返回不代表生成式编辑保真合格。原图只保留到本次编辑结束，保存后旧衣物重处理需重新上传。
+
+静态Pages继续使用浏览器BiRefNet及手动确认，不请求Node在线白底或识别。白底／参考图新增服务端路由仍限制本机；正式托管的鉴权、限流、预算、费用与密钥管理由团队统一部署。API Key没有进入客户端。
+
+## 实际自动化验证
+
+2026-11-21，本机Windows／正式Chrome。以下均实际执行；在线上游为模拟，真实OpenRouter请求0次，未读取真实密钥文件或使用真实课程Key。测试只使用合成图片、临时fake-indexeddb库与隔离Chrome档案。
+
+| 命令 | 结果 |
+| --- | --- |
+| npm.cmd run typecheck | 通过 |
+| npm.cmd test -- --maxWorkers=2 | 27文件通过、1文件跳过；202通过、1跳过。跳过项为原有默认关闭的真实首页AI测试，无新增skip |
+| npm.cmd run build | 通过，含新版Node路由 |
+| npm.cmd run test:e2e -- e2e/round5-wardrobe.spec.ts e2e/round5-online.spec.ts e2e/wardrobe.spec.ts e2e/wardrobe-parallel.spec.ts e2e/persistence.spec.ts | 24/24通过，32.3秒 |
+| npm.cmd run test:e2e | 49项：44通过、5失败，退出码1；均为原有天气用例 |
+| npm.cmd run build:pages | 通过，只构建、未发布 |
+| npm.cmd run test:e2e:pages -- --output test-results-pages | 3/3通过，包括实际本机BiRefNet、白底Blob保存和刷新 |
+| git diff --check | 通过；提交文件检查未发现实际密钥、模型权重、个人照片、数据库或临时日志 |
+
+覆盖重点：round2的tags／migration测试验证v2/v3→v4、四字段、图片字节、暂停边界和提前恢复、旧快照、永久反馈、Session／推荐条件；recognition/route及round3/ai-contract验证识别字段；media/openrouter-background验证模拟上游和白底路由；round5/upload-tasks及专项E2E验证批量、迟到AI、白底失败、取消和换图。新增在线E2E验证200非图片／损坏图片拒绝、仅重试白底、四字段刷新回显。完整回归中的本机模型用例使用Chrome；未单独运行WebKit浏览器配置。
+
+原5项失败仍位于 recommendation.spec.ts（城市恢复、观测先过期）及 weather.spec.ts（失败重试、切城竞态、切模式竞态），两文件本次零改动，没有删除断言、改预期或skip。由05／07接续处理。
+
+执行中的修正记录：初次单测被沙箱esbuild目录权限阻止，改在原用户权限下运行通过；初轮衣橱用例仍定位旧处理提示、新增模拟用例遗漏capabilities响应，修正后24项完整复验通过。Windows沙箱内两次回归在全部用例结束后未自动停止服务器，核对PID后结束本次测试服务器，取得完整49项／Pages汇总；最终衣橱专项在原用户权限下正常退出。未为通过测试改业务断言。
+
+最新[桌面列表](round05-evidence/2026-11-21/wardrobe-desktop.png)、[320px编辑](round05-evidence/2026-11-21/editor-mobile-320.png)、[批量部分保存](round05-evidence/2026-11-21/batch-partial-desktop.png)截图已保存；批量使用模拟识别和模拟在线图片。历史截图保留原日期与证据性质。原始日志在本机仓库外的round5-work/integration-*.log，不提交数据库、trace或大模型。
+
+## 启动与第6轮接手
+
+~~~powershell
+Set-Location 'C:/Users/dell/Desktop/WearWise/wearwise'
+# 新环境安装依赖；已有依赖不必重复安装
+npm.cmd ci --legacy-peer-deps
+npm.cmd run dev
+~~~
+
+访问 http://127.0.0.1:3000/wardrobe 。没有服务端配置时可以手动录入；上传在线处理失败会阻止该照片保存。真实服务由开发者自行在独立环境配置，变量见.env.example：OPENROUTER_API_KEY、AI_MODEL、AI_TIMEOUT_MS=90000、OPENROUTER_BACKGROUND_MODEL及AI_BACKGROUND_TIMEOUT_MS=120000。每张图通常分别发起识别与白底两次请求，旧交接的“白底重试不增加AI请求”不适用于在线模式费用说明。本次未进行这类调用。
+
+第6轮04应先取得此固定代码，或将更新后的origin/codex/round-05-wardrobe合入自己的后续工作分支；继续复用createServices(mode)的wardrobe／inspiration／preferences／session与04分析接口，完成灵感页面和归纳流程。灵感图片长期保存，图中衣物不自动加入衣橱；确认后再保存和归纳，不重复建立数据库或衣橱。
+
+## PR依赖与其他成员职责
+
+#36的head是原第5轮的严格后代，#34从#29独立分出。上述合并只增加父提交，没有循环依赖。更新#35后，#36现有提交成为#35祖先，其动态独立Diff会归零；04原提交及署名仍在历史中，可用[固定差异比较](https://github.com/dinggegu-dot/wearwise/compare/fe99dc4b7e6cbb5466f293fe06c5ac9360b176c3...7f3aa112dcccf3bac96d8d1aacaea3154e8b78dc)继续审阅。团队后续无需重复合并#36；由04／组长决定保留为来源记录或按团队流程处理。本次没有更改、合并或关闭#36。
+
+若04继续在该分支开发，先正常merge更新后的#35，再提交新增量，避免从旧head重复交付；无需rebase或强推。#34原提交同样保留，统一合流时使用原提交历史即可避免重复。#35仍面向#33，不改main或其他成员远程分支。
+
+05仍负责推荐页面新条件与AI核心接线及天气缺陷；04负责第6轮灵感及真实模型效果继续验证；02维护共享数据契约；部署负责人负责受保护Node服务器和站点迁移策略；07负责团队整体验收。本次未将推荐页面接线或正式部署算作第五轮完成。
+
+---
+
+<details>
+<summary>2026-11-20 原交付历史记录（完整保留；当时接口待办与启动说明以本次更新为准）</summary>
+
+# WearWise 第5轮衣橱管理交接
+
 03 → 第6轮04；07的独立验收另行进行。日期：2026-11-20（Asia/Shanghai）。
 
 本候选完成03衣橱页面与录入管理流程，使用正式衣橱服务和浏览器 IndexedDB 持久化。跨模块标签整合及真实 OpenRouter 联调尚未完成，按 Draft PR 交付；不代表04签收或全项目验收通过。
@@ -223,3 +325,5 @@ finally { Remove-Item Env:\OPENROUTER_API_KEY -ErrorAction SilentlyContinue }
 ```
 
 最多6次真实请求：单件选择1张（第1次），更换另一张（第2次），批量3张（第3–5次）；仅确有失败且仍需验证时手动重试一次（第6次）。不为凑次数重试，不上传私人照片，不自动充值。检查资料准确性、手改标签保护、手工场景确认、部分保存及刷新。白底重处理本身不增加AI请求。模型不可用交04核对，不自行更换供应商或模型。
+
+</details>
