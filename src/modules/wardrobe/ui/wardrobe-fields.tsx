@@ -38,7 +38,14 @@ export type EditDraft = <K extends keyof WardrobeDraft>(key: K, value: WardrobeD
 export function WardrobeFields({ draft, edit, disabled = false }: { draft: WardrobeDraft; edit: EditDraft; disabled?: boolean }) {
   return <fieldset className="wardrobe-fields" disabled={disabled}>
     <div className="fields-grid"><label className="full-field">名称<input data-initial-focus required maxLength={100} value={draft.name} onChange={event => edit('name', event.target.value)}/></label>
-    <label>类别<select value={draft.category} onChange={event => edit('category', event.target.value as WardrobeDraft['category'])}>{Object.entries(CATEGORY_LABELS).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+    <label>类别<select value={draft.category} onChange={event => edit('category', event.target.value as WardrobeDraft['category'])} onKeyDown={event => {
+      if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+      event.preventDefault();
+      const categories = Object.keys(CATEGORY_LABELS) as WardrobeDraft['category'][];
+      const current = categories.indexOf(draft.category);
+      const direction = event.key === 'ArrowDown' ? 1 : -1;
+      edit('category', categories[(current + direction + categories.length) % categories.length]);
+    }}>{Object.entries(CATEGORY_LABELS).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>
     <label>颜色<input required maxLength={50} value={draft.color} onChange={event => edit('color', event.target.value)}/></label>
     <label>版型<input maxLength={50} value={draft.fit ?? ''} onChange={event => edit('fit', event.target.value)}/></label>
     <label>厚薄<select aria-label="厚薄（保暖程度）" value={draft.warmth} onChange={event => edit('warmth', event.target.value as WardrobeDraft['warmth'])}>{Object.entries(WARMTH_LABELS).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>

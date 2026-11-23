@@ -8,7 +8,7 @@ test('WebKit 浏览器执行本机白底模型并显示预览', async ({ page })
   await page.goto('/wardrobe');
   await page.getByRole('button', { name: '＋ 添加衣物' }).click();
   await page.getByLabel('衣物照片（可选）').setInputFiles(path.resolve('tests/fixtures/synthetic-shirt.jpg'));
-  await expect(page.getByRole('status').filter({ hasText: '白底结果已返回' })).toBeVisible({ timeout: 90000 });
+  await expect(page.getByRole('status').filter({ hasText: '白底处理完成' })).toBeVisible({ timeout: 90000 });
   const corner = await page.getByAltText('照片预览').evaluate((image: HTMLImageElement) => {
     const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
     const ctx = canvas.getContext('2d')!; ctx.drawImage(image, 0, 0);

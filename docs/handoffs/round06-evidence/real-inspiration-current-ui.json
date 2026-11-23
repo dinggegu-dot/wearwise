@@ -1,0 +1,80 @@
+{
+  "at": "2026-11-23T01:41:25.087Z",
+  "model": "qwen/qwen3.8-max-0902",
+  "fixture": "tests/fixtures/real-outfit-cc0.jpg",
+  "responseStatus": 200,
+  "elapsedMs": 18478,
+  "draft": {
+    "name": "拼色长毛皮草街头造型",
+    "analysisLength": 171,
+    "tagCount": 7,
+    "tagKinds": [
+      "color",
+      "style",
+      "fit",
+      "layering",
+      "scene"
+    ]
+  },
+  "data": {
+    "inspirations": [
+      {
+        "id": "b70b9182-21d3-43fa-adfb-df18dd874913",
+        "name": "拼色长毛皮草街头造型",
+        "analysis": "我喜欢高对比配色，但不喜欢紧身裤。",
+        "imageId": "124f853f-d120-424e-b485-cf8dce9733db",
+        "tags": [
+          {
+            "text": "橙黑米色块拼色",
+            "kind": "color"
+          },
+          {
+            "text": "绿色镜框撞色点缀",
+            "kind": "color"
+          },
+          {
+            "text": "全黑内搭底色",
+            "kind": "color"
+          },
+          {
+            "text": "statement单品焦点穿搭",
+            "kind": "style"
+          },
+          {
+            "text": "宽松蓬松廓形",
+            "kind": "fit"
+          },
+          {
+            "text": "厚外套+贴身内搭叠穿",
+            "kind": "layering"
+          },
+          {
+            "text": "都市街头日晒场景",
+            "kind": "scene"
+          }
+        ],
+        "revision": 1
+      }
+    ],
+    "preferences": [
+      {
+        "group": "inspiration",
+        "content": "不喜欢紧身裤",
+        "state": "active",
+        "sourceIds": [
+          "b70b9182-21d3-43fa-adfb-df18dd874913"
+        ]
+      },
+      {
+        "group": "inspiration",
+        "content": "喜欢高对比配色",
+        "state": "active",
+        "sourceIds": [
+          "b70b9182-21d3-43fa-adfb-df18dd874913"
+        ]
+      }
+    ],
+    "mediaCount": 1
+  },
+  "isolatedBrowserContext": true
+}

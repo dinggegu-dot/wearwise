@@ -46,6 +46,7 @@ export interface PreferenceStore {
   /** 删除；灵感归纳留下删除标记以免被自动恢复，永久反馈同步移除本轮副本。 */
   remove(id: string): Promise<void>;
   applySummaries(candidates: SummaryCandidate[]): Promise<{ added: string[]; updated: string[]; skipped: string[] }>;
+  reconcileSummaries(candidates: SummaryCandidate[]): Promise<{ added: string[]; updated: string[]; skipped: string[]; removed: string[] }>;
 }
 
 export class PreferenceService {
@@ -67,4 +68,5 @@ export class PreferenceService {
   remove(id: string) { return this.store.remove(id); }
   /** 供第 6 轮写入灵感归纳：跳过用户删除过的，保留用户手改过的内容。 */
   applyInspirationSummaries(candidates: SummaryCandidate[]) { return this.store.applySummaries(candidates); }
+  reconcileInspirationSummaries(candidates: SummaryCandidate[]) { return this.store.reconcileSummaries(candidates); }
 }

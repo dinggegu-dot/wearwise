@@ -26,7 +26,7 @@ test('真实 BiRefNet 输出进入衣橱保存的图片 blob', async ({ page }) 
     if (response.url().includes('/models/birefnet/model_fp16.onnx')) modelBytes = Number(response.headers()['content-length'] ?? 0);
   });
   await openWardrobe(page);
-  await expect(page.getByRole('status').filter({ hasText: '白底结果已返回' })).toBeVisible({ timeout: 90000 });
+  await expect(page.getByRole('status').filter({ hasText: '白底处理完成' })).toBeVisible({ timeout: 90000 });
   expect(modelBytes).toBeGreaterThan(90_000_000);
   const corner = await previewCornerRgb(page);
   expect(corner[0]).toBeGreaterThan(248);
@@ -72,7 +72,7 @@ test('仅在本次原始上传文件仍在内存时重新处理白底图', async
   await expect(page.getByRole('button',{name:'确认保存'})).toBeDisabled();
   await page.unroute('**/models/birefnet/model_fp16.onnx', unavailable);
   await page.getByRole('button', { name: '重新处理白底图' }).click();
-  await expect(page.getByRole('status').filter({ hasText: '白底结果已返回' })).toBeVisible({ timeout: 90000 });
+  await expect(page.getByRole('status').filter({ hasText: '白底处理完成' })).toBeVisible({ timeout: 90000 });
   const after = await previewCornerRgb(page);
   expect(after.every(channel => channel > 248)).toBe(true);
   await expect(page.getByRole('alert').filter({hasText:'白底处理失败'})).toHaveCount(0);

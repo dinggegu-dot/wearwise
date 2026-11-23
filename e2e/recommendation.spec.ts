@@ -63,7 +63,7 @@ test('另一标签页删除衣物时当前推荐保留，不被清空', async ({
 
 test('刷新后天气控件与已保存推荐使用的城市一致', async ({ page }) => {
   await page.clock.install();
-  await page.route('https://api.open-meteo.com/**', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({current_units:{temperature_2m:'°C',apparent_temperature:'°C'},current:{time:Math.floor(Date.now()/1000),temperature_2m:20,apparent_temperature:19,weather_code:3}})}));
+  await page.route('https://api.open-meteo.com/**', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({current_units:{temperature_2m:'°C',apparent_temperature:'°C'},current:{time:Math.floor(Date.now()/1000),temperature_2m:20,apparent_temperature:19,weather_code:3},daily:{temperature_2m_min:[18],temperature_2m_max:[24]}})}));
   await page.goto('/wardrobe');
   for (const [name,category] of [['北京上衣','top'],['北京下装','bottom'],['北京鞋','shoes']]) {
     await page.getByRole('button',{name:'＋ 添加衣物'}).click(); await page.getByLabel('名称').fill(name); await page.getByLabel('颜色').fill('白');
@@ -123,7 +123,7 @@ test('切换风格和城市后旧搭配失效，历史记录不会恢复为当�
 
 test('获取后五分钟内观测时间先过期时禁止继续使用推荐',async({page})=>{
   await page.clock.install();
-  await page.route('https://api.open-meteo.com/**',route=>route.fulfill({status:200,json:{current_units:{temperature_2m:'°C',apparent_temperature:'°C'},current:{time:Math.floor(Date.now()/1000)-10740,temperature_2m:20,apparent_temperature:19,weather_code:3}}}));
+  await page.route('https://api.open-meteo.com/**',route=>route.fulfill({status:200,json:{current_units:{temperature_2m:'°C',apparent_temperature:'°C'},current:{time:Math.floor(Date.now()/1000)-10740,temperature_2m:20,apparent_temperature:19,weather_code:3},daily:{temperature_2m_min:[18],temperature_2m_max:[24]}}}));
   await page.goto('/wardrobe');
   for(const [name,category] of [['时间上衣','top'],['时间裤子','bottom'],['时间鞋','shoes']]) {
     await page.getByRole('button',{name:'＋ 添加衣物'}).click();await page.getByLabel('名称').fill(name);await page.getByLabel('颜色').fill('白');

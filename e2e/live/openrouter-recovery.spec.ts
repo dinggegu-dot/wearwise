@@ -18,19 +18,18 @@ test('真实 OpenRouter 拒绝后恢复有效配置，页面重试成功', async
     } else await route.continue();
   });
   await page.goto('/inspiration');
-  await page.locator('input[type=file]').setInputFiles(outfit);
   const firstResponse = page.waitForResponse(response => response.url().endsWith('/api/inspiration/analyze'));
-  await page.getByRole('button', { name: '分析/重试' }).click();
+  await page.locator('input[type=file]').setInputFiles(outfit);
   const first = await firstResponse;
   const firstBody = await first.json();
   expect(first.status(), JSON.stringify(firstBody)).toBe(502);
   expect(firstBody).toMatchObject({ ok: false, error: { code: 'AI_PROVIDER_ERROR', retryable: false } });
-  await expect(page.locator('p[role="alert"]')).toHaveText('视觉模型请求失败。');
+  await expect(page.getByRole('dialog', { name: '上传灵感' }).getByRole('alert')).toContainText('视觉模型请求失败。');
   await expect(page.getByAltText('灵感预览')).toBeVisible();
   await expect(page.locator('article')).toHaveCount(0);
 
   const secondResponse = page.waitForResponse(response => response.url().endsWith('/api/inspiration/analyze'));
-  await page.getByRole('button', { name: '分析/重试' }).click();
+  await page.getByRole('button', { name: '重新分析/重试' }).click();
   const second = await secondResponse;
   const body = await second.json();
   expect(second.status(), JSON.stringify(body)).toBe(200);
@@ -40,7 +39,7 @@ test('真实 OpenRouter 拒绝后恢复有效配置，页面重试成功', async
   expect(body.data.tags.length).toBeGreaterThan(0);
   await expect(page.getByLabel('名称')).toHaveValue(body.data.name);
   await expect(page.getByLabel('分析')).toHaveValue(body.data.analysis);
-  await expect(page.getByLabel('标签 1', { exact: true })).toHaveValue(body.data.tags[0].text);
-  await expect(page.locator('p[role="alert"]')).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: '上传灵感' }).getByText(body.data.tags[0].text)).toBeVisible();
+  await expect(page.getByRole('dialog', { name: '上传灵感' }).getByRole('alert')).toHaveCount(0);
   expect(attempts).toBe(2);
 });

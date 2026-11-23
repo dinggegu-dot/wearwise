@@ -113,7 +113,6 @@ test('真实灵感分析确认后保存，失败重试并在刷新后保留', as
 
   await page.goto('/inspiration');
   await page.locator('input[type=file]').setInputFiles(image);
-  await page.getByRole('button', { name: '分析/重试' }).click();
   await expect(page.getByLabel('名称')).not.toHaveValue('', { timeout: 60000 });
   await expect(page.getByLabel('分析')).not.toHaveValue('');
   expect(analysisStatus).toBe(200);
