@@ -128,6 +128,40 @@ export class DexiePreferenceStore implements PreferenceStore {
       return { added, updated, skipped };
     });
   }
+  async reconcileSummaries(candidates: SummaryCandidate[]) {
+    return this.db.transaction('rw', this.db.preferences, async () => {
+      const incoming = new Set(candidates.map(candidate => candidate.key));
+      const existing = new Map((await this.db.preferences.where('group').equals('inspiration').toArray()).map(p => [p.inspiration!.key, p]));
+      const result = { added: [] as string[], updated: [] as string[], skipped: [] as string[], removed: [] as string[] };
+      const now = new Date().toISOString();
+      for (const candidate of candidates) {
+        const sourceIds = [...new Set(candidate.sourceIds)];
+        if (!sourceIds.length) continue;
+        const previous = existing.get(candidate.key);
+        if (!previous) {
+          const value = preferenceSchema.parse({ id: crypto.randomUUID(), group: 'inspiration', content: candidate.content, state: 'active', userEdited: false, inspiration: { key: candidate.key, sourceIds }, revision: 1, createdAt: now, updatedAt: now });
+          await this.db.preferences.add(value); result.added.push(value.id);
+        } else if (previous.state === 'deleted' || previous.userEdited) {
+          if (JSON.stringify(previous.inspiration!.sourceIds) !== JSON.stringify(sourceIds)) await this.db.preferences.put(preferenceSchema.parse({ ...previous, inspiration: { key: candidate.key, sourceIds }, revision: previous.revision + 1, updatedAt: now }));
+          result.skipped.push(previous.id);
+        } else {
+          if (previous.content !== candidate.content || JSON.stringify(previous.inspiration!.sourceIds) !== JSON.stringify(sourceIds)) {
+            await this.db.preferences.put(preferenceSchema.parse({ ...previous, content: candidate.content, inspiration: { key: candidate.key, sourceIds }, revision: previous.revision + 1, updatedAt: now }));
+            result.updated.push(previous.id);
+          }
+        }
+      }
+      for (const previous of existing.values()) {
+        if (incoming.has(previous.inspiration!.key)) continue;
+        if (previous.state === 'deleted' || previous.userEdited) {
+          if (previous.inspiration!.sourceIds.length) await this.db.preferences.put(preferenceSchema.parse({ ...previous, inspiration: { ...previous.inspiration!, sourceIds: [] }, revision: previous.revision + 1, updatedAt: now }));
+        } else {
+          await this.db.preferences.delete(previous.id); result.removed.push(previous.id);
+        }
+      }
+      return result;
+    });
+  }
   /** 同步当前轮中与永久反馈对应的副本；本轮副本已随新轮清除时无需重建。 */
   private async syncRoundCopy(preferenceId: string, change: (f: RoundState['feedback'][number]) => RoundState['feedback'][number] | null) {
     const round = await readState(this.db, stateKeys.round); if (!round) return;
