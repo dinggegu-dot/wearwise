@@ -706,6 +706,57 @@ it('指定衣物不属于当前搭配时拒绝替换', async () => {
     expect(mocks.session.commitNewRound).not.toHaveBeenCalled();
   });
 
+  it('不喜欢但原因为空，反馈后换整套仍然使用该反馈', async () => {
+  const mocks = createMocks();
+
+  const originalContext =
+    await mocks.session.adjustmentContext();
+
+  mocks.session.adjustmentContext.mockResolvedValue({
+    ...originalContext,
+    feedback: [
+      {
+        id: 'feedback-empty-1',
+        order: 1,
+        choice: 'dislike',
+        reason: ''
+      }
+    ]
+  });
+
+  const newTop = testGarment('top-2', {
+    category: 'top'
+  });
+
+  mocks.wardrobe.candidates.mockResolvedValue([
+    top,
+    bottom,
+    shoes,
+    newTop
+  ]);
+
+  vi.mocked(requestAIRecommendation).mockResolvedValue({
+    garmentIds: ['top-2', 'bottom-1', 'shoes-1'],
+    reason: '根据用户不喜欢的反馈调整搭配。',
+    knowledgeVersion: 'V1.2'
+  });
+
+  const result = await mocks.service.feedbackSwap();
+
+  expect(result.status).toBe('committed');
+
+  const input = vi.mocked(
+    requestAIRecommendation
+  ).mock.calls[0][0];
+
+  expect(input.conditions.feedback).toEqual([
+    {
+      choice: 'dislike',
+      reason: ''
+    }
+  ]);
+});
+
   it('没有有效反馈时不执行反馈后换整套', async () => {
     const mocks = createMocks();
 
@@ -742,6 +793,55 @@ it('指定衣物不属于当前搭配时拒绝替换', async () => {
 
     expect(mocks.session.commitAdjustment).not.toHaveBeenCalled();
   });
+it('不喜欢但原因为空，换单件仍然使用该反馈', async () => {
+  const mocks = createMocks();
 
+  const originalContext =
+    await mocks.session.adjustmentContext();
+
+  mocks.session.adjustmentContext.mockResolvedValue({
+    ...originalContext,
+    feedback: [
+      {
+        id: 'feedback-empty-2',
+        order: 1,
+        choice: 'dislike',
+        reason: ''
+      }
+    ]
+  });
+
+  const newTop = testGarment('top-2', {
+    category: 'top'
+  });
+
+  mocks.wardrobe.candidates.mockResolvedValue([
+    top,
+    bottom,
+    shoes,
+    newTop
+  ]);
+
+  vi.mocked(requestAIRecommendation).mockResolvedValue({
+    garmentIds: ['top-2', 'bottom-1', 'shoes-1'],
+    reason: '根据用户反馈替换上衣。',
+    knowledgeVersion: 'V1.2'
+  });
+
+  const result = await mocks.service.swapItem('top-1');
+
+  expect(result.status).toBe('committed');
+
+  const input = vi.mocked(
+    requestAIRecommendation
+  ).mock.calls[0][0];
+
+  expect(input.conditions.feedback).toEqual([
+    {
+      choice: 'dislike',
+      reason: ''
+    }
+  ]);
+});
 
 });

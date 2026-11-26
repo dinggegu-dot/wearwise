@@ -57,11 +57,10 @@ export type SwapOutfitResult =
       status: 'no-alternative';
       message: string;
     }
-    | {
+  | {
       status: 'no-feedback';
       message: string;
-    }  ;
-
+    };
 
 export type SwapItemResult =
   | {
@@ -244,6 +243,8 @@ export class RecommendationCoreService {
       try {
         weather = await this.weather.current(city, options.signal);
       } catch {
+        options.signal?.throwIfAborted();
+
         throw new RecommendationCoreError(
           'WEATHER_UNAVAILABLE',
           '天气暂时无法获取，请重试。',
@@ -349,6 +350,8 @@ export class RecommendationCoreService {
       { signal: options.signal }
     );
 
+    options.signal?.throwIfAborted();
+
     // 8. 再次检查设置，避免生成期间用户修改条件。
     const latestDraft = await this.session.getSettingsDraft();
 
@@ -391,6 +394,8 @@ export class RecommendationCoreService {
 
     // 10. 提交新一轮。
     // 只有成功提交后，旧轮临时反馈才会被清除。
+    options.signal?.throwIfAborted();
+
     const round = await this.session.commitNewRound(
       {
         weather: weatherSnapshot,
@@ -420,7 +425,6 @@ export class RecommendationCoreService {
    * - 不清除有效反馈；
    * - 新组合不能与当前组合完全相同。
    */
-
   async swapOutfit(
     options: { signal?: AbortSignal } = {}
   ): Promise<SwapOutfitResult> {
@@ -437,7 +441,6 @@ export class RecommendationCoreService {
     kind: 'swap-outfit' | 'feedback-swap',
     options: { signal?: AbortSignal } = {}
   ): Promise<SwapOutfitResult> {
-
     const now = this.now();
 
     // 1. 获取当前轮次上下文。
@@ -453,14 +456,14 @@ export class RecommendationCoreService {
     const { applied, current, feedback, longTerm } = context;
 
     const currentGarmentIds = [...current.garmentIds];
-const expectedRoundId = current.roundId;
+    const expectedRoundId = current.roundId;
 
-if (!expectedRoundId) {
-  return {
-    status: 'no-current-outfit',
-    message: '当前搭配没有有效的轮次信息，请重新生成。'
-  };
-}
+    if (!expectedRoundId) {
+      return {
+        status: 'no-current-outfit',
+        message: '当前搭配没有有效的轮次信息，请重新生成。'
+      };
+    }
 
     // 2. 获取最新可用衣橱。
     const liveCandidates = await this.wardrobe.candidates(now);
@@ -504,25 +507,21 @@ if (!expectedRoundId) {
     }
 
     // adjustmentContext 已按提交顺序排列。
-    // 只发送有实际理由内容的有效反馈。
-    const effectiveFeedback = feedback
-      .filter(item => item.reason.trim().length > 0)
-      .map(item => ({
-        choice: item.choice,
-        reason: item.reason
-      }));
-
+    // 本轮已成功保存的反馈均有效，原因允许为空。
+    const effectiveFeedback = feedback.map(item => ({
+      choice: item.choice,
+      reason: item.reason
+    }));
 
     if (
       kind === 'feedback-swap' &&
-      effectiveFeedback.length === 0
+      feedback.length === 0
     ) {
       return {
         status: 'no-feedback',
-        message: '当前没有已成功保存的有效文字反馈，请先保存反馈。'
+        message: '当前没有已成功保存的反馈，请先提交喜欢或不喜欢。'
       };
     }
-
 
     if (effectiveFeedback.length > 0) {
       conditions.feedback = effectiveFeedback;
@@ -552,14 +551,15 @@ if (!expectedRoundId) {
         wardrobe: liveCandidates,
         conditions,
         operation: {
-  kind,
-  currentGarmentIds
-},
+          kind,
+          currentGarmentIds
+        },
         ...(referenceImages.size ? { referenceImages } : {})
       },
       { signal: options.signal }
     );
 
+    options.signal?.throwIfAborted();
 
     // 6. AI 返回后重新读取当前可用衣橱。
     const latestCandidates = await this.wardrobe.candidates(this.now());
@@ -612,7 +612,6 @@ if (!expectedRoundId) {
       );
     }
 
-
     // 反馈若在 AI 生成过程中发生改变，不能保存过期结果。
     const originalFeedbackIds = feedback.map(item => item.id);
     const latestFeedbackIds = latestContext.feedback.map(item => item.id);
@@ -627,9 +626,10 @@ if (!expectedRoundId) {
       );
     }
 
-
     // 10. 保存调整结果。
     // commitAdjustment 不开始新轮，也不主动清除有效反馈。
+    options.signal?.throwIfAborted();
+
     const round = await this.session.commitAdjustment(
       {
         expectedRoundId,
@@ -675,17 +675,15 @@ if (!expectedRoundId) {
       };
     }
 
+    const { current, applied, feedback, longTerm } = context;
+    const expectedRoundId = current.roundId;
 
-const { current, applied, feedback, longTerm } = context;
-const expectedRoundId = current.roundId;
-
-if (!expectedRoundId) {
-  return {
-    status: 'no-current-outfit',
-    message: '当前搭配没有有效的轮次信息，请重新生成。'
-  };
-}
-
+    if (!expectedRoundId) {
+      return {
+        status: 'no-current-outfit',
+        message: '当前搭配没有有效的轮次信息，请重新生成。'
+      };
+    }
 
     if (!current.garmentIds.includes(targetGarmentId)) {
       throw new RecommendationCoreError(
@@ -772,12 +770,11 @@ if (!expectedRoundId) {
     }
 
     // 本轮有效反馈已经由 Session 按提交顺序排列。
-    const effectiveFeedback = feedback
-      .filter(item => item.reason.trim().length > 0)
-      .map(item => ({
-        choice: item.choice,
-        reason: item.reason
-      }));
+    // 本轮已成功保存的反馈均有效，原因允许为空。
+    const effectiveFeedback = feedback.map(item => ({
+      choice: item.choice,
+      reason: item.reason
+    }));
 
     if (effectiveFeedback.length > 0) {
       conditions.feedback = effectiveFeedback;
@@ -816,6 +813,8 @@ if (!expectedRoundId) {
       },
       { signal: options.signal }
     );
+
+    options.signal?.throwIfAborted();
 
     // 7. 检查返回结果必须恰好替换一件衣物。
     if (
@@ -897,6 +896,8 @@ if (!expectedRoundId) {
 
     // 10. 使用第 2 轮 Session 提交调整。
     // 保持当前轮次，不清除本轮有效反馈。
+    options.signal?.throwIfAborted();
+
     const round = await this.session.commitAdjustment(
       {
         expectedRoundId,
@@ -918,7 +919,6 @@ if (!expectedRoundId) {
       knowledgeVersion: aiResult.knowledgeVersion
     };
   }
-
 
   /**
    * 首页今日穿搭：
@@ -966,6 +966,8 @@ if (!expectedRoundId) {
         options.signal
       );
     } catch {
+      options.signal?.throwIfAborted();
+
       throw new RecommendationCoreError(
         'WEATHER_UNAVAILABLE',
         '今日天气暂时无法获取，请重试。',
@@ -989,8 +991,10 @@ if (!expectedRoundId) {
       'temperatureMax'
     ];
 
-    if (weather.weatherCode !== null &&
-        weather.weatherCode !== undefined) {
+    if (
+      weather.weatherCode !== null &&
+      weather.weatherCode !== undefined
+    ) {
       usedFields.push('weatherCode');
     }
 
@@ -1027,6 +1031,8 @@ if (!expectedRoundId) {
       { signal: options.signal }
     );
 
+    options.signal?.throwIfAborted();
+
     // 8. 再次读取实时衣橱，防止生成期间衣物被暂停或删除。
     const latestCandidates = await this.wardrobe.candidates(
       this.now()
@@ -1060,16 +1066,19 @@ if (!expectedRoundId) {
     }
 
     // 确认生成期间共享城市没有发生变化。
-const latestCity = await this.session.getCity();
+    const latestCity = await this.session.getCity();
 
-if (latestCity !== city) {
-  throw new RecommendationCoreError(
-    'CITY_CHANGED',
-    '生成期间城市发生变化，请重新生成。'
-  );
-}
+    if (latestCity !== city) {
+      throw new RecommendationCoreError(
+        'CITY_CHANGED',
+        '生成期间城市发生变化，请重新生成。'
+      );
+    }
+
     // 9. 独立保存首页结果。
     // 不会修改推荐页的当前轮次和反馈。
+    options.signal?.throwIfAborted();
+
     const home = await this.session.commitHome(
       {
         kind: 'generate',
@@ -1090,5 +1099,4 @@ if (latestCity !== city) {
       knowledgeVersion: aiResult.knowledgeVersion
     };
   }
-
 }

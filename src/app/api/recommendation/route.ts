@@ -22,7 +22,10 @@ const conditionsSchema = z.object({
   weather: weatherSnapshotSchema.optional(),
   preference: preferenceSchema.optional(),
   scene: z.union([text(100), selectedSceneSchema]).optional(),
-  feedback: z.array(z.object({ choice: z.enum(['like', 'dislike']), reason: text(500) }).strict()).max(30).optional(),
+  feedback: z.array(z.object({
+  choice: z.enum(['like', 'dislike']),
+  reason: z.string().trim().max(500)
+}).strict()).max(30).optional(),
 }).strict();
 
 const operationSchema = z.discriminatedUnion('kind', [

@@ -5,11 +5,23 @@ import { createWeatherService } from '@/composition';
 import { useMode } from '@/composition/mode-provider';
 import { describeWeatherCode } from '@/modules/weather/domain/weather-code';
 
-export function WeatherPanel({ onChange, exampleOnly, initialWeather }: { onChange?: (weather: Weather | undefined) => void; exampleOnly?: boolean; initialWeather?: Weather }) {
+export function WeatherPanel({
+  onChange,
+  onCityChange,
+  initialCity,
+  exampleOnly,
+  initialWeather
+}: {
+  onChange?: (weather: Weather | undefined) => void;
+  onCityChange?: (city: City) => void;
+  initialCity?: City;
+  exampleOnly?: boolean;
+  initialWeather?: Weather;
+}) {
   const { mode } = useMode();
   const demo = exampleOnly ?? mode === 'demo';
   const service = useMemo(() => createWeatherService(mode), [mode]);
-  const [city, setCity] = useState<City>('深圳');
+  const [city, setCity] = useState<City>(initialCity ?? '深圳');
   const [weather, setWeather] = useState<Weather>();
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
@@ -17,7 +29,24 @@ export function WeatherPanel({ onChange, exampleOnly, initialWeather }: { onChan
   const request = useRef<{ sequence: number; abort?: AbortController }>({ sequence: 0 });
   useEffect(() => { setReady(true); return () => { request.current.sequence++; request.current.abort?.abort(); }; }, []);
   useEffect(() => { if (initialWeather) { setCity(initialWeather.city); setWeather(initialWeather); setError(''); } }, [initialWeather]);
-  const changeCity = (next: City) => { request.current.sequence++; request.current.abort?.abort(); setCity(next); setWeather(undefined); onChange?.(undefined); setError(''); setLoading(false); };
+  useEffect(() => {
+  if (initialCity) {
+    setCity(initialCity);
+  }
+}, [initialCity]);
+  const changeCity = (next: City) => {
+  request.current.sequence++;
+  request.current.abort?.abort();
+
+  setCity(next);
+  setWeather(undefined);
+
+  onCityChange?.(next);
+  onChange?.(undefined);
+
+  setError('');
+  setLoading(false);
+};
   const load = async (example = false, refresh = false) => {
     request.current.abort?.abort(); const sequence = ++request.current.sequence;
     const abort = new AbortController(); request.current.abort = abort;
