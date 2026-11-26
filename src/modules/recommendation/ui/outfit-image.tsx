@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { Garment } from '@/modules/wardrobe';
+import type { GarmentSnapshot } from '@/modules/session';
 
 type LoadImage = (id: string) => Promise<Blob | undefined>;
 type ImageState = {
@@ -51,7 +51,13 @@ function ImagePreview({ imageId, name, load }: { imageId: string; name: string; 
   </div>;
 }
 
-export function OutfitImage({ item, load }: { item: Garment; load: LoadImage }) {
+export function OutfitImage({
+  item,
+  load
+}: {
+  item: GarmentSnapshot;
+  load: LoadImage;
+}) {
   return <figure className="outfit-item">
     <ImagePreview key={`${item.id}:${item.imageId}`} imageId={item.imageId} name={item.name} load={load} />
     <figcaption>{item.name}</figcaption>
