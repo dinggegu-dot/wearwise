@@ -271,13 +271,14 @@ export class DexieSessionStore implements SessionStore {
       return { home, current: current ? outfitResultSchema.parse(current) : undefined };
     });
   }
-  async commitHome(input: { kind: 'generate' | AdjustmentKind; expectedResultId?: string; targetGarmentId?: string; result: OutfitResult }, now: Date) {
+  async commitHome(input: { kind: 'generate' | AdjustmentKind; expectedResultId?: string | null; targetGarmentId?: string; result: OutfitResult }, now: Date) {
     const result = outfitResultSchema.parse(input.result);
     if (result.surface !== 'home' || result.roundId !== null) throw new Error('结果不属于首页');
     return this.db.transaction('rw', this.db.state, this.db.results, this.db.garments, async () => {
       const home = await readState(this.db, stateKeys.home);
       let adjustments: HomeState['adjustments'] = [];
       if (input.kind === 'generate') {
+        if (input.expectedResultId !== undefined && home?.currentResultId !== (input.expectedResultId ?? undefined)) throw new Error('首页搭配已变化，请刷新后重试。');
         await this.requireCandidates(result.garmentIds, now);
         await this.db.results.where('surface').equals('home').delete();
       } else {

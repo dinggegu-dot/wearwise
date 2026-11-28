@@ -1,3 +1,4 @@
+import { beijingDate } from '@/shared/domain/beijing-date';
 
 import type { Garment } from '@/modules/wardrobe';
 import { WardrobeService } from '@/modules/wardrobe';
@@ -88,6 +89,10 @@ export type HomeRecommendationResult =
   | {
       status: 'insufficient-wardrobe';
       message: string;
+    }
+  | {
+      status: 'no-current-outfit' | 'no-alternative';
+      message: string;
     };
 
 export interface RecommendationCoreDependencies {
@@ -138,7 +143,7 @@ function hasCompleteOutfit(garments: Garment[]): boolean {
  */
 function validateOutfit(
   garmentIds: string[],
-  garments: Garment[]
+  garments: Array<Pick<Garment, 'id' | 'category'>>
 ): boolean {
   if (
     garmentIds.length === 0 ||
@@ -717,13 +722,7 @@ export class RecommendationCoreService {
       id => id !== targetGarmentId
     );
 
-    // 未被替换的位置必须保持不变，因此这些衣物需要仍然可用。
-    if (otherIds.some(id => !candidateById.has(id))) {
-      throw new RecommendationCoreError(
-        'GARMENT_UNAVAILABLE',
-        '当前搭配中存在已删除或暂停的衣物，无法仅替换指定单件。'
-      );
-    }
+    const keptGarments = current.snapshots.filter(item => otherIds.includes(item.id));
 
     // 3. 预先检查是否有同类别的可用替代衣物。
     const alternatives = candidates.filter(
@@ -807,7 +806,8 @@ export class RecommendationCoreService {
           kind: 'swap-item',
           currentGarmentIds: [...current.garmentIds],
           targetGarmentId,
-          targetCategory
+          targetCategory,
+          keptGarments
         },
         ...(referenceImages.size ? { referenceImages } : {})
       },
@@ -859,9 +859,8 @@ export class RecommendationCoreService {
       latestCandidates.map(item => [item.id, item])
     );
 
-    const selected = aiResult.garmentIds.map(
-      id => latestById.get(id)
-    );
+    const keptById = new Map(keptGarments.map(item => [item.id, item]));
+    const selected = aiResult.garmentIds.map(id => keptById.get(id) ?? latestById.get(id));
 
     if (selected.some(item => !item)) {
       throw new RecommendationCoreError(
@@ -920,183 +919,90 @@ export class RecommendationCoreService {
     };
   }
 
-  /**
-   * 首页今日穿搭：
-   * 1. 固定读取长期记忆；
-   * 2. 固定读取当前城市当天真实天气；
-   * 3. 读取当前可用衣橱；
-   * 4. 使用服务端搭配知识；
-   * 5. 不读取推荐页草稿、临时喜好、场景和单次反馈；
-   * 6. 独立保存到 Home。
-   */
-  async generateHome(
-    options: { signal?: AbortSignal } = {}
+  /** Home operations always use current long-term records and today's selected-city weather. */
+  generateHome(options: { signal?: AbortSignal } = {}): Promise<HomeRecommendationResult> {
+    return this.runHome('generate', undefined, options);
+  }
+
+  swapHomeOutfit(options: { signal?: AbortSignal } = {}): Promise<HomeRecommendationResult> {
+    return this.runHome('swap-outfit', undefined, options);
+  }
+
+  swapHomeItem(targetGarmentId: string, options: { signal?: AbortSignal } = {}): Promise<HomeRecommendationResult> {
+    return this.runHome('swap-item', targetGarmentId, options);
+  }
+
+  private async runHome(
+    kind: 'generate' | 'swap-outfit' | 'swap-item',
+    targetGarmentId: string | undefined,
+    options: { signal?: AbortSignal }
   ): Promise<HomeRecommendationResult> {
+    options.signal?.throwIfAborted();
     const now = this.now();
-
-    // 1. 获取共享城市。
     const city = await this.session.getCity();
+    if (!city) throw new RecommendationCoreError('CITY_REQUIRED', '请先选择城市，再生成今日穿搭。');
+    const { current, longTerm, candidates } = await this.session.homeContext(now);
+    if (kind !== 'generate' && !current) return { status: 'no-current-outfit', message: '请先生成今日穿搭。' };
 
-    if (!city) {
-      throw new RecommendationCoreError(
-        'CITY_REQUIRED',
-        '请先选择城市，再生成今日穿搭。'
-      );
+    const target = kind === 'swap-item' ? current?.snapshots.find(item => item.id === targetGarmentId) : undefined;
+    if (kind === 'swap-item' && !target) throw new RecommendationCoreError('INVALID_TARGET', '指定衣物不属于首页当前搭配。');
+    const keptGarments = kind === 'swap-item' ? current!.snapshots.filter(item => item.id !== targetGarmentId) : [];
+    if (target) {
+      const alternatives = candidates.filter(item => item.category === target.category && !current!.garmentIds.includes(item.id));
+      if (!alternatives.length) return { status: 'no-alternative', message: '暂无合适的替代衣物，已保留当前搭配。' };
+    } else if (!hasCompleteOutfit(candidates)) {
+      const has = (category: Garment['category']) => candidates.some(item => item.category === category);
+      const missing = [!has('shoes') ? '鞋履' : '', !has('dress') && !has('top') ? '上衣或连衣裙' : '', !has('dress') && !has('bottom') ? '下装或连衣裙' : ''].filter(Boolean);
+      return { status: 'insufficient-wardrobe', message: `当前可用衣物不足，需添加或恢复：${missing.join('、')}。` };
     }
 
-    // 2. 获取首页专用上下文。
-    const context = await this.session.homeContext(now);
-
-    const { longTerm, candidates } = context;
-
-    // 3. 检查衣橱是否足以组成完整搭配。
-    if (!hasCompleteOutfit(candidates)) {
-      return {
-        status: 'insufficient-wardrobe',
-        message: '当前可用衣橱不足以组成完整搭配。'
-      };
-    }
-
-    // 4. 首页固定获取当天真实天气。
     let weather: Weather;
-
-    try {
-      weather = await this.weather.current(
-        city,
-        options.signal
-      );
-    } catch {
+    try { weather = await this.weather.current(city, options.signal); }
+    catch {
       options.signal?.throwIfAborted();
-
-      throw new RecommendationCoreError(
-        'WEATHER_UNAVAILABLE',
-        '今日天气暂时无法获取，请重试。',
-        true
-      );
+      throw new RecommendationCoreError('WEATHER_UNAVAILABLE', '今日天气暂时无法获取，请重试或切换城市。', true);
     }
+    if (weather.example || weather.source === 'example') throw new RecommendationCoreError('WEATHER_UNAVAILABLE', '首页推荐需要当前城市当天的真实天气。', true);
+    const weatherSnapshot = toWeatherSnapshot(weather, ['temperature', 'apparentTemperature', 'temperatureMin', 'temperatureMax', ...(weather.weatherCode == null ? [] : ['weatherCode'])]);
+    if (weatherSnapshot.date !== beijingDate(now)) throw new RecommendationCoreError('WEATHER_UNAVAILABLE', '天气不是今天的数据，请重新获取。', true);
+    const conditions: AIRecommendationConditions = { weather: weatherSnapshot };
+    if (longTerm.length) conditions.memory = longTerm.map(item => `【${item.group}${item.feedback ? `/${item.feedback.choice}` : ''}】${item.content}`);
 
-    if (weather.example || weather.source === 'example') {
-      throw new RecommendationCoreError(
-        'WEATHER_UNAVAILABLE',
-        '首页推荐不能使用示例天气，请重新获取真实天气。',
-        true
-      );
-    }
-
-    // 5. 转换成 Session 使用的天气快照。
-    const usedFields = [
-      'temperature',
-      'apparentTemperature',
-      'temperatureMin',
-      'temperatureMax'
-    ];
-
-    if (
-      weather.weatherCode !== null &&
-      weather.weatherCode !== undefined
-    ) {
-      usedFields.push('weatherCode');
-    }
-
-    const weatherSnapshot = toWeatherSnapshot(
-      weather,
-      usedFields
-    );
-
-    // 6. 首页固定使用长期记忆。
-    // 不读取推荐页的临时喜好、场景和单次反馈。
-    const conditions: {
-      memory?: string[];
-      weather: WeatherSnapshot;
-    } = {
-      weather: weatherSnapshot
-    };
-
-    if (longTerm.length > 0) {
-      conditions.memory = longTerm.map(item => {
-        const feedbackLabel = item.feedback
-          ? `/${item.feedback.choice}`
-          : '';
-
-        return `【${item.group}${feedbackLabel}】${item.content}`;
-      });
-    }
-
-    // 7. 调用 AI。
-    const aiResult = await requestAIRecommendation(
-      {
-        wardrobe: candidates,
-        conditions
-      },
-      { signal: options.signal }
-    );
-
+    const operation = target ? {
+      kind: 'swap-item' as const, currentGarmentIds: [...current!.garmentIds], targetGarmentId: target.id,
+      targetCategory: target.category, keptGarments
+    } : kind === 'swap-outfit' ? { kind: 'swap-outfit' as const, currentGarmentIds: [...current!.garmentIds] } : undefined;
+    const result = await requestAIRecommendation({ wardrobe: candidates, conditions, ...(operation ? { operation } : {}) }, options);
     options.signal?.throwIfAborted();
 
-    // 8. 再次读取实时衣橱，防止生成期间衣物被暂停或删除。
-    const latestCandidates = await this.wardrobe.candidates(
-      this.now()
-    );
-
-    const latestById = new Map(
-      latestCandidates.map(item => [item.id, item])
-    );
-
-    const selectedGarments = aiResult.garmentIds.map(
-      id => latestById.get(id)
-    );
-
-    if (selectedGarments.some(item => !item)) {
-      throw new RecommendationCoreError(
-        'GARMENT_UNAVAILABLE',
-        '今日推荐中存在已删除或暂停的衣物，请重新生成。'
-      );
+    const latest = new Map((await this.wardrobe.candidates(this.now())).map(item => [item.id, item]));
+    const retained = new Map(keptGarments.map(item => [item.id, item]));
+    if (target) {
+      const added = result.garmentIds.filter(id => !retained.has(id));
+      if (result.garmentIds.length !== current!.garmentIds.length || added.length !== 1 || added[0] === target.id ||
+          !keptGarments.every(item => result.garmentIds.includes(item.id)) || latest.get(added[0])?.category !== target.category) {
+        throw new RecommendationCoreError('AI_INVALID_SWAP_ITEM', '替换结果不符合只更换指定单品的要求，已保留当前搭配。');
+      }
+    } else if (kind === 'swap-outfit' && isSameCombination(result.garmentIds, current!.garmentIds)) {
+      return { status: 'no-alternative', message: '暂无其他符合要求的搭配，已保留当前搭配。' };
     }
+    const selected = result.garmentIds.map(id => retained.get(id) ?? latest.get(id));
+    if (selected.some(item => !item)) throw new RecommendationCoreError('GARMENT_UNAVAILABLE', '生成期间有候选衣物被删除或暂停，请重试。');
+    if (!validateOutfit(result.garmentIds, selected as Array<Pick<Garment, 'id' | 'category'>>)) throw new RecommendationCoreError('AI_INVALID_OUTFIT', '首页推荐结果不符合完整穿搭结构。');
 
-    if (
-      !validateOutfit(
-        aiResult.garmentIds,
-        selectedGarments as Garment[]
-      )
-    ) {
-      throw new RecommendationCoreError(
-        'AI_INVALID_OUTFIT',
-        '首页推荐结果不符合完整穿搭结构。'
-      );
+    // Required images must be readable before committing. The old result survives preparation failure.
+    for (const item of selected) {
+      if (!item || !('imageId' in item) || !await this.wardrobe.image(item.imageId)) {
+        throw new RecommendationCoreError('IMAGE_UNAVAILABLE', '搭配图片暂时无法读取，已保留原结果，请重试。', true);
+      }
     }
-
-    // 确认生成期间共享城市没有发生变化。
-    const latestCity = await this.session.getCity();
-
-    if (latestCity !== city) {
-      throw new RecommendationCoreError(
-        'CITY_CHANGED',
-        '生成期间城市发生变化，请重新生成。'
-      );
-    }
-
-    // 9. 独立保存首页结果。
-    // 不会修改推荐页的当前轮次和反馈。
+    if (await this.session.getCity() !== city) throw new RecommendationCoreError('CITY_CHANGED', '生成期间城市发生变化，请重试。');
+    const latestHome = await this.session.readHome();
+    if (latestHome.current?.id !== current?.id) throw new RecommendationCoreError('HOME_CHANGED', '首页搭配已被其他操作修改，请重试。');
     options.signal?.throwIfAborted();
-
-    const home = await this.session.commitHome(
-      {
-        kind: 'generate',
-        weather: weatherSnapshot,
-        result: {
-          garmentIds: aiResult.garmentIds,
-          reason: aiResult.reason,
-          knowledgeVersion: aiResult.knowledgeVersion
-        }
-      },
-      this.now()
-    );
-
-    return {
-      status: 'committed',
-      home,
-      garmentIds: aiResult.garmentIds,
-      knowledgeVersion: aiResult.knowledgeVersion
-    };
+    const home = await this.session.commitHome({ kind, weather: weatherSnapshot,
+      expectedResultId: current?.id ?? null, ...(target ? { targetGarmentId: target.id } : {}), result
+    }, this.now());
+    return { status: 'committed', home, garmentIds: result.garmentIds, knowledgeVersion: result.knowledgeVersion };
   }
 }

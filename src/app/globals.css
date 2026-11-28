@@ -717,3 +717,58 @@ a { color: inherit; text-decoration: none; }
   opacity: .5;
   cursor: not-allowed;
 }
+
+/* Round 09: desktop home integration, preserving the existing sage/cream palette. */
+.home-hero { grid-template-columns: minmax(280px, .8fr) minmax(0, 1.4fr); gap: 28px; padding: 40px 0; align-items: center; }
+.home-hero h1 { font-size: clamp(30px, 3.2vw, 43px); }
+.home-today { min-width: 0; padding: 24px; border: 1px solid #e3e7dc; border-radius: 14px; background: #fff; box-shadow: 0 10px 30px #60715808; }
+.home-today h2 { margin: 8px 0 12px; color: #40543f; font: 600 27px Georgia, 'Songti SC', serif; }
+.home-basis-tags { display: flex; flex-wrap: wrap; gap: 10px; color: #60765c; font-size: 12px; }
+.home-basis-tags span { padding: 6px 12px; border-radius: 20px; background: #f0f4ed; }
+.home-outfit-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(175px, 1fr); gap: 18px; margin-top: 18px; }
+.home-outfit-layout .outfit-flatlay, .home-outfit-layout .outfit-garment-list { margin: 0; }
+.home-outfit-layout .outfit-flatlay-heading { margin-bottom: 10px; }
+.home-outfit-layout .outfit-flatlay-heading span { display: none; }
+.home-outfit-layout .outfit-flatlay-stage { padding: 12px; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: 'outerwear top' 'bottom shoes'; grid-template-rows: repeat(2, minmax(125px, auto)); min-height: 280px; }
+.home-outfit-layout .outfit-flatlay-item.slot-dress { grid-area: 1 / 1 / 3 / 2; }
+.home-outfit-layout .outfit-item, .home-thumbnails .outfit-item { margin: 0; max-width: 100%; }
+.home-outfit-layout .outfit-flatlay-item .outfit-item > div { width: 100% !important; max-width: 110px; }
+.home-outfit-layout .outfit-flatlay-item img { max-width: 100%; object-fit: contain; }
+.home-outfit-layout .outfit-garment-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.home-outfit-layout .outfit-garment-card { display: grid; grid-template-columns: 66px minmax(0, 1fr); padding: 8px; gap: 8px; }
+.home-outfit-layout .outfit-garment-card .outfit-item > div { width: 66px !important; height: 66px !important; }
+.home-outfit-layout .outfit-garment-card .outfit-item img { width: 66px; height: 66px; object-fit: contain; }
+.home-outfit-layout .outfit-garment-card figcaption { display: none; }
+.home-outfit-layout .outfit-garment-info { margin: 0; gap: 3px; }
+.home-outfit-layout .outfit-garment-info > span { font-size: 10px; }
+.home-outfit-layout .outfit-garment-info button { margin-top: 3px; padding: 5px 6px; font-size: 11px; }
+.home-reason { background: #f5f6ef; border-radius: 7px; padding: 12px; font-size: 13px; line-height: 1.8; color: #53664f; }
+.home-basis { color: #7b8875; font-size: 11px; line-height: 1.7; }
+.home-today-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; }
+.home-today-actions .primary-link { border: 0; gap: 8px; padding: 11px 18px; }
+.home-outfit-empty { min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; color: #778d70; }
+.home-outfit-empty h3 { margin: 0; font-size: 20px; }
+.home-outfit-empty p { max-width: 340px; margin: 0; color: #899580; font-size: 13px; line-height: 1.9; }
+.home-outfit-empty button { border: 0; }
+.home-notice, .home-today [role='alert'] { margin: 14px 0; color: #945343; font-size: 13px; line-height: 1.8; }
+.home-notice button { margin-left: 8px; }
+.home-today [role='status'] { font-size: 12px; line-height: 1.8; color: #7b8068; }
+.home-count { display: block; font-size: 25px; color: #59704f; margin: 14px 0; }
+.home-thumbnails { display: flex; gap: 10px; margin-bottom: 18px; }
+.home-thumbnails figure { flex: 1; min-width: 0; }
+.home-thumbnails figure > div { width: 100% !important; height: 75px !important; }
+.home-thumbnails img { width: 100%; height: 75px; object-fit: contain; }
+.home-thumbnails figcaption { font-size: 10px; overflow-wrap: anywhere; color: #829078; }
+.weather-card label { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #677c5e; margin: 15px 0; }
+.weather-card select { min-width: 90px; border: 1px solid #dce4d6; border-radius: 6px; padding: 5px; background: #fff; }
+.home-weather-values p { margin: 8px 0; color: #72816a; }
+.home-weather-values strong { font-size: 20px; font-weight: 600; color: #4f6547; }
+.weather-card small { display: block; margin-top: 16px; font-size: 10px; color: #919a88; }
+@media (min-width: 1100px) { .main { max-width: 1440px; } }
+@media (max-width: 1050px) { .home-hero { grid-template-columns: 1fr; } .home-hero .hero-copy { max-width: 640px; } }
+@media (max-width: 560px) { .home-outfit-layout { grid-template-columns: 1fr; } .home-today { padding: 18px; } }
+.home-outfit-layout .outfit-flatlay-item { width: 100%; }
+.home-outfit-layout .outfit-flatlay-item .outfit-item img { width: 100%; height: 110px; }
+.home-outfit-layout .outfit-flatlay-stage[data-has-outerwear='false'][data-outfit-type='separates'] { grid-template-areas: 'top top' 'bottom shoes'; }
+.home-outfit-layout .outfit-flatlay-stage[data-outfit-type='dress'] { grid-template-areas: 'dress outerwear' 'dress shoes'; }
+.home-outfit-layout .outfit-flatlay-stage[data-outfit-type='dress'] .slot-dress { grid-area: dress; }

@@ -12,7 +12,7 @@ import {
 import { createServices } from '@/composition';
 import { useMode } from '@/composition/mode-provider';
 
-import type { City, Weather } from '@/modules/weather';
+import { useSharedWeather } from '@/modules/weather/ui/shared-weather';
 
 import type {
   RoundView,
@@ -55,6 +55,7 @@ const OPERATION_LABELS: Record<PageOperation, string> = {
 
 export function RecommendationsPage() {
   const { mode } = useMode();
+  const sharedWeather = useSharedWeather();
 
   const services = useMemo(
     () => createServices(mode),
@@ -67,12 +68,6 @@ export function RecommendationsPage() {
 
   const [roundView, setRoundView] =
     useState<RoundView>({ results: [] });
-
-  const [city, setCity] =
-    useState<City>('深圳');
-
-  const [weather, setWeather] =
-    useState<Weather>();
 
   const [garmentStatus, setGarmentStatus] =
     useState<GarmentStatus>();
@@ -110,16 +105,13 @@ export function RecommendationsPage() {
   const settingsSaveQueue =
     useRef<Promise<void>>(Promise.resolve());
 
-  const citySaveQueue =
-    useRef<Promise<void>>(Promise.resolve());
-
   const busy = operation !== null;
 
   const modalOpen =
     feedbackChoice !== null || feedbackSaved;
 
   const controlsDisabled =
-    !initialized || busy || modalOpen;
+    !initialized || !sharedWeather.ready || sharedWeather.savingCity || busy || modalOpen;
 
   // 修改条件：立即更新 UI，并顺序保存。
   const updateSettings = useCallback(
@@ -276,13 +268,12 @@ export function RecommendationsPage() {
     setFeedbackSwapError('');
     setError('');
     setSettings(undefined);
-    setWeather(undefined);
+
     setRoundView({ results: [] });
     setGarmentStatus(undefined);
 
     settingsRef.current = undefined;
     settingsSaveQueue.current = Promise.resolve();
-    citySaveQueue.current = Promise.resolve();
 
     const isActive = () =>
       mounted.current &&
@@ -292,21 +283,11 @@ export function RecommendationsPage() {
       try {
         const [
           draft,
-          view,
-          savedCity
+          view
         ] = await Promise.all([
           services.session.getSettingsDraft(),
-          services.session.readRound(),
-          services.session.getCity()
+          services.session.readRound()
         ]);
-
-        if (!isActive()) return;
-
-        const resolvedCity = savedCity ?? '深圳';
-
-        if (!savedCity) {
-          await services.session.setCity(resolvedCity);
-        }
 
         if (!isActive()) return;
 
@@ -324,7 +305,7 @@ export function RecommendationsPage() {
 
         setSettings(draft);
         setRoundView(view);
-        setCity(resolvedCity);
+
         setGarmentStatus(status);
 
         // 只恢复属于当前搭配的未提交反馈。
@@ -364,38 +345,6 @@ export function RecommendationsPage() {
       services.dispose();
     };
   }, [services]);
-
-  // 修改城市，不覆盖当前轮次已经使用的天气。
-  const changeCity = useCallback(
-    (next: City) => {
-      const version = lifecycle.current;
-
-      setCity(next);
-
-      const save = citySaveQueue.current
-        .catch(() => undefined)
-        .then(() => services.session.setCity(next));
-
-      citySaveQueue.current = save;
-
-      void save.catch(() => {
-        if (
-          mounted.current &&
-          lifecycle.current === version
-        ) {
-          setError('城市保存失败，请重试。');
-        }
-      });
-    },
-    [services]
-  );
-
-  const updateWeather = useCallback(
-    (next: Weather | undefined) => {
-      setWeather(next);
-    },
-    []
-  );
 
   // 所有推荐和反馈操作共享同一个同步锁。
   const beginOperation = (
@@ -470,7 +419,7 @@ export function RecommendationsPage() {
 
     try {
       await settingsSaveQueue.current;
-      await citySaveQueue.current;
+      await sharedWeather.waitForCity();
 
       task.controller.signal.throwIfAborted();
 
@@ -792,13 +741,7 @@ export function RecommendationsPage() {
           <div className="panel">
             <h2>天气参考</h2>
 
-            <WeatherPanel
-              onChange={updateWeather}
-              onCityChange={changeCity}
-              initialCity={city}
-              exampleOnly={mode === 'demo'}
-              initialWeather={weather}
-            />
+            <WeatherPanel/>
 
             <p>
               生成时将根据已保存的城市获取天气。

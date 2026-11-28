@@ -12,3 +12,6 @@ playwright-report/
 # BiRefNet weights are installed locally after SHA-256 verification, not staged with source.
 public/models/birefnet/*.onnx
 spikes/birefnet/model/onnx/*.onnx
+
+# Generated packaging metadata contains the final commit identifier.
+/VERSION.txt

@@ -38,7 +38,7 @@ export interface SessionStore {
   saveFeedbackDraft(draft: FeedbackDraft): Promise<void>;
   clearFeedbackDraft(): Promise<void>;
   readHome(): Promise<{ home?: HomeState; current?: OutfitResult }>;
-  commitHome(input: { kind: 'generate' | AdjustmentKind; expectedResultId?: string; targetGarmentId?: string; result: OutfitResult }, now: Date): Promise<HomeState>;
+  commitHome(input: { kind: 'generate' | AdjustmentKind; expectedResultId?: string | null; targetGarmentId?: string; result: OutfitResult }, now: Date): Promise<HomeState>;
   getResult(id: string): Promise<OutfitResult | undefined>;
   /** 存储层在事务内读取当前衣物生成快照。 */
   snapshotGarments(ids: string[]): Promise<Garment[]>;
@@ -108,6 +108,21 @@ export function buildResult(surface: Surface, roundId: string | null, garments: 
   };
 }
 
+/** A single replacement must preserve the other positions' original display snapshots. */
+function retainPositions(result: OutfitResult, current: OutfitResult, target: string): OutfitResult {
+  const kept = new Map(current.snapshots.filter(item => item.id !== target).map(item => [item.id, item]));
+  const added = result.snapshots.filter(item => !kept.has(item.id));
+  if (!current.garmentIds.includes(target) || result.garmentIds.length !== current.garmentIds.length ||
+      ![...kept.keys()].every(id => result.garmentIds.includes(id)) || added.length !== 1) throw new Error('换掉这件只能替换指定单品');
+  const replacement = added[0];
+  if (replacement.id === target) throw new Error('暂无合适的替代衣物');
+  return {
+    ...result,
+    snapshots: result.snapshots.map(item => kept.get(item.id) ?? item),
+    flatLay: current.flatLay.map(slot => slot.garmentId === target ? { ...slot, garmentId: replacement.id } : slot)
+  };
+}
+
 export class SessionService {
   constructor(private readonly store: SessionStore, private readonly wardrobe: WardrobeService, private readonly preferences: PreferenceService) {}
 
@@ -144,7 +159,12 @@ export class SessionService {
     if (!round || round.roundId !== input.expectedRoundId) throw new Error('本轮已变化，请刷新后重试。');
     const a = round.applied;
     const basis = { label: basisLabel({ weather: a.weather, scene: sceneText(a.scene), preference: !!a.preference, memory: a.memory }), memory: a.memory, weather: a.weather, preference: !!a.preference, scene: sceneText(a.scene), ...(input.result.knowledgeVersion ? { knowledgeVersion: input.result.knowledgeVersion } : {}) };
-    const result = buildResult('recommendations', round.roundId, await this.store.snapshotGarments(input.result.garmentIds), input.result, basis, now);
+    let result = buildResult('recommendations', round.roundId, await this.store.snapshotGarments(input.result.garmentIds), input.result, basis, now);
+    if (input.kind === 'swap-item' && input.targetGarmentId) {
+      const { current } = await this.store.readRound();
+      if (!current) throw new Error('当前搭配不存在，请重新生成。');
+      result = retainPositions(result, current, input.targetGarmentId);
+    }
     return this.store.commitAdjustment({ expectedRoundId: input.expectedRoundId, kind: input.kind, targetGarmentId: input.targetGarmentId, result }, now);
   }
   /** 连续调整时可读取的全部输入：本轮已应用条件、本轮有效反馈（按提交顺序）、开启记忆时的最新有效长期记录、当前候选衣物。 */
@@ -207,10 +227,15 @@ export class SessionService {
   }
 
   /** 首页固定使用长期记忆与当前城市当天天气，不读推荐页开关、喜好、场景或单次反馈。 */
-  async commitHome(input: { kind: 'generate' | AdjustmentKind; weather: WeatherSnapshot; expectedResultId?: string; targetGarmentId?: string; result: ResultDraft }, now = new Date()) {
+  async commitHome(input: { kind: 'generate' | AdjustmentKind; weather: WeatherSnapshot; expectedResultId?: string | null; targetGarmentId?: string; result: ResultDraft }, now = new Date()) {
     if (input.weather.date !== beijingDate(now)) throw new Error('天气不是今天的数据，请重新获取。');
     const basis = { label: basisLabel({ weather: input.weather, scene: null, preference: false, memory: true }), memory: true, weather: input.weather, preference: false, scene: null, ...(input.result.knowledgeVersion ? { knowledgeVersion: input.result.knowledgeVersion } : {}) };
-    const result = buildResult('home', null, await this.store.snapshotGarments(input.result.garmentIds), input.result, basis, now);
+    let result = buildResult('home', null, await this.store.snapshotGarments(input.result.garmentIds), input.result, basis, now);
+    if (input.kind === 'swap-item' && input.targetGarmentId) {
+      const { current } = await this.store.readHome();
+      if (!current) throw new Error('当前搭配不存在，请重新生成。');
+      result = retainPositions(result, current, input.targetGarmentId);
+    }
     return this.store.commitHome({ kind: input.kind, expectedResultId: input.expectedResultId, targetGarmentId: input.targetGarmentId, result }, now);
   }
 

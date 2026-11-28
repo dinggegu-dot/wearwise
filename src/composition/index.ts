@@ -25,8 +25,15 @@ import {RecommendationCoreService} from '@/modules/recommendation/core-service';
 
 export type Mode = 'demo' | 'real';
 
+const sharedWeather = new Map<Mode, WeatherService>();
+
 export function createWeatherService(mode: Mode) {
-    return new WeatherService(mode === 'demo' ? new ExampleWeatherProvider() : new OpenMeteoProvider());
+    let service = sharedWeather.get(mode);
+    if (!service) {
+        service = new WeatherService(mode === 'demo' ? new ExampleWeatherProvider() : new OpenMeteoProvider());
+        sharedWeather.set(mode, service);
+    }
+    return service;
 }
 
 export function createServices(mode: Mode) {
