@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import path from 'node:path';
-import { backgroundResult } from './helpers/background';
+import { backgroundResult, confirmSingleTarget } from './helpers/background';
 
 const sample = path.resolve('tests/fixtures/synthetic-shirt.jpg');
 test.beforeEach(async ({ page }) => {
@@ -28,7 +28,7 @@ test('在线白底 HTTP 200 无效结果不能保存；只重试白底并持久�
   });
   await page.goto('/wardrobe');
   await page.getByRole('button', { name: '＋ 添加衣物' }).click();
-  await page.getByLabel('衣物照片（可选）').setInputFiles(sample);
+  await page.getByLabel('衣物照片（可选）').setInputFiles(sample); await confirmSingleTarget(page);
   await expect(page.getByRole('alert').filter({ hasText: '在线白底结果格式无效' })).toBeVisible();
   await expect(page.getByRole('button', { name: '确认保存' })).toBeDisabled();
   await expect(page.getByLabel('名称')).toHaveValue('新版识别外套');
@@ -69,7 +69,7 @@ test('关闭弹窗和换图取消在线白底，迟到结果不覆盖新图', as
   await page.route('**/api/recognition', route => route.fulfill({ status: 503, json: { ok: false, error: { message: '模拟识别不可用' } } }));
   await page.goto('/wardrobe');
   await page.getByRole('button', { name: '＋ 添加衣物' }).click();
-  await page.getByLabel('衣物照片（可选）').setInputFiles(sample);
+  await page.getByLabel('衣物照片（可选）').setInputFiles(sample); await confirmSingleTarget(page);
   await expect.poll(() => count).toBe(1);
   const failed = page.waitForEvent('requestfailed', { predicate: r => r.url().endsWith('/api/background/remove') });
   await page.getByRole('button', { name: '取消', exact: true }).click();
@@ -77,10 +77,10 @@ test('关闭弹窗和换图取消在线白底，迟到结果不覆盖新图', as
   await expect(page.locator('.wardrobe-grid article')).toHaveCount(0);
   await page.getByRole('button', { name: '＋ 添加衣物' }).click();
   await page.getByLabel('名称').fill('保留新草稿');
-  await page.getByLabel('衣物照片（可选）').setInputFiles(sample);
+  await page.getByLabel('衣物照片（可选）').setInputFiles(sample); await confirmSingleTarget(page);
   await expect.poll(() => count).toBe(2);
   const replaced = page.waitForEvent('requestfailed', { predicate: r => r.url().endsWith('/api/background/remove') });
-  await page.getByLabel('衣物照片（可选）').setInputFiles(sample);
+  await page.getByLabel('衣物照片（可选）').setInputFiles(sample); await confirmSingleTarget(page);
   await replaced;
   await expect(page.getByAltText('照片预览')).toBeVisible();
   release();

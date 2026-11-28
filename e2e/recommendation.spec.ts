@@ -1,161 +1,207 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page, type Locator } from '@playwright/test';
+import { fulfillRecommendation, mockRecommendation, mockWeather, weatherResult } from './helpers/recommendation';
 
-test.beforeEach(async ({ page }) => { await page.addInitScript(() => localStorage.setItem('wearwise-mode', 'real')); });
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('wearwise-mode', 'real'));
+  await mockWeather(page);
+  await mockRecommendation(page);
+});
 
-for (const viewport of [{width:1440,height:900},{width:390,height:844}]) {
- test(`真实衣橱到示例天气、穿搭和反馈的闭环 ${viewport.width}px`, async ({ page }) => {
-  await page.setViewportSize(viewport);
+const outfit = (page: Page) => page.locator('article').filter({ has: page.getByRole('heading', { name: '当前穿搭' }) });
+const generate = (page: Page) => page.getByRole('button', { name: '生成穿搭', exact: true });
+const recommendations = (page: Page) => page.getByRole('navigation').getByRole('link', { name: '穿搭推荐', exact: true });
+
+async function seed(page: Page, prefix: string) {
   await page.goto('/wardrobe');
-  for (const [name, category] of [['白衬衫','top'],['牛仔裤','bottom'],['运动鞋','shoes']]) {
-    await page.getByRole('button', { name:'＋ 添加衣物' }).click();
+  for (const [category, suffix] of [['top','上衣'], ['bottom','长裤'], ['shoes','鞋']]) {
+    const name = prefix + suffix;
+    await page.getByRole('button', { name: '＋ 添加衣物' }).click();
     await page.getByLabel('名称').fill(name);
     await page.getByLabel('颜色').fill('白色');
     await page.getByLabel('类别').selectOption(category);
-    await page.getByLabel('保暖程度').selectOption('medium');
-    await page.getByRole('button', {name:'确认保存'}).click();
-    await expect(page.getByRole('heading', {name})).toBeVisible();
+    await page.getByRole('button', { name: '确认保存' }).click();
+    await expect(page.getByRole('heading', { name })).toBeVisible();
   }
-  await page.getByRole('link', {name:'穿搭推荐'}).click();
-  await page.getByRole('button', {name:'使用示例天气'}).click();
-  await page.getByRole('button', {name:'生成穿搭'}).click();
-  const outfit=page.locator('article').filter({hasText:'搭配 1'});
-  await expect(outfit).toContainText('白衬衫');
-  await expect(outfit).toContainText('牛仔裤');
-  await expect(outfit).toContainText('运动鞋');
-  await outfit.getByRole('button', {name:'喜欢', exact:true}).click();
-  await expect(outfit.getByRole('button', {name:'喜欢', exact:true})).toHaveAttribute('aria-pressed','true');
-  await page.reload();
-  const restored=page.locator('article').filter({hasText:'搭配 1'});
-  await expect(restored).toBeVisible();
-  await expect(restored.getByRole('button', {name:'喜欢', exact:true})).toHaveAttribute('aria-pressed','true');
-  await restored.getByRole('button', {name:'不喜欢'}).click();
-  await expect(restored.getByRole('button', {name:'不喜欢'})).toHaveAttribute('aria-pressed','true');
-  await page.getByRole('link', {name:'我的衣橱'}).click();
-  const card=page.locator('article').filter({hasText:'白衬衫'});
-  await card.getByRole('button', {name:'暂时不推荐'}).click();
-  await page.getByRole('dialog').getByRole('button', {name:'确认暂停'}).click();
-  await expect(card.getByText(/暂停推荐，\d{4}-\d{2}-\d{2} 起恢复/)).toBeVisible();
-  // 新规则：暂停衣物不改变已展示的搭配，旧结果与反馈保留。
-  await page.getByRole('link', {name:'穿搭推荐'}).click();
-  const kept=page.locator('article').filter({hasText:'搭配 1'});
-  await expect(kept).toContainText('白衬衫');
-  await expect(kept.getByRole('button', {name:'不喜欢'})).toHaveAttribute('aria-pressed','true');
-});
+  await recommendations(page).click();
+  await expect(page.getByText('深圳 阴天')).toBeVisible();
 }
 
-test('另一标签页删除衣物时当前推荐保留，不被清空', async ({ page, context }) => {
-  await page.goto('/wardrobe');
-  for (const [name, category] of [['跨页上衣','top'],['跨页下装','bottom'],['跨页鞋','shoes']]) {
-    await page.getByRole('button',{name:'＋ 添加衣物'}).click(); await page.getByLabel('名称').fill(name); await page.getByLabel('颜色').fill('白');
-    await page.getByLabel('类别').selectOption(category); await page.getByRole('button',{name:'确认保存'}).click(); await expect(page.getByRole('heading',{name})).toBeVisible();
+async function feedback(page: Page, choice: '喜欢' | '不喜欢', reason = '') {
+  await outfit(page).getByRole('button', { name: choice === '喜欢' ? '♡ 喜欢' : choice, exact: true }).click();
+  if (reason) await page.getByRole('dialog').getByRole('textbox').fill(reason);
+  await page.getByRole('button', { name: '提交反馈' }).click();
+  await page.getByRole('button', { name: '暂时不换，返回' }).click();
+}
+
+async function tabTo(page: Page, target: Locator) {
+  await expect(target).toBeAttached();
+  for (let index = 0; index < 60; index++) {
+    if (await target.evaluate(element => element === document.activeElement)) return;
+    await page.keyboard.press('Tab');
   }
-  await page.getByRole('link',{name:'穿搭推荐'}).click(); await page.getByRole('button',{name:'使用示例天气'}).click(); await page.getByRole('button',{name:'生成穿搭'}).click();
-  await expect(page.locator('article').filter({hasText:'搭配 1'})).toBeVisible();
-  const other=await context.newPage(); await other.goto('/wardrobe');
-  const card=other.locator('article').filter({hasText:'跨页上衣'}); await expect(card).toBeVisible();
-  other.once('dialog', dialog => dialog.accept()); await card.getByRole('button',{name:'删除'}).click(); await expect(card).toHaveCount(0);
-  await page.bringToFront(); await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-  await expect(page.locator('article').filter({hasText:'搭配 1'})).toContainText('跨页上衣');
-  await expect(page.getByRole('alert').filter({hasText:'衣橱已改变'})).toHaveCount(0);
-  await page.reload(); await expect(page.locator('article').filter({hasText:'搭配 1'})).toContainText('跨页上衣');
+  throw new Error('键盘无法到达目标：' + await target.evaluate(element => element.outerHTML.slice(0, 200)));
+}
+
+for (const width of [1440, 390]) {
+  test(`衣橱到真实天气输入、模拟推荐与反馈闭环 ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await seed(page, '闭环');
+    await generate(page).click();
+    for (const item of ['上衣','长裤','鞋']) await expect(outfit(page)).toContainText('闭环' + item);
+    await feedback(page, '喜欢', '颜色搭配好');
+    await page.reload();
+    await expect(outfit(page)).toContainText('闭环上衣');
+    await feedback(page, '不喜欢', '颜色不喜欢');
+    await page.getByRole('navigation').getByRole('link', { name: '我的衣橱' }).click();
+    await page.locator('article').filter({ hasText: '闭环上衣' }).getByRole('button', { name: '暂时不推荐' }).click();
+    await page.getByRole('button', { name: '确认暂停' }).click();
+    await recommendations(page).click();
+    await expect(outfit(page)).toContainText('当前搭配包含已暂停衣物：闭环上衣');
+    await generate(page).click();
+    await expect(page.locator('.outfit-panel [role=alert]')).toContainText('衣橱不足');
+    await expect(outfit(page)).toContainText('闭环上衣');
+  });
+}
+
+test('另一标签页删除衣物时保留当前搭配快照', async ({ page, context }) => {
+  await seed(page, '跨页');
+  await generate(page).click();
+  await expect(outfit(page)).toContainText('跨页上衣');
+  const other = await context.newPage();
+  await mockWeather(other);
+  await other.goto('/wardrobe');
+  const card = other.locator('article').filter({ hasText: '跨页上衣' });
+  other.once('dialog', dialog => dialog.accept());
+  await card.getByRole('button', { name: '删除' }).click();
+  await expect(card).toHaveCount(0);
+  await page.bringToFront();
+  await expect(outfit(page)).toContainText('跨页上衣');
+  await page.reload();
+  await expect(outfit(page)).toContainText('当前搭配包含已删除衣物：跨页上衣');
   await other.close();
 });
 
-test('刷新后天气控件与已保存推荐使用的城市一致', async ({ page }) => {
-  await page.clock.install();
-  await page.route('https://api.open-meteo.com/**', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({current_units:{temperature_2m:'°C',apparent_temperature:'°C'},current:{time:Math.floor(Date.now()/1000),temperature_2m:20,apparent_temperature:19,weather_code:3},daily:{temperature_2m_min:[18],temperature_2m_max:[24]}})}));
-  await page.goto('/wardrobe');
-  for (const [name,category] of [['北京上衣','top'],['北京下装','bottom'],['北京鞋','shoes']]) {
-    await page.getByRole('button',{name:'＋ 添加衣物'}).click(); await page.getByLabel('名称').fill(name); await page.getByLabel('颜色').fill('白');
-    await page.getByLabel('类别').selectOption(category); await page.getByRole('button',{name:'确认保存'}).click(); await expect(page.getByRole('heading',{name})).toBeVisible();
-  }
-  await page.getByRole('link',{name:'穿搭推荐'}).click(); await page.getByLabel('选择城市').selectOption('北京');
-  await page.getByRole('button',{name:'查看天气'}).click(); await expect(page.getByText('北京 阴天')).toBeVisible();
-  await page.getByRole('button',{name:'生成穿搭'}).click(); await expect(page.locator('article').filter({hasText:'搭配 1'})).toBeVisible();
-  await page.reload(); await expect(page.locator('article').filter({hasText:'搭配 1'})).toBeVisible();
-  await expect(page.getByLabel('选择城市')).toHaveValue('北京'); await expect(page.getByText('北京 阴天')).toBeVisible();
-  await page.clock.fastForward('05:01');
-  await expect(page.getByText(/天气已过期/)).toBeVisible();
-  await expect(page.getByRole('button', {name:'生成穿搭'})).toBeDisabled();
-  await expect(page.locator('article').filter({hasText:'搭配 1'}).getByRole('button', {name:'喜欢',exact:true})).toBeDisabled();
+test('刷新恢复已应用城市和天气，改城市仅在成功生成后生效', async ({ page }) => {
+  await seed(page, '天气');
+  await page.getByLabel('选择城市').selectOption('北京');
+  await expect(page.getByText('北京 阴天')).toBeVisible();
+  await generate(page).click();
+  await expect(outfit(page)).toContainText('北京');
+  await page.reload();
+  await expect(page.getByLabel('选择城市')).toHaveValue('北京');
+  await expect(outfit(page)).toContainText('北京');
+  await page.getByLabel('选择城市').selectOption('上海');
+  await expect(page.getByText('上海 阴天')).toBeVisible();
+  await expect(outfit(page)).toContainText('北京');
+  await generate(page).click();
+  await expect(outfit(page)).toContainText('上海');
 });
 
-test('只用键盘完成衣橱、推荐和反馈闭环',async({page})=>{
+test('只用键盘完成衣橱、推荐和反馈闭环', async ({ page }) => {
   await page.goto('/wardrobe');
-  async function tabTo(target: import('@playwright/test').Locator) {
-    for(let i=0;i<50;i++) {
-      if(await target.evaluate(element=>element===document.activeElement)) return;
-      await page.keyboard.press('Tab');
-    }
-    throw new Error('键盘无法到达目标: '+await target.evaluate(element=>element.outerHTML.slice(0,200)));
-  }
-  for(const [name,down,category] of [['键盘上衣',0,'top'],['键盘下装',1,'bottom'],['键盘鞋履',4,'shoes']] as const) {
-    await tabTo(page.getByRole('button',{name:'＋ 添加衣物'}));await page.keyboard.press('Enter');
-    await expect(page.getByLabel('名称')).toBeFocused();await page.keyboard.type(name);
-    await tabTo(page.getByLabel('类别'));for(let i=0;i<down;i++) await page.keyboard.press('ArrowDown');
+  for (const [name, arrows, category] of [['键盘上衣', 0, 'top'], ['键盘长裤', 1, 'bottom'], ['键盘鞋', 4, 'shoes']] as const) {
+    await tabTo(page, page.getByRole('button', { name: '＋ 添加衣物' }));
+    await page.keyboard.press('Enter');
+    await expect(page.getByLabel('名称')).toBeFocused();
+    await page.keyboard.type(name);
+    await tabTo(page, page.getByLabel('类别'));
+    for (let index = 0; index < arrows; index++) await page.keyboard.press('ArrowDown');
     await expect(page.getByLabel('类别')).toHaveValue(category);
-    await tabTo(page.getByLabel('颜色'));await page.keyboard.type('白色');
-    await tabTo(page.getByRole('button',{name:'确认保存'}));await page.keyboard.press('Enter');
-    await expect(page.getByRole('heading',{name})).toBeVisible();
+    await tabTo(page, page.getByLabel('颜色'));
+    await page.keyboard.type('白色');
+    await tabTo(page, page.getByRole('button', { name: '确认保存' }));
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('heading', { name })).toBeVisible();
   }
-  await tabTo(page.getByRole('link',{name:'穿搭推荐',exact:true}));await page.keyboard.press('Enter');
-  await tabTo(page.getByRole('button',{name:'使用示例天气'}));await page.keyboard.press('Enter');
-  await tabTo(page.getByRole('button',{name:'生成穿搭'}));await page.keyboard.press('Enter');
-  const outfit=page.locator('article').filter({hasText:'搭配 1'});await expect(outfit).toContainText('键盘上衣');
-  await tabTo(outfit.getByRole('button',{name:'喜欢',exact:true}));await page.keyboard.press('Enter');
-  await expect(outfit.getByRole('button',{name:'喜欢',exact:true})).toHaveAttribute('aria-pressed','true');
+  await tabTo(page, recommendations(page));
+  await page.keyboard.press('Enter');
+  await tabTo(page, generate(page));
+  await page.keyboard.press('Enter');
+  await expect(outfit(page)).toContainText('键盘上衣');
+  await tabTo(page, outfit(page).getByRole('button', { name: '♡ 喜欢' }));
+  await page.keyboard.press('Enter');
+  await tabTo(page, page.getByRole('button', { name: '提交反馈' }));
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: '反馈已保存' })).toBeVisible();
 });
 
-test('切换风格和城市后旧搭配失效，历史记录不会恢复为当前推荐',async({page})=>{
-  await page.goto('/wardrobe');
-  for(const [name,category] of [['变更上衣','top'],['变更裤子','bottom'],['变更鞋子','shoes']]) {
-    await page.getByRole('button',{name:'＋ 添加衣物'}).click();await page.getByLabel('名称').fill(name);await page.getByLabel('颜色').fill('白');
-    await page.getByLabel('类别').selectOption(category);await page.getByRole('button',{name:'确认保存'}).click();await expect(page.getByRole('heading',{name})).toBeVisible();
-  }
-  await page.getByRole('link',{name:'穿搭推荐',exact:true}).click();await page.getByRole('button',{name:'使用示例天气'}).click();
-  await page.getByRole('button',{name:'生成穿搭'}).click();await expect(page.locator('article').filter({hasText:'搭配 1'})).toBeVisible();
-  await page.getByLabel('选择风格').selectOption('简约通勤');await expect(page.locator('article').filter({hasText:'搭配 1'})).toHaveCount(0);
-  await page.reload();await expect(page.locator('article').filter({hasText:'搭配 1'})).toHaveCount(0);
-  await page.getByRole('button',{name:'使用示例天气'}).click();await page.getByRole('button',{name:'生成穿搭'}).click();await expect(page.locator('article').filter({hasText:'搭配 1'})).toBeVisible();
-  await page.getByLabel('选择城市').selectOption('上海');await expect(page.locator('article').filter({hasText:'搭配 1'})).toHaveCount(0);
-  await page.reload();await expect(page.locator('article').filter({hasText:'搭配 1'})).toHaveCount(0);
+test('过期的新城市天气阻止新生成，已应用搭配仍可反馈', async ({ page }) => {
+  await seed(page, '过期');
+  await generate(page).click();
+  await expect(outfit(page)).toContainText('深圳');
+  await page.route('https://api.open-meteo.com/**', route => route.fulfill({ json: weatherResult(1700000000000) }));
+  await page.getByLabel('选择城市').selectOption('上海');
+  await expect(page.getByRole('region', { name: '今日天气' }).getByRole('alert')).toContainText('暂时无法获取天气');
+  await generate(page).click();
+  await expect(page.locator('.outfit-panel [role=alert]')).toContainText('天气暂时无法获取');
+  await expect(outfit(page)).toContainText('深圳');
+  await feedback(page, '喜欢');
 });
 
-test('获取后五分钟内观测时间先过期时禁止继续使用推荐',async({page})=>{
-  await page.clock.install();
-  await page.route('https://api.open-meteo.com/**',route=>route.fulfill({status:200,json:{current_units:{temperature_2m:'°C',apparent_temperature:'°C'},current:{time:Math.floor(Date.now()/1000)-10740,temperature_2m:20,apparent_temperature:19,weather_code:3},daily:{temperature_2m_min:[18],temperature_2m_max:[24]}}}));
-  await page.goto('/wardrobe');
-  for(const [name,category] of [['时间上衣','top'],['时间裤子','bottom'],['时间鞋','shoes']]) {
-    await page.getByRole('button',{name:'＋ 添加衣物'}).click();await page.getByLabel('名称').fill(name);await page.getByLabel('颜色').fill('白');
-    await page.getByLabel('类别').selectOption(category);await page.getByRole('button',{name:'确认保存'}).click();await expect(page.getByRole('heading',{name})).toBeVisible();
-  }
-  await page.getByRole('link',{name:'穿搭推荐',exact:true}).click();await page.getByRole('button',{name:'查看天气'}).click();
-  await page.getByRole('button',{name:'生成穿搭'}).click();await expect(page.locator('article').filter({hasText:'搭配 1'})).toBeVisible();
-  await page.clock.fastForward('01:02');
-  await expect(page.getByText(/天气已过期/)).toBeVisible();await expect(page.getByRole('button',{name:'生成穿搭'})).toBeDisabled();
-  await expect(page.locator('article').filter({hasText:'搭配 1'}).getByRole('button',{name:'喜欢',exact:true})).toBeDisabled();
-});
-
-test('生成推荐过程中切换模式不会激活或显示旧模式晚结果',async({page})=>{
-  await page.goto('/wardrobe');
-  for(const [name,category] of [['竞态上衣','top'],['竞态裤子','bottom'],['竞态鞋','shoes']]) {
-    await page.getByRole('button',{name:'＋ 添加衣物'}).click();await page.getByLabel('名称').fill(name);await page.getByLabel('颜色').fill('白');
-    await page.getByLabel('类别').selectOption(category);await page.getByRole('button',{name:'确认保存'}).click();await expect(page.getByRole('heading',{name})).toBeVisible();
-  }
-  await page.getByRole('link',{name:'穿搭推荐',exact:true}).click();await page.getByRole('button',{name:'使用示例天气'}).click();
-  await page.evaluate(async()=>{
-    const db=await new Promise<IDBDatabase>((resolve,reject)=>{const request=indexedDB.open('wearwise-real-v1');request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
-    const tx=db.transaction(['meta'],'readwrite');const store=tx.objectStore('meta');
-    const state=window as unknown as {releaseRecommendationLock?:()=>void};let stopped=false;
-    state.releaseRecommendationLock=()=>{stopped=true;};
-    await new Promise<void>((resolve,reject)=>{
-      let first=true;const next=()=>{const request=store.get('wardrobeRevision');request.onsuccess=()=>{if(first){first=false;resolve();}if(!stopped)next();};request.onerror=()=>reject(request.error);};next();
-    });tx.oncomplete=()=>db.close();
+test('生成时报告实际等待、防止重复提交并保留旧轮反馈，成功新轮才清除', async ({ page }) => {
+  await seed(page, '等候');
+  await generate(page).click();
+  await expect(outfit(page)).toBeVisible();
+  await feedback(page, '不喜欢', '不喜欢黑色');
+  let generationCalls = 0;
+  let swapFeedback: unknown;
+  let release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/api/recommendation', async route => {
+    const input = route.request().postDataJSON();
+    if (input.operation) {
+      swapFeedback = input.conditions.feedback;
+      return fulfillRecommendation(route);
+    }
+    if (++generationCalls === 1) {
+      await gate;
+      return route.fulfill({ status: 504, json: {
+        ok: false, requestId: 'r11-timeout', error: { code: 'AI_TIMEOUT', message: 'AI 请求超时。', retryable: true },
+      } });
+    }
+    return fulfillRecommendation(route);
   });
-  await page.getByRole('button',{name:'生成穿搭'}).click();await expect(page.getByRole('button',{name:'正在生成…'})).toBeVisible();
-  await page.getByRole('button',{name:'切换示例模式'}).click();await expect(page.getByText('示例模式 · 示例数据')).toBeVisible();
-  await page.evaluate(()=>(window as unknown as {releaseRecommendationLock:()=>void}).releaseRecommendationLock());
-  await expect(page.getByText('竞态上衣')).toHaveCount(0);await expect(page.locator('article').filter({hasText:'搭配 1'})).toHaveCount(0);
-  await page.getByRole('button',{name:'切换真实衣橱'}).click();await expect(page.getByText('真实衣橱 · 仅本浏览器保存')).toBeVisible();
-  await expect(page.locator('article').filter({hasText:'搭配 1'})).toHaveCount(0);await page.reload();await expect(page.locator('article').filter({hasText:'搭配 1'})).toHaveCount(0);
+  await generate(page).click();
+  try {
+    await expect(page.getByRole('timer')).toHaveText(/已等待 [1-9]\d* 秒/);
+    const waiting = page.getByRole('button', { name: '正在生成…' });
+    await expect(waiting).toBeDisabled();
+    await waiting.evaluate((button: HTMLButtonElement) => button.click());
+    expect(generationCalls).toBe(1);
+  } finally { release(); }
+  await expect(page.locator('.outfit-panel [role=alert]')).toContainText('请求编号 r11-timeout');
+  await expect(page.getByRole('timer')).toHaveCount(0);
+  await expect(outfit(page)).toContainText('等候上衣');
+  await outfit(page).getByRole('button', { name: '换一套' }).click();
+  await expect.poll(() => swapFeedback).toEqual([{ choice: 'dislike', reason: '不喜欢黑色' }]);
+  await generate(page).click();
+  await expect(page.getByText('请求编号 r11-timeout')).toHaveCount(0);
+  await expect(generate(page)).toBeEnabled();
+  swapFeedback = 'pending';
+  await outfit(page).getByRole('button', { name: '换一套' }).click();
+  await expect.poll(() => swapFeedback).toBeUndefined();
+});
+
+test('生成过程中切换模式，迟到结果无法写入旧模式', async ({ page }) => {
+  await seed(page, '竞态');
+  let release!: () => void;
+  let seen = false;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/api/recommendation', async route => {
+    seen = true;
+    await gate;
+    await fulfillRecommendation(route).catch(() => undefined);
+  });
+  await generate(page).click();
+  await expect.poll(() => seen).toBe(true);
+  try {
+    await page.getByRole('button', { name: '切换示例模式' }).click();
+    await expect(page.getByText('示例模式 · 示例数据')).toBeVisible();
+  } finally { release(); }
+  await expect(outfit(page)).toHaveCount(0);
+  await page.getByRole('button', { name: '切换真实衣橱' }).click();
+  await expect(page.getByText('真实衣橱 · 仅本浏览器保存')).toBeVisible();
+  await expect(outfit(page)).toHaveCount(0);
+  await page.reload();
+  await expect(outfit(page)).toHaveCount(0);
 });

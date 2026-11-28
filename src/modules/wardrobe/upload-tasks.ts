@@ -1,24 +1,25 @@
 import type { Category, Garment, WardrobeService } from '.';
 import type { RecognitionCandidate } from '@/modules/recognition';
-import type { PreparedImage } from '@/modules/media/browser-image-processor';
+import type { ImageCrop, PreparedImage } from '@/modules/media/browser-image-processor';
 import { blankDraft, checkedDraft, type WardrobeDraft } from './draft';
 import { readTags } from './tag-adapter';
 
-export type TaskStatus = 'queued' | 'processing' | 'ready' | 'failed' | 'saving' | 'saved';
+export type TaskStatus = 'awaiting-target' | 'queued' | 'processing' | 'ready' | 'failed' | 'saving' | 'saved';
 export interface UploadTask {
   id: string; requestId: string; sequence: number; file?: File; filename: string;
   draft: WardrobeDraft; status: TaskStatus; selected: boolean; manual: boolean;
-  white?: PreparedImage; recognitionImage?: PreparedImage;
+  crop?: ImageCrop; white?: PreparedImage; recognitionImage?: PreparedImage;
   preparing: boolean; recognizing: boolean; recognized: boolean;
   imageError?: string; recognitionError?: string; saveError?: string; warnings: string[];
   saved?: Garment;
 }
 interface Ports {
-  prepare(file: File, signal: AbortSignal, validated?: (image: PreparedImage) => void): Promise<PreparedImage>;
+  requireTarget?: boolean;
+  prepare(file: File, signal: AbortSignal, validated?: (image: PreparedImage) => void, crop?: ImageCrop): Promise<PreparedImage>;
   recognize?: (image: Blob, signal: AbortSignal) => Promise<RecognitionCandidate>;
   save(draft: WardrobeDraft, white: Blob, requestId: string): ReturnType<WardrobeService['add']>;
 }
-type Runtime = { abort: AbortController; touched: Set<keyof WardrobeDraft>; whiteOnly?: boolean; recognitionOnly?: boolean };
+type Runtime = { abort: AbortController; touched: Set<keyof WardrobeDraft>; initialDraft: WardrobeDraft; whiteOnly?: boolean; recognitionOnly?: boolean };
 const message = (error: unknown) => error instanceof Error ? error.message : '处理失败，请重试。';
 
 /** Memory-only queue shared by single and bulk editors. One image/model task at a time.
@@ -32,6 +33,7 @@ export class UploadTasks {
   private closed = false;
   private saving = false;
   constructor(private readonly ports: Ports) {}
+  get requiresTarget() { return this.ports.requireTarget === true; }
   activate() { this.closed = false; }
   snapshot = () => this.tasks;
   subscribe = (fn: () => void) => { this.listeners.add(fn); return () => { this.listeners.delete(fn); }; };
@@ -44,8 +46,8 @@ export class UploadTasks {
     const added = files.map(file => {
       const id = crypto.randomUUID();
       const invalid = !file.size || file.size > 10 * 1024 * 1024;
-      const task: UploadTask = { id, requestId: crypto.randomUUID(), sequence: 0, file: invalid ? undefined : file, filename: file.name, draft: blankDraft(category), status: invalid ? 'failed' : 'queued', imageError: invalid ? '图片大小须在 10 MB 以内，请更换图片。' : undefined, selected: false, manual: !this.ports.recognize, preparing: false, recognizing: false, recognized: false, warnings: [] };
-      this.tasks.push(task); this.runtime.set(id, { abort: new AbortController(), touched: new Set() }); return id;
+      const task: UploadTask = { id, requestId: crypto.randomUUID(), sequence: 0, file: invalid ? undefined : file, filename: file.name, draft: blankDraft(category), status: invalid ? 'failed' : this.ports.requireTarget ? 'awaiting-target' : 'queued', imageError: invalid ? '图片大小须在 10 MB 以内，请更换图片。' : undefined, selected: false, manual: !this.ports.recognize, preparing: false, recognizing: false, recognized: false, warnings: [] };
+      this.tasks.push(task); this.runtime.set(id, { abort: new AbortController(), touched: new Set(), initialDraft: task.draft }); return id;
     });
     this.emit(); void this.pump(); return added;
   }
@@ -55,7 +57,21 @@ export class UploadTasks {
   }
   seed(id: string, draft: WardrobeDraft, touched: Set<keyof WardrobeDraft>) {
     const task = this.find(id); if (!task) return;
-    task.draft = draft; this.runtime.get(id)!.touched = new Set(touched); this.emit();
+    task.draft = draft;
+    const runtime = this.runtime.get(id)!;
+    runtime.initialDraft = draft; runtime.touched = new Set(touched); this.emit();
+  }
+  confirmTarget(id: string, crop?: ImageCrop) {
+    const task = this.find(id);
+    if (!task?.file || task.status !== 'awaiting-target') return;
+    task.crop = crop && { ...crop };
+    task.status = 'queued';
+    this.emit(); void this.pump();
+  }
+  changeTarget(id: string) {
+    const task = this.find(id);
+    if (!this.ports.requireTarget || !task?.file || ['saving', 'saved', 'awaiting-target'].includes(task.status)) return;
+    this.resetProcessing(task);
   }
   select(id: string, selected: boolean) { const task = this.find(id); if (task?.status === 'ready') { task.selected = selected; this.emit(); } }
   private settle(task: UploadTask) {
@@ -64,11 +80,13 @@ export class UploadTasks {
     if (task.status !== 'ready') task.selected = false;
   }
   useManual(id: string) {
-    const task = this.find(id); if (!task || task.status === 'saving' || task.status === 'saved') return;
-    task.manual = true; task.recognitionError = undefined; this.settle(task); this.emit();
+    const task = this.find(id); if (!task || ['saving', 'saved', 'awaiting-target'].includes(task.status)) return;
+    task.manual = true; task.recognitionError = undefined;
+    if (task.status !== 'queued') this.settle(task);
+    this.emit();
   }
   retry(id: string, recognitionOnly = false, whiteOnly = false) {
-    const task = this.find(id); if (!task || ['saved','saving','processing','queued'].includes(task.status)) return;
+    const task = this.find(id); if (!task || ['saved','saving','processing','queued','awaiting-target'].includes(task.status)) return;
     if (!task.file) { task.imageError = '请更换有效图片后重试。'; this.emit(); return; }
     const runtime = this.runtime.get(id)!;
     runtime.recognitionOnly = !!(recognitionOnly && task.recognitionImage && this.ports.recognize);
@@ -79,10 +97,26 @@ export class UploadTasks {
     if (!file) return; // Cancelling a native picker preserves the current task.
     if (!file.size || file.size > 10 * 1024 * 1024) throw new Error('图片大小须在 10 MB 以内。');
     const task = this.find(id); if (!task || task.status === 'saving' || task.status === 'saved') return;
-    const runtime = this.runtime.get(id)!; runtime.abort.abort(); runtime.whiteOnly = false; runtime.recognitionOnly = false; task.sequence++;
-    task.file = file; task.filename = file.name; task.white = undefined; task.recognitionImage = undefined;
+    task.file = file; task.filename = file.name;
+    this.resetProcessing(task);
+  }
+  private resetProcessing(task: UploadTask) {
+    const runtime = this.runtime.get(task.id)!;
+    runtime.abort.abort(); runtime.whiteOnly = false; runtime.recognitionOnly = false; task.sequence++;
+    // Keep user edits and clear values inferred from the previous target.
+    const next = { ...runtime.initialDraft };
+    for (const key of runtime.touched) Object.assign(next, { [key]: task.draft[key] });
+    for (const kind of ['style', 'scene'] as const) {
+      if (runtime.touched.has(`${kind}Tags`) || runtime.touched.has(`${kind}Other`)) {
+        next[`${kind}Tags`] = task.draft[`${kind}Tags`];
+        next[`${kind}Other`] = task.draft[`${kind}Other`];
+      }
+    }
+    task.draft = next;
+    task.crop = undefined; task.white = undefined; task.recognitionImage = undefined;
     task.recognized = false; task.preparing = false; task.recognizing = false; task.imageError = undefined; task.recognitionError = undefined; task.saveError = undefined; task.warnings = [];
-    task.status = 'queued'; task.selected = false; this.emit(); void this.pump();
+    task.status = this.ports.requireTarget ? 'awaiting-target' : 'queued';
+    task.selected = false; this.emit(); void this.pump();
   }
   remove(id: string) {
     const task = this.find(id); if (!task || task.status === 'saving') return;
@@ -133,11 +167,11 @@ export class UploadTasks {
         runtime.recognitionOnly = false;
         const needsRecognition = !runtime.whiteOnly && !task.manual && !task.recognized;
         runtime.whiteOnly = false;
-        task.status = 'processing'; task.preparing = true; task.recognizing = false; task.imageError = undefined;
+        task.status = 'processing'; task.preparing = !recognitionOnly; task.recognizing = false;
+        if (!recognitionOnly) task.imageError = undefined;
         if (needsRecognition) task.recognitionError = undefined;
         this.emit();
         if (recognitionOnly) {
-          task.preparing = false;
           await this.recognize(task, recognitionOnly, seq, runtime);
           if (this.valid(task, seq, abort)) { this.settle(task); this.emit(); }
           continue;
@@ -148,7 +182,7 @@ export class UploadTasks {
             if (!this.valid(task!, seq, abort)) return;
             task!.recognitionImage = source;
             if (needsRecognition) recognition = this.recognize(task!, source, seq, runtime);
-          });
+          }, task.crop);
           if (this.valid(task, seq, abort)) {
             if (result.backgroundRemoval !== 'removed') task.imageError = '白底处理失败：当前结果仍有原背景，请重试或更换图片，不能保存。';
             else { task.white = result; task.imageError = undefined; }

@@ -1,4 +1,4 @@
-import { mockBackground } from './helpers/background';
+import { mockBackground, confirmSingleTarget } from './helpers/background';
 import { chromium, test, expect } from '@playwright/test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -19,7 +19,7 @@ test('隔离 Chrome 用户目录关闭并重开后衣物和图片仍可读取', 
     await page.getByRole('button', {name:'＋ 添加衣物'}).click();
     await page.getByLabel('名称').fill('重开测试衣物'); await page.getByLabel('颜色').fill('绿色');
     const png = await page.evaluate(() => { const c=document.createElement('canvas');c.width=8;c.height=8;return c.toDataURL('image/png').split(',')[1]; });
-    await page.getByLabel('衣物照片（可选）').setInputFiles({name:'photo.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+    await page.getByLabel('衣物照片（可选）').setInputFiles({name:'photo.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')}); await confirmSingleTarget(page);
     await expect(page.getByAltText('照片预览')).toBeVisible({ timeout: 90000 });
     await page.getByRole('button', {name:'改为手动填写并确认'}).click();
     await page.getByRole('button', {name:'确认保存'}).click();

@@ -209,6 +209,18 @@ export class RecommendationCoreService {
     this.now = dependencies.now ?? (() => new Date());
   }
 
+  private async requireOutfitImages(items: Array<Pick<Garment, 'imageId'> | undefined>) {
+    for (const item of items) {
+      if (!item?.imageId || !(await this.wardrobe.image(item.imageId))?.size) {
+        throw new RecommendationCoreError(
+          'IMAGE_UNAVAILABLE',
+          '搭配图片暂时无法读取，已保留原结果，请重试。',
+          true
+        );
+      }
+    }
+  }
+
   /**
    * 新一轮生成：读取最新草稿；不继承旧轮临时反馈。
    */
@@ -352,7 +364,7 @@ export class RecommendationCoreService {
         conditions,
         ...(referenceImages.size ? { referenceImages } : {})
       },
-      { signal: options.signal }
+      { signal: options.signal, source: 'recommendations' }
     );
 
     options.signal?.throwIfAborted();
@@ -396,6 +408,8 @@ export class RecommendationCoreService {
         'AI 返回的搭配不符合完整穿搭结构，请重新生成。'
       );
     }
+
+    await this.requireOutfitImages(selectedGarments);
 
     // 10. 提交新一轮。
     // 只有成功提交后，旧轮临时反馈才会被清除。
@@ -561,7 +575,7 @@ export class RecommendationCoreService {
         },
         ...(referenceImages.size ? { referenceImages } : {})
       },
-      { signal: options.signal }
+      { signal: options.signal, source: 'recommendations' }
     );
 
     options.signal?.throwIfAborted();
@@ -602,6 +616,8 @@ export class RecommendationCoreService {
         'AI 返回的替换搭配不符合完整穿搭结构。'
       );
     }
+
+    await this.requireOutfitImages(selected);
 
     // 9. 提交前再次检查当前结果没有被其他操作替换。
     const latestContext = await this.session.adjustmentContext(this.now());
@@ -811,7 +827,7 @@ export class RecommendationCoreService {
         },
         ...(referenceImages.size ? { referenceImages } : {})
       },
-      { signal: options.signal }
+      { signal: options.signal, source: 'recommendations' }
     );
 
     options.signal?.throwIfAborted();
@@ -878,6 +894,8 @@ export class RecommendationCoreService {
         '替换后的搭配不符合完整穿搭结构。'
       );
     }
+
+    await this.requireOutfitImages(selected);
 
     // 9. 检查当前结果没有被其他调整替换。
     const latestContext = await this.session.adjustmentContext(this.now());
@@ -972,7 +990,7 @@ export class RecommendationCoreService {
       kind: 'swap-item' as const, currentGarmentIds: [...current!.garmentIds], targetGarmentId: target.id,
       targetCategory: target.category, keptGarments
     } : kind === 'swap-outfit' ? { kind: 'swap-outfit' as const, currentGarmentIds: [...current!.garmentIds] } : undefined;
-    const result = await requestAIRecommendation({ wardrobe: candidates, conditions, ...(operation ? { operation } : {}) }, options);
+    const result = await requestAIRecommendation({ wardrobe: candidates, conditions, ...(operation ? { operation } : {}) }, { ...options, source: 'home' });
     options.signal?.throwIfAborted();
 
     const latest = new Map((await this.wardrobe.candidates(this.now())).map(item => [item.id, item]));
@@ -990,12 +1008,7 @@ export class RecommendationCoreService {
     if (selected.some(item => !item)) throw new RecommendationCoreError('GARMENT_UNAVAILABLE', '生成期间有候选衣物被删除或暂停，请重试。');
     if (!validateOutfit(result.garmentIds, selected as Array<Pick<Garment, 'id' | 'category'>>)) throw new RecommendationCoreError('AI_INVALID_OUTFIT', '首页推荐结果不符合完整穿搭结构。');
 
-    // Required images must be readable before committing. The old result survives preparation failure.
-    for (const item of selected) {
-      if (!item || !('imageId' in item) || !await this.wardrobe.image(item.imageId)) {
-        throw new RecommendationCoreError('IMAGE_UNAVAILABLE', '搭配图片暂时无法读取，已保留原结果，请重试。', true);
-      }
-    }
+    await this.requireOutfitImages(selected);
     if (await this.session.getCity() !== city) throw new RecommendationCoreError('CITY_CHANGED', '生成期间城市发生变化，请重试。');
     const latestHome = await this.session.readHome();
     if (latestHome.current?.id !== current?.id) throw new RecommendationCoreError('HOME_CHANGED', '首页搭配已被其他操作修改，请重试。');

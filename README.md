@@ -1,8 +1,6 @@
 # WearWise · 智能衣橱
 
-**第9轮本地候选**：已完成首页集成、共享天气和独立更换搭配，见[第9轮交接](docs/handoffs/ROUND-09.md)。本轮基于第39号拉取请求，通过独立分支和层叠拉取请求交付，尚未合并主分支或部署。首页生成、更换整套搭配和替换指定单件衣物已通过真实人工智能服务联调；测试使用合成衣橱，实拍照片视觉效果仍待复核。下方旧轮次记录保留用于追溯，当前候选以第9轮交接和项目根目录的`VERSION.txt`为准。版本说明在打包时生成，源码压缩包内也包含相同文件。
-
-本轮交付说明使用中文完整表述。历史资料中的常用术语：人工智能对应AI，拉取请求对应Pull Request或PR，提交编号对应SHA，应用程序接口对应API，用户界面对应UI，可缩放矢量图对应SVG。原始验证记录中的PASS表示通过，NOT_RUN表示未执行；代码标识、命令、文件名和原始证据保留原文。
+**当前交接为第 11 轮候选。** 01 已按第 10 轮验收修复上传目标、推荐输出与异常恢复，并交给 07 复验五页和三条搭配规则。候选版本、跨电脑启动、测试素材和待验证项见 [第 11 轮交接](docs/handoffs/ROUND-11.md)。
 
 **开发接力从 [12 轮总计划 #10](https://github.com/dinggegu-dot/wearwise/issues/10) 开始。** 第 01 轮已交付。第 02 轮由 02 从 [候选分支](https://github.com/dinggegu-dot/wearwise/tree/codex/round-01-baseline) 开始，在自己的电脑完成安装、五页复验与签收。[01 → 02 交接](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/handoffs/ROUND-01.md)
 
@@ -16,7 +14,7 @@
 
 ## 团队和 AI 的共同材料
 
-[网页功能概述](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/WEB-FUNCTION-OVERVIEW.md) · [推荐依据与记忆规则](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/RECOMMENDATION-MEMORY-RULES.md) · [12 轮次排班](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/ROUND-SCHEDULE.md) · [UI 示例](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/project/UI-REFERENCE.md) · [交接模板](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/handoffs/ROUND-HANDOFF-TEMPLATE.md)
+[网页功能概述](docs/project/WEB-FUNCTION-OVERVIEW.md) · [推荐依据与记忆规则](docs/project/RECOMMENDATION-MEMORY-RULES.md) · [12 轮次排班](docs/project/ROUND-SCHEDULE.md) · [UI 示例](docs/project/UI-REFERENCE.md) · [交接模板](docs/handoffs/ROUND-HANDOFF-TEMPLATE.md)
 
 每位成员和自己的 AI 先读 [团队 AI 协作与交接指南](team/AI协作与交接指南.md)，再读共同材料与上一轮交接，以交接指定的固定 SHA 为基础。每轮负责人亲自复核可操作流程。只有点击「生成穿搭」并成功才开启新一轮，单次反馈在同一轮持续有效，首页与推荐页调整互相独立。
 
@@ -54,7 +52,7 @@ Next.js App Router、React、TypeScript、Tailwind CSS、Lucide、Dexie、Zod、
 
 ## 本地开发
 
-复验五页候选时，按 [01 → 02 交接](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/handoffs/ROUND-01.md) 克隆候选分支。以下命令同样适用于本仓库当前分支。
+按 [第 11 轮交接](docs/handoffs/ROUND-11.md) 检出候选版本，再安装依赖并启动。
 
 需要 Node.js 22.12 或更高版本。
 
@@ -71,7 +69,7 @@ npm run build
 npm run test:e2e
 ```
 
-端到端测试要求本机安装正式 Google Chrome，并先完成构建。
+端到端测试使用正式 Google Chrome。请在首次运行 `npm run test:e2e` 前运行 `bash scripts/install-birefnet-model.sh` 安装并校验本机白底模型。只测页面和手动录入时可直接启动。
 
 ## 项目结构
 

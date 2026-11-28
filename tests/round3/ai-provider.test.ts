@@ -65,3 +65,30 @@ describe('OpenRouter adapter errors', () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 });
+
+describe('recommendation structured output', () => {
+  it('uses JSON mode and bounded Qwen reasoning while preserving the input', async () => {
+    vi.stubEnv('AI_MODEL', 'qwen/qwen3.8-max-0902');
+    const fetcher = vi.fn().mockResolvedValue(Response.json({ choices: [{ message: {
+      content: '```json\n{"garmentIds":["top-1"],"reason":"配色协调","notes":"额外说明"}\n```',
+    } }] }));
+    vi.stubGlobal('fetch', fetcher);
+    const { recommend } = await import('@/modules/recognition/infrastructure/ai-provider');
+    const input = { wardrobe: [{ id: 'top-1' }], conditions: { scene: '运动健身' }, knowledge: {} };
+    await expect(recommend(input)).resolves.toEqual({ garmentIds: ['top-1'], reason: '配色协调' });
+    const payload = JSON.parse(fetcher.mock.calls[0][1].body);
+    expect(payload).toMatchObject({ response_format: { type: 'json_object' }, reasoning: { effort: 'minimal' } });
+    expect(payload.messages[0].content[0].text).toContain(JSON.stringify(input));
+  });
+
+  it('retains safe diagnostics without accepting invalid schema fields or repeating a paid request', async () => {
+    const fetcher = vi.fn().mockResolvedValue(Response.json({ choices: [{ message: {
+      content: '{"garmentIds":["top-1"],"reason":["private model detail"]}',
+    } }] }));
+    vi.stubGlobal('fetch', fetcher);
+    const { recommend } = await import('@/modules/recognition/infrastructure/ai-provider');
+    await expect(recommend({ wardrobe: [], conditions: {}, knowledge: {} }))
+      .rejects.toMatchObject({ code: 'AI_INVALID_RESPONSE', detail: 'reason' });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+});

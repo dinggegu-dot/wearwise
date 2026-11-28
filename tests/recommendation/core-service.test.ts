@@ -80,9 +80,9 @@ const current = {
   roundId: 'round-1',
   garmentIds: ['top-1', 'bottom-1', 'shoes-1'],
   snapshots: [
-    { id: 'top-1', category: 'top' },
-    { id: 'bottom-1', category: 'bottom' },
-    { id: 'shoes-1', category: 'shoes' }
+    { id: 'top-1', imageId: 'img-top-1', category: 'top' },
+    { id: 'bottom-1', imageId: 'img-bottom-1', category: 'bottom' },
+    { id: 'shoes-1', imageId: 'img-shoes-1', category: 'shoes' }
   ]
 };
 
@@ -124,7 +124,7 @@ const session = {
 
   const wardrobe = {
     candidates: vi.fn().mockResolvedValue(garments),
-    image: vi.fn().mockResolvedValue(undefined)
+    image: vi.fn().mockResolvedValue(new Blob(['test garment image']))
   };
 
   const weather = {
@@ -160,6 +160,14 @@ describe('RecommendationCoreService', () => {
     mockSuccessfulAI();
   });
 
+  it('缺少必要衣物图片时不提交新轮，留住已应用条件和单次反馈', async () => {
+    const mocks = createMocks();
+    mocks.wardrobe.image.mockResolvedValueOnce(undefined);
+    await expect(mocks.service.generateNewRound()).rejects.toMatchObject({ code: 'IMAGE_UNAVAILABLE' });
+    expect(mocks.session.commitNewRound).not.toHaveBeenCalled();
+    expect(mocks.session.commitAdjustment).not.toHaveBeenCalled();
+  });
+
   it('四项条件全部关闭时，只发送衣橱和基础知识', async () => {
     const mocks = createMocks(
       createDraft({
@@ -188,7 +196,7 @@ describe('RecommendationCoreService', () => {
     expect(input.wardrobe).toHaveLength(3);
 
     expect(mocks.weather.current).not.toHaveBeenCalled();
-    expect(mocks.wardrobe.image).not.toHaveBeenCalled();
+    expect(mocks.wardrobe.image.mock.calls.flat()).toEqual(garments.map(item => item.imageId));
 
     expect(mocks.session.commitNewRound).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -584,7 +592,7 @@ it('换单件成功，只改变指定上衣', async () => {
     currentGarmentIds: ['top-1', 'bottom-1', 'shoes-1'],
     targetGarmentId: 'top-1',
     targetCategory: 'top',
-    keptGarments: [{ id: 'bottom-1', category: 'bottom' }, { id: 'shoes-1', category: 'shoes' }]
+    keptGarments: [{ id: 'bottom-1', imageId: 'img-bottom-1', category: 'bottom' }, { id: 'shoes-1', imageId: 'img-shoes-1', category: 'shoes' }]
   });
 });
 

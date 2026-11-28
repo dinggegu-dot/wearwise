@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
-  testDir: './e2e', testMatch: ['round9-home.spec.ts', 'round7-preferences.spec.ts'],
+  testDir: './e2e', testIgnore: 'live/**', testMatch: ['round9-home.spec.ts', 'round7-preferences.spec.ts'],
   workers: 1, retries: 0, reporter: [['list']], timeout: 45000,
   expect: { timeout: 15000 },
   use: { baseURL: 'http://127.0.0.1:3099', channel: 'chrome', viewport: { width: 1440, height: 1000 }, screenshot: 'only-on-failure', trace: 'retain-on-failure' },

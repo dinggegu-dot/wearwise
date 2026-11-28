@@ -6,7 +6,7 @@
   - 2026-11-16 标签投票（PR #31）
   - **第 5 轮 PR #35 确认的 OUTFIT-TIPS V1.2 词表与字段**（`codex/round-05-wardrobe` 中的 `src/modules/wardrobe/tag-adapter.ts`、`docs/handoffs/ROUND-05.md`）。三者不一致时以第 5 轮为准。
 - 分支：`codex/round-02-tags`，基于第 2 轮固定提交 `63efce6`。按 01 的决定单独成 PR #34，合并顺序为 #29 → #34。
-- 注意：仓库里的 `WEB-FUNCTION-OVERVIEW.md` 仍是旧版，请以第 4 版 docx 为准。
+- 页面交互见[网页版功能概述](WEB-FUNCTION-OVERVIEW.md)。
 
 ## 1. 已确定的内容
 
