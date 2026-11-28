@@ -1,4 +1,5 @@
 'use client';
+import { SharedWeatherProvider } from '@/modules/weather/ui/shared-weather';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { createServices, type Mode } from '@/composition';
 interface ModeContextValue { mode: Mode; setLocked(value: boolean): void }
@@ -37,5 +38,5 @@ export function ModeProvider({children}:{children:React.ReactNode}) {
   }, []);
   if (loading) return <p role="status">正在准备衣橱…</p>;
   if (!mode) return null;
-  return <ModeContext.Provider value={{mode,setLocked}}><div className="mode-bar"><span>{mode === 'demo' ? '示例模式 · 示例数据' : '真实衣橱 · 仅本浏览器保存'}</span><button disabled={working || locked} onClick={() => void choose(mode === 'real' ? 'demo' : 'real')}>{mode === 'real' ? '切换示例模式' : '切换真实衣橱'}</button>{mode === 'demo' && <button disabled={working || locked} onClick={() => { if (window.confirm('确定重置示例衣橱吗？示例数据将恢复初始状态。')) void choose('demo',true); }}>重置示例</button>}{error && <span role="alert">{error}</span>}</div><div key={`${mode}-${generation}`}>{children}</div></ModeContext.Provider>;
+  return <ModeContext.Provider value={{mode,setLocked}}><div className="mode-bar"><span>{mode === 'demo' ? '示例模式 · 示例数据' : '真实衣橱 · 仅本浏览器保存'}</span><button disabled={working || locked} onClick={() => void choose(mode === 'real' ? 'demo' : 'real')}>{mode === 'real' ? '切换示例模式' : '切换真实衣橱'}</button>{mode === 'demo' && <button disabled={working || locked} onClick={() => { if (window.confirm('确定重置示例衣橱吗？示例数据将恢复初始状态。')) void choose('demo',true); }}>重置示例</button>}{error && <span role="alert">{error}</span>}</div><div key={`${mode}-${generation}`}><SharedWeatherProvider mode={mode}>{children}</SharedWeatherProvider></div></ModeContext.Provider>;
 }

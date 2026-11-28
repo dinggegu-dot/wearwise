@@ -1,6 +1,6 @@
 
 import type { Garment, Category } from '@/modules/wardrobe';
-import type { WeatherSnapshot } from '@/modules/session/schema';
+import type { WeatherSnapshot, GarmentSnapshot } from '@/modules/session/schema';
 
 /**
  * 与 POST /api/recommendation 保持一致的条件结构。
@@ -31,6 +31,8 @@ export type AIRecommendationOperation =
       currentGarmentIds: string[];
       targetGarmentId: string;
       targetCategory: Category;
+      /** Frozen positions are display context, never new candidates. */
+      keptGarments?: GarmentSnapshot[];
     }
   | {
       kind: 'feedback-swap';

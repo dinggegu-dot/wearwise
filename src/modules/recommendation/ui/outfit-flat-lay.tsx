@@ -39,7 +39,9 @@ export function OutfitFlatLay({
         <span>{items.length} 件单品</span>
       </div>
 
-      <div className="outfit-flatlay-stage">
+      <div className="outfit-flatlay-stage"
+        data-outfit-type={items.some(item => item.slot.slot === 'dress') ? 'dress' : 'separates'}
+        data-has-outerwear={items.some(item => item.slot.slot === 'outerwear')}>
         {items.map(({ slot, garment }) => (
           <div
             key={slot.garmentId}

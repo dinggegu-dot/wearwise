@@ -5,7 +5,7 @@ import {
   isCandidate,
   categorySchema
 } from '@/modules/wardrobe';
-import { weatherSnapshotSchema } from '@/modules/session/schema';
+import { weatherSnapshotSchema, garmentSnapshotSchema } from '@/modules/session/schema';
 import { readRecommendationKnowledge } from '@/modules/recommendation/knowledge';
 import { STYLE_TAGS, SCENE_TAGS } from '@/shared/domain/tags';
 
@@ -38,7 +38,8 @@ const operationSchema = z.discriminatedUnion('kind', [
     kind: z.literal('swap-item'),
     currentGarmentIds: z.array(text(100)).min(1).max(8),
     targetGarmentId: text(100),
-    targetCategory: categorySchema
+    targetCategory: categorySchema,
+    keptGarments: z.array(garmentSnapshotSchema).max(7).optional()
   }).strict(),
 
   z.object({
@@ -123,6 +124,15 @@ try {
     if (new Set(wardrobe.map(item => item.id)).size !== wardrobe.length || wardrobe.some(item => !isCandidate(item)))
       return fail('VALIDATION_ERROR', '推荐衣橱包含重复、已删除或暂停的衣物。', 400);
     const allowed = new Set(wardrobe.map(item => item.id));
+    if (operation?.kind === 'swap-item' && operation.keptGarments) {
+      const keptIds = operation.keptGarments.map(item => item.id);
+      const expected = operation.currentGarmentIds.filter(id => id !== operation.targetGarmentId);
+      if (!operation.currentGarmentIds.includes(operation.targetGarmentId) || new Set(keptIds).size !== keptIds.length ||
+          keptIds.length !== expected.length || !expected.every(id => keptIds.includes(id))) {
+        return fail('VALIDATION_ERROR', '保留位置须与当前搭配一致。', 400);
+      }
+      for (const id of keptIds) allowed.add(id);
+    }
     // Do not send database metadata or pause history to the model.
     const modelWardrobe = wardrobe.map(({ id, name, category, color, fit, warmth, material, styleTags, sceneTags, styleOther, sceneOther }) =>
       ({ id, name, category, color, fit, warmth, material, styleTags, sceneTags, styleOther, sceneOther }));
@@ -133,11 +143,23 @@ try {
     wardrobe: modelWardrobe,
     knowledge,
     conditions: modelConditions,
-    operation,
+    operation: operation?.kind === 'swap-item' && operation.keptGarments ? {
+      ...operation,
+      keptGarments: operation.keptGarments.map(({ id, name, category, color, fit, warmth, material, styleTags, sceneTags }) =>
+        ({ id, name, category, color, fit, warmth, material, styleTags, sceneTags }))
+    } : operation,
     referenceImages
     }, request.signal);
     if (result.garmentIds.some(id => !allowed.has(id)) || new Set(result.garmentIds).size !== result.garmentIds.length)
       return fail('AI_INVALID_RESPONSE', '推荐结果包含无效或重复衣物。', 502);
+    if (operation?.kind === 'swap-item') {
+      const kept = operation.currentGarmentIds.filter(id => id !== operation.targetGarmentId);
+      const added = result.garmentIds.filter(id => !kept.includes(id));
+      if (result.garmentIds.length !== operation.currentGarmentIds.length || !kept.every(id => result.garmentIds.includes(id)) ||
+          added.length !== 1 || added[0] === operation.targetGarmentId || wardrobe.find(item => item.id === added[0])?.category !== operation.targetCategory) {
+        return fail('AI_INVALID_RESPONSE', '单件替换修改了保留位置或使用了不可用替代。', 502);
+      }
+    }
     return Response.json({
   ok: true,
   data: {

@@ -1,103 +1,29 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { cities, type City, type Weather } from '@/modules/weather';
-import { createWeatherService } from '@/composition';
-import { useMode } from '@/composition/mode-provider';
 import { describeWeatherCode } from '@/modules/weather/domain/weather-code';
+import { useSharedWeather } from './shared-weather';
 
-export function WeatherPanel({
-  onChange,
-  onCityChange,
-  initialCity,
-  exampleOnly,
-  initialWeather
-}: {
-  onChange?: (weather: Weather | undefined) => void;
-  onCityChange?: (city: City) => void;
-  initialCity?: City;
-  exampleOnly?: boolean;
-  initialWeather?: Weather;
-}) {
-  const { mode } = useMode();
-  const demo = exampleOnly ?? mode === 'demo';
-  const service = useMemo(() => createWeatherService(mode), [mode]);
-  const [city, setCity] = useState<City>(initialCity ?? '深圳');
-  const [weather, setWeather] = useState<Weather>();
-  const [loading, setLoading] = useState(false);
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState('');
-  const request = useRef<{ sequence: number; abort?: AbortController }>({ sequence: 0 });
-  useEffect(() => { setReady(true); return () => { request.current.sequence++; request.current.abort?.abort(); }; }, []);
-  useEffect(() => { if (initialWeather) { setCity(initialWeather.city); setWeather(initialWeather); setError(''); } }, [initialWeather]);
-  useEffect(() => {
-  if (initialCity) {
-    setCity(initialCity);
-  }
-}, [initialCity]);
-  const changeCity = (next: City) => {
-  request.current.sequence++;
-  request.current.abort?.abort();
-
-  setCity(next);
-  setWeather(undefined);
-
-  onCityChange?.(next);
-  onChange?.(undefined);
-
-  setError('');
-  setLoading(false);
-};
-  const load = async (example = false, refresh = false) => {
-    request.current.abort?.abort(); const sequence = ++request.current.sequence;
-    const abort = new AbortController(); request.current.abort = abort;
-    setLoading(true); setError(''); setWeather(undefined); onChange?.(undefined);
-    try {
-      const result = example ? await service.useExample(city) : await service.current(city, {refresh, signal: abort.signal});
-      if (sequence === request.current.sequence) { setWeather(result); onChange?.(result); }
-    } catch { if (sequence === request.current.sequence) setError('天气暂时不可用，请重试或选择示例天气。'); }
-    finally { if (sequence === request.current.sequence) setLoading(false); }
-  };
-  return <div className="feature-card weather-card"><span className="card-number">03 / WEATHER</span><h3>今日天气</h3>
-    <label>选择城市 <select aria-label="选择城市" value={city} onChange={event => changeCity(event.target.value as City)}>{Object.keys(cities).map(item => <option key={item}>{item}</option>)}</select></label>
-    {loading && <p role="status">正在获取天气…</p>}
+export function WeatherPanel({ onChange }: { onChange?: (weather: Weather | undefined) => void }) {
+  const { city, weather, ready, loading, savingCity, error, changeCity, refresh } = useSharedWeather();
+  useEffect(() => { onChange?.(weather); }, [weather, onChange]);
+  return <section className="feature-card weather-card" aria-label="今日天气">
+    <span className="card-number">03 / WEATHER</span><h3>今日天气</h3>
+    <label>切换城市 <select aria-label="选择城市" value={city} disabled={!ready && !error}
+      onChange={event => { void changeCity(event.target.value as City).catch(() => undefined); }}>
+      {Object.keys(cities).map(item => <option key={item}>{item}</option>)}
+    </select></label>
+    {(loading || savingCity) && <p role="status">{savingCity ? '正在保存城市…' : '正在获取天气…'}</p>}
     {error && <p role="alert">{error}</p>}
-
-{weather && (
-  <div>
-    <p>
-      {weather.example
-        ? '示例天气 · '
-        : weather.cached
-          ? '缓存天气 · '
-          : ''}
-      {weather.city} {describeWeatherCode(weather.weatherCode)}
-    </p>
-
-    <p>
-      当前气温：{weather.temperature}°C
-    </p>
-
-    <p>
-      体感温度：{weather.apparentTemperature}°C
-    </p>
-
-    <p>
-      当天温度范围：
-      {weather.temperatureMin ?? '--'}°C
-      {' ~ '}
-      {weather.temperatureMax ?? '--'}°C
-    </p>
-
-    <small>
-      数据时间：
-      {new Date(weather.dataTime).toLocaleString('zh-CN', {
-        timeZone: 'Asia/Shanghai'
-      })}
-    </small>
-  </div>
-)}
-
-    <div className="wardrobe-actions">{!demo && <button disabled={!ready || loading} onClick={() => void load(false, true)}>{weather || error ? '重新获取' : '查看天气'}</button>}<button disabled={!ready || loading} onClick={() => void load(true)}>使用示例天气</button></div>
-    <small>天气来源：<a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a></small>
-  </div>;
+    {weather && <div className="home-weather-values">
+      <p>{weather.example ? '示例天气 · ' : ''}{weather.city} {describeWeatherCode(weather.weatherCode)}</p>
+      <strong>当前气温：{weather.temperature}°C</strong>
+      <p>体感温度：{weather.apparentTemperature}°C</p>
+      <p>当天温度范围：{weather.temperatureMin ?? '--'}°C ~ {weather.temperatureMax ?? '--'}°C</p>
+    </div>}
+    <button className="secondary-button" disabled={loading || savingCity} onClick={() => void refresh()}>
+      {error ? '重试' : weather?.example ? '使用示例天气' : '刷新天气'}
+    </button>
+    <small>天气来源：{weather?.example ? '示例数据' : <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a>}</small>
+  </section>;
 }

@@ -55,7 +55,7 @@ export function OutfitImage({
   item,
   load
 }: {
-  item: GarmentSnapshot;
+  item: Pick<GarmentSnapshot, 'id' | 'name' | 'imageId'>;
   load: LoadImage;
 }) {
   return <figure className="outfit-item">

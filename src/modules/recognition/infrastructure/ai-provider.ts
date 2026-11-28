@@ -111,7 +111,7 @@ export async function recommend(
 2. swap-outfit：必须与 currentGarmentIds 组成不同的衣物组合，可以保留部分衣物。
 3. swap-item：只能替换 targetGarmentId 对应的衣物，必须保留其他所有衣物 ID，替换衣物必须属于 targetCategory。
 4. feedback-swap：根据 conditions.feedback 中按顺序提供的有效反馈生成不同搭配，较晚的明确修正优先。
-5. 所有衣物必须来自 wardrobe。
+5. 新选衣物必须来自 wardrobe。swap-item 的 keptGarments 是必须原样保留的位置快照（可能已删除或暂停），不属于可重新挑选的候选；只允许新替代单品来自 wardrobe。理由应结合保留位置描述整套搭配，不把保留衣物说成新候选。
 6. 不得返回重复 ID。
 7. 只输出 JSON，包含 garmentIds 和 reason。
 

@@ -583,7 +583,8 @@ it('换单件成功，只改变指定上衣', async () => {
     kind: 'swap-item',
     currentGarmentIds: ['top-1', 'bottom-1', 'shoes-1'],
     targetGarmentId: 'top-1',
-    targetCategory: 'top'
+    targetCategory: 'top',
+    keptGarments: [{ id: 'bottom-1', category: 'bottom' }, { id: 'shoes-1', category: 'shoes' }]
   });
 });
 

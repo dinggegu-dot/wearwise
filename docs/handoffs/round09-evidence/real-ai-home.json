@@ -1,0 +1,391 @@
+{
+  "baseSha": "66ee8ad64397d08f88b057a4bd558153e6692e5b",
+  "fixture": "isolated Chrome storage, six authored synthetic SVG garments; real AI and real Open-Meteo, no request mocking",
+  "status": "PASS",
+  "steps": [
+    {
+      "operation": "generateHome",
+      "durationMs": 50127,
+      "httpStatus": 200,
+      "apiOk": true,
+      "conditions": {
+        "weather": {
+          "city": "深圳",
+          "date": "2026-11-27",
+          "weatherCode": 2,
+          "temperature": 20,
+          "apparentTemperature": 20.5,
+          "temperatureMin": 16,
+          "temperatureMax": 26,
+          "source": "open-meteo",
+          "usedFields": [
+            "temperature",
+            "apparentTemperature",
+            "temperatureMin",
+            "temperatureMax",
+            "weatherCode"
+          ]
+        },
+        "memory": [
+          "【explicit】喜欢低饱和、简约、舒适的搭配"
+        ]
+      },
+      "aiResult": {
+        "garmentIds": [
+          "T1",
+          "B2",
+          "S2"
+        ],
+        "reason": "今日体感约20.5°C，属于温和天气；白色棉质T恤、米色直筒长裤和棕色休闲便鞋均为中等厚度，适合当前衣橱条件下的日常穿着。整体采用白色、米色与棕色低饱和中性色搭配，简洁干净，宽松版型舒适自然，符合你喜欢低饱和、简约、舒适的偏好。",
+        "knowledgeVersion": "V1.2"
+      },
+      "savedResult": {
+        "id": "1efdd0ad-2fdf-4c49-bee7-bfb9b04f3e7f",
+        "surface": "home",
+        "roundId": null,
+        "garmentIds": [
+          "T1",
+          "B2",
+          "S2"
+        ],
+        "snapshots": [
+          {
+            "id": "T1",
+            "name": "白色棉质T恤",
+            "category": "top",
+            "color": "白色",
+            "fit": "宽松",
+            "warmth": "medium",
+            "material": "不确定",
+            "styleTags": [],
+            "sceneTags": [],
+            "imageId": "live-img-T1"
+          },
+          {
+            "id": "B2",
+            "name": "米色直筒长裤",
+            "category": "bottom",
+            "color": "米色",
+            "fit": "宽松",
+            "warmth": "medium",
+            "material": "不确定",
+            "styleTags": [],
+            "sceneTags": [],
+            "imageId": "live-img-B2"
+          },
+          {
+            "id": "S2",
+            "name": "棕色休闲便鞋",
+            "category": "shoes",
+            "color": "棕色",
+            "fit": "宽松",
+            "warmth": "medium",
+            "material": "不确定",
+            "styleTags": [],
+            "sceneTags": [],
+            "imageId": "live-img-S2"
+          }
+        ],
+        "flatLay": [
+          {
+            "garmentId": "T1",
+            "slot": "top",
+            "layer": 2
+          },
+          {
+            "garmentId": "B2",
+            "slot": "bottom",
+            "layer": 1
+          },
+          {
+            "garmentId": "S2",
+            "slot": "shoes",
+            "layer": 0
+          }
+        ],
+        "reason": "今日体感约20.5°C，属于温和天气；白色棉质T恤、米色直筒长裤和棕色休闲便鞋均为中等厚度，适合当前衣橱条件下的日常穿着。整体采用白色、米色与棕色低饱和中性色搭配，简洁干净，宽松版型舒适自然，符合你喜欢低饱和、简约、舒适的偏好。",
+        "basis": {
+          "label": "深圳 · 11月27日天气 · 长期偏好",
+          "memory": true,
+          "weather": {
+            "city": "深圳",
+            "date": "2026-11-27",
+            "weatherCode": 2,
+            "temperature": 20,
+            "apparentTemperature": 20.5,
+            "temperatureMin": 16,
+            "temperatureMax": 26,
+            "source": "open-meteo",
+            "usedFields": [
+              "temperature",
+              "apparentTemperature",
+              "temperatureMin",
+              "temperatureMax",
+              "weatherCode"
+            ]
+          },
+          "preference": false,
+          "scene": null,
+          "knowledgeVersion": "V1.2"
+        },
+        "createdAt": "2026-11-27T15:34:23.213Z"
+      }
+    },
+    {
+      "operation": "swapHomeOutfit",
+      "durationMs": 38099,
+      "httpStatus": 200,
+      "apiOk": true,
+      "conditions": {
+        "weather": {
+          "city": "深圳",
+          "date": "2026-11-27",
+          "weatherCode": 2,
+          "temperature": 20,
+          "apparentTemperature": 20.5,
+          "temperatureMin": 16,
+          "temperatureMax": 26,
+          "source": "open-meteo",
+          "usedFields": [
+            "temperature",
+            "apparentTemperature",
+            "temperatureMin",
+            "temperatureMax",
+            "weatherCode"
+          ]
+        },
+        "memory": [
+          "【explicit】喜欢低饱和、简约、舒适的搭配"
+        ]
+      },
+      "aiResult": {
+        "garmentIds": [
+          "T2",
+          "B2",
+          "S2"
+        ],
+        "reason": "这套搭配将上衣替换为浅绿色短袖上衣，保留米色直筒长裤和棕色休闲便鞋，整体呈现低饱和、简约舒适的视觉效果。浅绿色柔和清爽，与米色、棕色形成自然协调的浅淡中性色系，适合喜欢简约舒适风格的日常场景。当前体感温度约20.5℃，属于温和天气，轻薄上衣与中等厚度长裤组合较为合适；早晚温度相对较低，如需长时间外出可另行准备一件外套。",
+        "knowledgeVersion": "V1.2"
+      },
+      "savedResult": {
+        "id": "f7537663-48f2-4def-865e-9b648bb2faf6",
+        "surface": "home",
+        "roundId": null,
+        "garmentIds": [
+          "T2",
+          "B2",
+          "S2"
+        ],
+        "snapshots": [
+          {
+            "id": "T2",
+            "name": "浅绿色短袖上衣",
+            "category": "top",
+            "color": "浅绿色",
+            "fit": "宽松",
+            "warmth": "medium",
+            "material": "不确定",
+            "styleTags": [],
+            "sceneTags": [],
+            "imageId": "live-img-T2"
+          },
+          {
+            "id": "B2",
+            "name": "米色直筒长裤",
+            "category": "bottom",
+            "color": "米色",
+            "fit": "宽松",
+            "warmth": "medium",
+            "material": "不确定",
+            "styleTags": [],
+            "sceneTags": [],
+            "imageId": "live-img-B2"
+          },
+          {
+            "id": "S2",
+            "name": "棕色休闲便鞋",
+            "category": "shoes",
+            "color": "棕色",
+            "fit": "宽松",
+            "warmth": "medium",
+            "material": "不确定",
+            "styleTags": [],
+            "sceneTags": [],
+            "imageId": "live-img-S2"
+          }
+        ],
+        "flatLay": [
+          {
+            "garmentId": "T2",
+            "slot": "top",
+            "layer": 2
+          },
+          {
+            "garmentId": "B2",
+            "slot": "bottom",
+            "layer": 1
+          },
+          {
+            "garmentId": "S2",
+            "slot": "shoes",
+            "layer": 0
+          }
+        ],
+        "reason": "这套搭配将上衣替换为浅绿色短袖上衣，保留米色直筒长裤和棕色休闲便鞋，整体呈现低饱和、简约舒适的视觉效果。浅绿色柔和清爽，与米色、棕色形成自然协调的浅淡中性色系，适合喜欢简约舒适风格的日常场景。当前体感温度约20.5℃，属于温和天气，轻薄上衣与中等厚度长裤组合较为合适；早晚温度相对较低，如需长时间外出可另行准备一件外套。",
+        "basis": {
+          "label": "深圳 · 11月27日天气 · 长期偏好",
+          "memory": true,
+          "weather": {
+            "city": "深圳",
+            "date": "2026-11-27",
+            "weatherCode": 2,
+            "temperature": 20,
+            "apparentTemperature": 20.5,
+            "temperatureMin": 16,
+            "temperatureMax": 26,
+            "source": "open-meteo",
+            "usedFields": [
+              "temperature",
+              "apparentTemperature",
+              "temperatureMin",
+              "temperatureMax",
+              "weatherCode"
+            ]
+          },
+          "preference": false,
+          "scene": null,
+          "knowledgeVersion": "V1.2"
+        },
+        "createdAt": "2026-11-27T15:35:01.572Z"
+      }
+    },
+    {
+      "operation": "swapHomeItem",
+      "durationMs": 26729,
+      "httpStatus": 200,
+      "apiOk": true,
+      "conditions": {
+        "weather": {
+          "city": "深圳",
+          "date": "2026-11-27",
+          "weatherCode": 2,
+          "temperature": 20,
+          "apparentTemperature": 20.5,
+          "temperatureMin": 16,
+          "temperatureMax": 26,
+          "source": "open-meteo",
+          "usedFields": [
+            "temperature",
+            "apparentTemperature",
+            "temperatureMin",
+            "temperatureMax",
+            "weatherCode"
+          ]
+        },
+        "memory": [
+          "【explicit】喜欢低饱和、简约、舒适的搭配"
+        ]
+      },
+      "aiResult": {
+        "garmentIds": [
+          "T1",
+          "B2",
+          "S2"
+        ],
+        "reason": "本次仅替换目标上衣，将浅绿色短袖上衣替换为白色棉质T恤，并保留米色直筒长裤与棕色休闲便鞋。白色、米色与棕色整体低饱和且协调，符合简约、舒适的偏好；当前体感约20.5℃，选择短袖上衣较为合适，宽松版型也提升日常穿着舒适度。",
+        "knowledgeVersion": "V1.2"
+      },
+      "savedResult": {
+        "id": "22b8688e-c1ea-4dc6-80b9-8170124c84d7",
+        "surface": "home",
+        "roundId": null,
+        "garmentIds": [
+          "T1",
+          "B2",
+          "S2"
+        ],
+        "snapshots": [
+          {
+            "id": "T1",
+            "name": "白色棉质T恤",
+            "category": "top",
+            "color": "白色",
+            "fit": "宽松",
+            "warmth": "medium",
+            "material": "不确定",
+            "styleTags": [],
+            "sceneTags": [],
+            "imageId": "live-img-T1"
+          },
+          {
+            "id": "B2",
+            "name": "米色直筒长裤",
+            "category": "bottom",
+            "color": "米色",
+            "fit": "宽松",
+            "warmth": "medium",
+            "material": "不确定",
+            "styleTags": [],
+            "sceneTags": [],
+            "imageId": "live-img-B2"
+          },
+          {
+            "id": "S2",
+            "name": "棕色休闲便鞋",
+            "category": "shoes",
+            "color": "棕色",
+            "fit": "宽松",
+            "warmth": "medium",
+            "material": "不确定",
+            "styleTags": [],
+            "sceneTags": [],
+            "imageId": "live-img-S2"
+          }
+        ],
+        "flatLay": [
+          {
+            "garmentId": "T1",
+            "slot": "top",
+            "layer": 2
+          },
+          {
+            "garmentId": "B2",
+            "slot": "bottom",
+            "layer": 1
+          },
+          {
+            "garmentId": "S2",
+            "slot": "shoes",
+            "layer": 0
+          }
+        ],
+        "reason": "本次仅替换目标上衣，将浅绿色短袖上衣替换为白色棉质T恤，并保留米色直筒长裤与棕色休闲便鞋。白色、米色与棕色整体低饱和且协调，符合简约、舒适的偏好；当前体感约20.5℃，选择短袖上衣较为合适，宽松版型也提升日常穿着舒适度。",
+        "basis": {
+          "label": "深圳 · 11月27日天气 · 长期偏好",
+          "memory": true,
+          "weather": {
+            "city": "深圳",
+            "date": "2026-11-27",
+            "weatherCode": 2,
+            "temperature": 20,
+            "apparentTemperature": 20.5,
+            "temperatureMin": 16,
+            "temperatureMax": 26,
+            "source": "open-meteo",
+            "usedFields": [
+              "temperature",
+              "apparentTemperature",
+              "temperatureMin",
+              "temperatureMax",
+              "weatherCode"
+            ]
+          },
+          "preference": false,
+          "scene": null,
+          "knowledgeVersion": "V1.2"
+        },
+        "createdAt": "2026-11-27T15:35:28.401Z"
+      }
+    }
+  ]
+}

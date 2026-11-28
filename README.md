@@ -1,5 +1,9 @@
 # WearWise · 智能衣橱
 
+**第9轮本地候选**：已完成首页集成、共享天气和独立更换搭配，见[第9轮交接](docs/handoffs/ROUND-09.md)。本轮基于第39号拉取请求，通过独立分支和层叠拉取请求交付，尚未合并主分支或部署。首页生成、更换整套搭配和替换指定单件衣物已通过真实人工智能服务联调；测试使用合成衣橱，实拍照片视觉效果仍待复核。下方旧轮次记录保留用于追溯，当前候选以第9轮交接和项目根目录的`VERSION.txt`为准。版本说明在打包时生成，源码压缩包内也包含相同文件。
+
+本轮交付说明使用中文完整表述。历史资料中的常用术语：人工智能对应AI，拉取请求对应Pull Request或PR，提交编号对应SHA，应用程序接口对应API，用户界面对应UI，可缩放矢量图对应SVG。原始验证记录中的PASS表示通过，NOT_RUN表示未执行；代码标识、命令、文件名和原始证据保留原文。
+
 **开发接力从 [12 轮总计划 #10](https://github.com/dinggegu-dot/wearwise/issues/10) 开始。** 第 01 轮已交付。第 02 轮由 02 从 [候选分支](https://github.com/dinggegu-dot/wearwise/tree/codex/round-01-baseline) 开始，在自己的电脑完成安装、五页复验与签收。[01 → 02 交接](https://github.com/dinggegu-dot/wearwise/blob/40d68d94a790e757143739fc84b05477f44d90ff/docs/handoffs/ROUND-01.md)
 
 第 01 轮固定提交为 `40d68d94a790e757143739fc84b05477f44d90ff`。这一版本提供首页、我的衣橱、穿搭推荐三个可操作页面，以及穿搭灵感和我的偏好两个页面框架。GitHub Pages 提供静态版本。

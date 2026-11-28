@@ -1,0 +1,48 @@
+{
+  "dateBeijing": "2026-11-27",
+  "baseSha": "b32b1be5e7f57c339a2bae7c56a0d1fea25beafa",
+  "environment": {
+    "os": "Windows",
+    "node": "24.22.3",
+    "chrome": "158.0.8127.37"
+  },
+  "checks": {
+    "typecheck": "PASS",
+    "unit": {
+      "status": "PASS",
+      "passed": 250,
+      "skipped": 1,
+      "passedFiles": 33,
+      "skippedFiles": 1,
+      "newRound9Tests": 14
+    },
+    "productionBuild": "PASS",
+    "round9Chrome": {
+      "status": "PASS",
+      "passed": 9,
+      "newRound9Tests": 6,
+      "preferencesRegression": 3,
+      "durationSeconds": 22.7
+    },
+    "diffCheck": "PASS",
+    "realWeather": "PASS; see round09-real-weather.json",
+    "realAI": {
+      "status": "PASS",
+      "browserTests": 1,
+      "realModelCalls": 3,
+      "durationMs": [
+        50127,
+        38099,
+        26729
+      ],
+      "fixture": "six authored synthetic SVG garments",
+      "report": "real-ai-home.json",
+      "runtimeCodeSha": "66ee8ad64397d08f88b057a4bd558153e6692e5b"
+    },
+    "realGarmentPhotoVisualReview": "NOT_RUN; browser fixtures are synthetic SVGs",
+    "fullHistoricalPlaywright": "NOT_RUN",
+    "independentRound10Acceptance": "NOT_RUN",
+    "remotePushMergeDeployment": "NOT_RUN"
+  },
+  "evidenceNote": "This file summarizes observed command results; it is not a raw runner log. Screenshots with generated garments use synthetic fixtures."
+}

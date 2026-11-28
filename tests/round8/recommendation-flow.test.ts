@@ -163,6 +163,7 @@ function createMocks() {
         ]
       }),
 
+    readHome: vi.fn().mockResolvedValue({}),
     commitHome:
       vi.fn().mockResolvedValue({
         currentResultId: 'home-result-1'
@@ -173,8 +174,7 @@ function createMocks() {
     candidates:
       vi.fn().mockResolvedValue(garments),
 
-    image:
-      vi.fn().mockResolvedValue(undefined)
+    image: vi.fn().mockResolvedValue(new Blob(['image']))
   };
 
   const weather = {
@@ -389,7 +389,8 @@ describe('R08 推荐连续业务流程', () => {
       ],
 
       targetGarmentId: 'top-1',
-      targetCategory: 'top'
+      targetCategory: 'top',
+      keptGarments: [{ id: 'bottom-1', category: 'bottom' }, { id: 'shoes-1', category: 'shoes' }]
     });
 
     expect(
