@@ -94,27 +94,34 @@ async function validImage(image: File): Promise<boolean> {
 
 export async function POST(request: Request) {
   const requestId = crypto.randomUUID();
-  const fail = (code: string, message: string, status: number, retryable = status === 504) =>
-    Response.json({ ok: false, error: { code, message, retryable }, requestId }, { status });
+  const sourceHeader = request.headers.get('x-wearwise-recommendation-source');
+  const source = sourceHeader === 'home' || sourceHeader === 'recommendations' ? sourceHeader : 'unknown';
+  const startedAt = performance.now();
+  let phaseStartedAt = startedAt;
+  let phase = 'configuration';
+  let operationKind = 'generate';
+  let modelMs: number | undefined;
+  const stage = (next: string) => { phase = next; phaseStartedAt = performance.now(); };
+  const record = (code: string, detail?: string) => {
+    const now = performance.now();
+    console.info('[wearwise.recommendation]', {
+      requestId, source, operation: operationKind, phase, code, detail,
+      modelMs: phase === 'model' ? Math.round(now - phaseStartedAt) : modelMs,
+      elapsedMs: Math.round(now - startedAt), phaseMs: Math.round(now - phaseStartedAt),
+    });
+  };
+  const fail = (code: string, message: string, status: number, retryable = status === 504, detail?: string) => {
+    record(code, detail);
+    return Response.json({ ok: false, error: { code, message, retryable }, requestId }, { status });
+  };
   if (!aiAvailable()) return fail('AI_UNAVAILABLE', 'AI 服务尚未配置。', 503);
   try {
+    stage('input');
     const { value, images } = await readBody(request);
     const parsed = inputSchema.safeParse(value);
     if (!parsed.success) return fail('VALIDATION_ERROR', '推荐输入格式无效。', 400);
     const { wardrobe, conditions, operation } = parsed.data;
-
-let knowledge: Awaited<ReturnType<typeof readRecommendationKnowledge>>;
-
-try {
-  knowledge = await readRecommendationKnowledge();
-} catch {
-  return fail(
-    'KNOWLEDGE_UNAVAILABLE',
-    '搭配知识文件暂时无法读取，请稍后重试。',
-    500,
-    true
-  );
-}
+    operationKind = operation?.kind ?? 'generate';
     const ids = conditions.preference?.imageIds ?? [];
     if (new Set(ids).size !== ids.length || ids.length !== images.size || ids.some(id => !images.has(id)))
       return fail('VALIDATION_ERROR', '本次喜好参考图须与启用的图片逐一对应。', 400);
@@ -133,44 +140,54 @@ try {
       }
       for (const id of keptIds) allowed.add(id);
     }
+    stage('knowledge');
+    let knowledge: Awaited<ReturnType<typeof readRecommendationKnowledge>>;
+    try {
+      knowledge = await readRecommendationKnowledge();
+    } catch {
+      return fail('KNOWLEDGE_UNAVAILABLE', '搭配知识文件暂时无法读取，请稍后重试。', 500, true);
+    }
+
     // Do not send database metadata or pause history to the model.
     const modelWardrobe = wardrobe.map(({ id, name, category, color, fit, warmth, material, styleTags, sceneTags, styleOther, sceneOther }) =>
       ({ id, name, category, color, fit, warmth, material, styleTags, sceneTags, styleOther, sceneOther }));
     const modelConditions = conditions.preference
       ? { ...conditions, preference: { text: conditions.preference.text, styleTags: conditions.preference.styleTags ?? [], referenceImageCount: referenceImages.length } }
       : conditions;
+    stage('model');
     const result = await recommend({
-    wardrobe: modelWardrobe,
-    knowledge,
-    conditions: modelConditions,
-    operation: operation?.kind === 'swap-item' && operation.keptGarments ? {
-      ...operation,
-      keptGarments: operation.keptGarments.map(({ id, name, category, color, fit, warmth, material, styleTags, sceneTags }) =>
-        ({ id, name, category, color, fit, warmth, material, styleTags, sceneTags }))
-    } : operation,
-    referenceImages
+      wardrobe: modelWardrobe,
+      knowledge,
+      conditions: modelConditions,
+      operation: operation?.kind === 'swap-item' && operation.keptGarments ? {
+        ...operation,
+        keptGarments: operation.keptGarments.map(({ id, name, category, color, fit, warmth, material, styleTags, sceneTags }) =>
+          ({ id, name, category, color, fit, warmth, material, styleTags, sceneTags }))
+      } : operation,
+      referenceImages
     }, request.signal);
+    modelMs = Math.round(performance.now() - phaseStartedAt);
+    stage('result');
     if (result.garmentIds.some(id => !allowed.has(id)) || new Set(result.garmentIds).size !== result.garmentIds.length)
-      return fail('AI_INVALID_RESPONSE', '推荐结果包含无效或重复衣物。', 502);
+      return fail('AI_INVALID_RESPONSE', '推荐结果包含无效或重复衣物，请用当前条件重试。', 502, false, 'candidate-ids');
     if (operation?.kind === 'swap-item') {
       const kept = operation.currentGarmentIds.filter(id => id !== operation.targetGarmentId);
       const added = result.garmentIds.filter(id => !kept.includes(id));
       if (result.garmentIds.length !== operation.currentGarmentIds.length || !kept.every(id => result.garmentIds.includes(id)) ||
           added.length !== 1 || added[0] === operation.targetGarmentId || wardrobe.find(item => item.id === added[0])?.category !== operation.targetCategory) {
-        return fail('AI_INVALID_RESPONSE', '单件替换修改了保留位置或使用了不可用替代。', 502);
+        return fail('AI_INVALID_RESPONSE', '单件替换修改了保留位置或使用了不可用替代。', 502, false, 'swap-item-positions');
       }
     }
-    return Response.json({
-  ok: true,
-  data: {
-    ...result,
-    knowledgeVersion: knowledge.version
-  },
-  requestId
-});
+    record('OK');
+    return Response.json({ ok: true, data: { ...result, knowledgeVersion: knowledge.version }, requestId });
   } catch (e) {
-    if (e instanceof AIError) return fail(e.code, e.message, e.code === 'AI_TIMEOUT' ? 504 : e.code === 'AI_UNAVAILABLE' ? 503 : 502, e.retryable);
+    if (request.signal.aborted) return fail('CANCELED', '推荐已取消。', 499, false);
+    if (e instanceof AIError) {
+      const status = e.code === 'AI_TIMEOUT' ? 504 : e.code === 'AI_UNAVAILABLE' ? 503 : 502;
+      return fail(e.code, e.message, status, e.retryable, e.detail);
+    }
     if (e instanceof InputError) return fail('VALIDATION_ERROR', e.message, 400);
-    return fail('VALIDATION_ERROR', '推荐请求无效。', 400);
+    if (phase === 'input') return fail('VALIDATION_ERROR', '推荐请求无效。', 400);
+    return fail('INTERNAL_ERROR', '推荐服务暂时无法完成请求，请重试。', 500, true);
   }
 }

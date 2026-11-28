@@ -98,6 +98,26 @@ describe('single/bulk task lifecycle', () => {
     const [id] = queue.add([photo()], 'top'); await ready(queue); queue.retry(id);
     await vi.waitFor(() => expect(queue.snapshot()[0].status).toBe('failed')); expect(queue.snapshot()[0].white).toBeDefined(); expect(await queue.saveSelected([id])).toBe(0); queue.dispose();
   });
+  it('preserves the white-background failure after a successful recognition retry', async () => {
+    let prepares = 0;
+    const recognize = vi.fn().mockResolvedValue(candidate());
+    const queue = new UploadTasks({
+      prepare: async (_file, _signal, validated) => {
+        validated?.(image());
+        return image(++prepares === 1 ? 'removed' : 'fallback');
+      }, recognize, save: vi.fn(),
+    });
+    const [id] = queue.add([photo()], 'top');
+    await ready(queue);
+    queue.retry(id, false, true);
+    await vi.waitFor(() => expect(queue.snapshot()[0].status).toBe('failed'));
+    queue.retry(id, true);
+    await vi.waitFor(() => expect(queue.snapshot()[0]).toMatchObject({ status: 'failed', recognized: true }));
+    expect(queue.snapshot()[0].imageError).toContain('白底处理失败');
+    expect(recognize).toHaveBeenCalledTimes(2);
+    expect(await queue.saveSelected([id])).toBe(0);
+    queue.dispose();
+  });
   it('times out an unresponsive AI without hanging the remaining queue', async () => {
     vi.useFakeTimers();
     const queue = new UploadTasks({ prepare: async (_f,_s,validated) => { validated?.(image()); return image(); }, recognize: async () => new Promise(() => {}), save: vi.fn() });

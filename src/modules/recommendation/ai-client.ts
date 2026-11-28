@@ -88,6 +88,7 @@ interface APIResponse {
 }
 
 export interface AIRecommendationClientOptions {
+  source?: 'home' | 'recommendations';
   signal?: AbortSignal;
   fetcher?: typeof fetch;
 }
@@ -238,13 +239,16 @@ export async function requestAIRecommendation(
   const fetcher = options.fetcher ?? fetch;
 
   const request = buildRequest(input);
+  const headers = options.source
+    ? { ...request.headers, 'x-wearwise-recommendation-source': options.source }
+    : request.headers;
 
   let response: Response;
 
   try {
     response = await fetcher('/api/recommendation', {
       method: 'POST',
-      headers: request.headers,
+      headers,
       body: request.body,
       signal: options.signal
     });

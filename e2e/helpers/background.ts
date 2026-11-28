@@ -8,3 +8,7 @@ export const backgroundResult = (route: Route) => route.fulfill({ contentType: '
 export async function mockBackground(page: Page) {
   await page.route('**/api/background/remove', backgroundResult);
 }
+
+export async function confirmSingleTarget(page: Page) {
+  await page.getByRole('button', { name: '原图只有一件，开始处理' }).click();
+}

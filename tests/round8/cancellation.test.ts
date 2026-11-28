@@ -91,9 +91,9 @@ function createMocks(
     ],
 
     snapshots: [
-      { id: 'top-1', category: 'top' },
-      { id: 'bottom-1', category: 'bottom' },
-      { id: 'shoes-1', category: 'shoes' }
+      { id: 'top-1', imageId: 'img-top-1', category: 'top' },
+      { id: 'bottom-1', imageId: 'img-bottom-1', category: 'bottom' },
+      { id: 'shoes-1', imageId: 'img-shoes-1', category: 'shoes' }
     ]
   };
 
@@ -165,7 +165,7 @@ function createMocks(
       vi.fn().mockResolvedValue(garments),
 
     image:
-      vi.fn().mockResolvedValue(undefined)
+      vi.fn().mockResolvedValue(new Blob(['test garment image']))
   };
 
   const weather = {

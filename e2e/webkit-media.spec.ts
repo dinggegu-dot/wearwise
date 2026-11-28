@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import path from 'node:path';
 
-test('WebKit 浏览器执行本机白底模型并显示预览', async ({ page }) => {
+test('浏览器执行本机白底模型并显示预览', async ({ page }) => {
   test.setTimeout(120000);
   await page.addInitScript(() => localStorage.setItem('wearwise-mode', 'demo'));
   await page.route('**/api/capabilities', route => route.fulfill({ status: 200, json: { recognition: { available: false } } }));

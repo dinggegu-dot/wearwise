@@ -76,9 +76,9 @@ function createMocks() {
       'shoes-1'
     ],
     snapshots: [
-      { id: 'top-1', category: 'top' },
-      { id: 'bottom-1', category: 'bottom' },
-      { id: 'shoes-1', category: 'shoes' }
+      { id: 'top-1', imageId: 'img-top-1', category: 'top' },
+      { id: 'bottom-1', imageId: 'img-bottom-1', category: 'bottom' },
+      { id: 'shoes-1', imageId: 'img-shoes-1', category: 'shoes' }
     ]
   };
 
@@ -390,7 +390,7 @@ describe('R08 推荐连续业务流程', () => {
 
       targetGarmentId: 'top-1',
       targetCategory: 'top',
-      keptGarments: [{ id: 'bottom-1', category: 'bottom' }, { id: 'shoes-1', category: 'shoes' }]
+      keptGarments: [{ id: 'bottom-1', imageId: 'img-bottom-1', category: 'bottom' }, { id: 'shoes-1', imageId: 'img-shoes-1', category: 'shoes' }]
     });
 
     expect(

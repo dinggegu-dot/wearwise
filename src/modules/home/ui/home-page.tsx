@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, Shirt, Sparkles, RefreshCw } from 'lucide-react';
 import { createServices } from '@/composition';
 import { useMode } from '@/composition/mode-provider';
+import { AIRecommendationClientError } from '@/modules/recommendation/ai-client';
 import { WeatherPanel } from '@/modules/weather/ui/weather-panel';
 import { useSharedWeather } from '@/modules/weather/ui/shared-weather';
 import { OutfitFlatLay, OutfitGarmentList, OutfitImage } from '@/modules/recommendation/ui';
@@ -14,12 +15,14 @@ type Action = { kind: 'generate' | 'swap-outfit' | 'swap-item'; target?: string 
 
 export function HomePage() {
   const { mode } = useMode();
+  const staticPages = process.env.NEXT_PUBLIC_RUNTIME_TARGET === 'pages';
   const sharedWeather = useSharedWeather();
   const services = useMemo(() => createServices(mode), [mode]);
   const [current, setCurrent] = useState<OutfitResult>();
   const [total, setTotal] = useState<number>(), [thumbnails, setThumbnails] = useState<Thumbnail[]>([]);
   const [status, setStatus] = useState<{ deleted: GarmentSnapshot[]; paused: GarmentSnapshot[] }>();
   const [ready, setReady] = useState(false), [readError, setReadError] = useState(''), [error, setError] = useState('');
+  const [requestId, setRequestId] = useState('');
   const [busy, setBusy] = useState<Action>(), [retry, setRetry] = useState<Action>();
   const alive = useRef(false), reads = useRef(0), operation = useRef<AbortController | undefined>(undefined);
   const loadImage = useCallback((id: string) => services.wardrobe.image(id), [services]);
@@ -48,7 +51,7 @@ export function HomePage() {
   }, [services, mode, refresh]);
   const run = async (action: Action) => {
     if (operation.current || !ready || !sharedWeather.ready || sharedWeather.savingCity) return;
-    const controller = new AbortController(); operation.current = controller; setBusy(action); setError(''); setRetry(undefined);
+    const controller = new AbortController(); operation.current = controller; setBusy(action); setError(''); setRequestId(''); setRetry(undefined);
     try {
       await sharedWeather.waitForCity(); controller.signal.throwIfAborted();
       const options = { signal: controller.signal };
@@ -60,13 +63,15 @@ export function HomePage() {
       else await refresh();
     } catch (error) {
       if (alive.current && operation.current === controller && !controller.signal.aborted) {
-        setError(error instanceof Error ? error.message : '今日穿搭操作失败，请重试。'); setRetry(action);
+        setError(error instanceof Error ? error.message : '今日穿搭操作失败，请重试。');
+        if (error instanceof AIRecommendationClientError && error.requestId) setRequestId(error.requestId);
+        setRetry(action);
       }
     } finally {
       if (operation.current === controller) { operation.current = undefined; if (alive.current) setBusy(undefined); }
     }
   };
-  const disabled = !ready || !sharedWeather.ready || sharedWeather.savingCity || !!busy;
+  const disabled = staticPages || !ready || !sharedWeather.ready || sharedWeather.savingCity || !!busy;
   return <>
     <section className="hero home-hero">
       <div className="hero-copy">
@@ -79,10 +84,11 @@ export function HomePage() {
       <section className="home-today" aria-label="今日穿搭" aria-busy={!!busy}>
         <span className="section-kicker">TODAY'S LOOK</span><h2>今日穿搭</h2>
         <div className="home-basis-tags"><span>长期偏好</span><span>当天真实天气</span></div>
+        {staticPages && <p>生成今日穿搭需要启动带模型配置的 WearWise 服务。</p>}
         {readError && <div role="alert">{readError} <button onClick={() => void refresh()}>重试读取</button></div>}
         {!ready && !readError && <p role="status">正在读取首页…</p>}
         {busy && <p role="status">{busy.kind === 'swap-item' ? '正在寻找替代衣物…' : '正在为你搭配…'}</p>}
-        {error && <div role="alert" className="home-notice">{error}{retry && <button className="secondary-button" disabled={disabled} onClick={() => void run(retry)}>重试搭配</button>}</div>}
+        {error && <div role="alert" className="home-notice">{error}{requestId && <small>请求编号 {requestId}</small>}{retry && <button className="secondary-button" disabled={disabled} onClick={() => void run(retry)}>重试搭配</button>}</div>}
         {current ? <>
           <div className="home-outfit-layout">
             <OutfitFlatLay result={current} load={loadImage}/>

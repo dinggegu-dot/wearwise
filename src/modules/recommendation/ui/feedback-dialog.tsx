@@ -290,14 +290,8 @@ export function FeedbackDialog({
         ...normalized
       });
 
-    } catch (e) {
-      if (mounted.current) {
-        setError(
-          e instanceof Error
-            ? e.message
-            : '反馈保存失败，请重试。'
-        );
-      }
+    } catch {
+      if (mounted.current) setError('反馈保存失败，已保留填写内容，请重试。');
     } finally {
       actionLock.current = false;
 

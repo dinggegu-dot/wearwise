@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+import { TargetPicker } from './target-picker';
 import { BlobImage } from './wardrobe-fields';
 import type { UploadTask, UploadTasks } from '../upload-tasks';
 
@@ -14,8 +16,23 @@ function readableWarning(warning: string) {
 }
 
 export function UploadPanel({ task, queue, disabled = false }: { task: UploadTask; queue: UploadTasks; disabled?: boolean }) {
-  return <section className="upload-panel" aria-label="图片处理与识别">
-    <div className="photo-comparison"><figure><figcaption>上传图片 · 仅本次预览</figcaption><BlobImage blob={task.file} alt="上传原图"/></figure><figure><figcaption>白底结果</figcaption><BlobImage blob={task.white?.blob} alt="照片预览"/></figure></div>
+  const awaitingTarget = task.status === 'awaiting-target';
+  const focusPreview = useRef(false);
+  const preview = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!awaitingTarget && focusPreview.current) {
+      focusPreview.current = false;
+      preview.current?.focus({ preventScroll: true });
+    }
+  }, [awaitingTarget]);
+  if (awaitingTarget && task.file) {
+    return <section className="upload-panel" aria-label="选择目标衣物">
+      <TargetPicker key={task.sequence} file={task.file} onConfirm={crop => { focusPreview.current = true; queue.confirmTarget(task.id, crop); }}/>
+    </section>;
+  }
+  return <section ref={preview} tabIndex={-1} className="upload-panel" aria-label="图片处理与识别">
+    <div className="photo-comparison"><figure><figcaption>{task.crop ? '框选的衣物' : '上传图片 · 仅本次预览'}</figcaption><BlobImage blob={task.recognitionImage?.blob ?? task.file} alt={task.crop ? '本次处理的目标衣物' : '上传原图'}/></figure><figure><figcaption>白底结果</figcaption><BlobImage blob={task.white?.blob} alt="照片预览"/></figure></div>
+    {task.status === 'queued' && <p role="status">已选定目标，等待处理…</p>}
     {task.preparing && <p role="status">正在处理图片并移除背景…</p>}
     {task.white && !task.imageError && !task.preparing && <p className="success-text" role="status">白底处理完成，请对照原图检查衣物颜色和细节。</p>}
     {task.imageError && <p className="inline-error" role="alert">{task.imageError}</p>}
@@ -27,8 +44,10 @@ export function UploadPanel({ task, queue, disabled = false }: { task: UploadTas
       <summary>查看 AI 判断说明（{task.warnings.length} 条）</summary>
       <ul>{task.warnings.map((warning, index) => <li key={index}>{readableWarning(warning)}</li>)}</ul>
     </details>}
-    <div className="wardrobe-actions"><button type="button" disabled={disabled || task.preparing || task.recognizing} onClick={() => queue.retry(task.id,false,true)}>重新处理白底图</button>
-    {!task.manual && <button type="button" disabled={disabled || task.preparing || task.recognizing} onClick={() => queue.retry(task.id, true)}>重新识别衣物</button>}
-    {!task.manual && !task.recognized && !task.recognizing && <button type="button" disabled={disabled} onClick={() => queue.useManual(task.id)}>改为手动填写并确认</button>}</div>
+    <div className="wardrobe-actions">
+    {task.file && queue.requiresTarget && <button type="button" disabled={disabled} onClick={() => queue.changeTarget(task.id)}>重新选择目标</button>}
+    <button type="button" disabled={disabled || task.status === 'queued' || task.preparing || task.recognizing} onClick={() => queue.retry(task.id,false,true)}>重新处理白底图</button>
+    {!task.manual && <button type="button" disabled={disabled || task.status === 'queued' || task.preparing || task.recognizing} onClick={() => queue.retry(task.id, true)}>重新识别衣物</button>}
+    {!task.manual && task.status !== 'queued' && !task.recognized && !task.recognizing && <button type="button" disabled={disabled} onClick={() => queue.useManual(task.id)}>改为手动填写并确认</button>}</div>
   </section>;
 }

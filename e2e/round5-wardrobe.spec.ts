@@ -1,4 +1,4 @@
-import { mockBackground } from './helpers/background';
+import { mockBackground, confirmSingleTarget } from './helpers/background';
 import { expect, test, type Page } from '@playwright/test';
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
@@ -58,6 +58,7 @@ test('R5-04/05 批量混合状态、独立编辑、部分保存故障重试与�
   const sample=path.resolve('tests/fixtures/synthetic-shirt.jpg');
   const payload = {name:'synthetic-shirt.jpg',mimeType:'image/jpeg',buffer:readFileSync(sample)};
   await page.getByLabel('选择多张照片').setInputFiles([payload,{name:'bad.jpg',mimeType:'image/jpeg',buffer:Buffer.from('not an image')},payload]);
+  await page.getByRole('button', { name: '待处理原图均为单件，开始处理' }).click();
   const rows=page.locator('.batch-row');await expect(rows).toHaveCount(3);
   await expect(rows.nth(0).getByRole('status')).toHaveText('处理成功',{timeout:90000});await expect(rows.nth(1).getByRole('status')).toHaveText('处理失败');await expect(rows.nth(2).getByRole('status')).toHaveText('处理中');
   await expect(rows.nth(1).getByRole('checkbox')).toBeDisabled();await expect(rows.nth(2).getByRole('checkbox')).toBeDisabled();
@@ -84,7 +85,7 @@ test('R5-09 文件选择取消、弹窗关闭与Object URL释放',async({page})=
   await page.addInitScript(()=>{const make=URL.createObjectURL.bind(URL),drop=URL.revokeObjectURL.bind(URL),urls=new Set<string>();(window as unknown as {round5Urls:Set<string>}).round5Urls=urls;URL.createObjectURL=value=>{const url=make(value);urls.add(url);return url;};URL.revokeObjectURL=url=>{urls.delete(url);drop(url);};});
   await page.route('**/api/background/remove',route=>route.fulfill({status:503,json:{error:{message:'白底处理失败：模拟上游不可用'}}}));
   await page.goto('/wardrobe');await page.getByRole('button',{name:'＋ 添加衣物'}).click();await page.getByLabel('名称').fill('保留草稿');
-  await page.getByLabel('衣物照片（可选）').setInputFiles(path.resolve('tests/fixtures/synthetic-shirt.jpg'));await expect(page.getByRole('alert').filter({hasText:'白底处理失败'})).toBeVisible();
+  await page.getByLabel('衣物照片（可选）').setInputFiles(path.resolve('tests/fixtures/synthetic-shirt.jpg')); await confirmSingleTarget(page);await expect(page.getByRole('alert').filter({hasText:'白底处理失败'})).toBeVisible();
   await page.getByLabel('衣物照片（可选）').dispatchEvent('cancel');await expect(page.getByRole('dialog')).toBeVisible();await expect(page.getByLabel('名称')).toHaveValue('保留草稿');
   await page.getByRole('button',{name:'取消',exact:true}).click();await expect.poll(()=>page.evaluate(()=>(window as unknown as {round5Urls:Set<string>}).round5Urls.size)).toBe(0);expect((await stored(page)).garments).toHaveLength(0);
 });
@@ -95,9 +96,9 @@ test('R5-06 换图失败和取消保留旧记录，保存故障保留新草稿�
   const old=(await stored(page)).garments[0];const card=page.locator('.wardrobe-grid article').filter({hasText:'保护原衣物'});
   const unavailable=(route:import('@playwright/test').Route)=>route.fulfill({status:503,json:{error:{message:'白底处理失败：模拟上游不可用'}}});
   await page.route('**/api/background/remove',unavailable);await card.getByRole('button',{name:'编辑',exact:true}).click();
-  const sample=path.resolve('tests/fixtures/synthetic-shirt.jpg');await page.getByLabel('衣物照片（可选）').setInputFiles(sample);await expect(page.getByRole('alert').filter({hasText:'白底处理失败'})).toBeVisible();await expect(page.getByRole('button',{name:'确认保存'})).toBeDisabled();expect((await stored(page)).garments[0]).toEqual(old);
+  const sample=path.resolve('tests/fixtures/synthetic-shirt.jpg');await page.getByLabel('衣物照片（可选）').setInputFiles(sample); await confirmSingleTarget(page);await expect(page.getByRole('alert').filter({hasText:'白底处理失败'})).toBeVisible();await expect(page.getByRole('button',{name:'确认保存'})).toBeDisabled();expect((await stored(page)).garments[0]).toEqual(old);
   await page.getByRole('button',{name:'取消',exact:true}).click();expect((await stored(page)).garments[0]).toEqual(old);
-  await page.unroute('**/api/background/remove',unavailable);await card.getByRole('button',{name:'编辑',exact:true}).click();await page.getByLabel('衣物照片（可选）').setInputFiles(sample);await expect(page.getByAltText('照片预览')).toBeVisible({timeout:90000});await page.getByRole('button',{name:'改为手动填写并确认'}).click();await page.getByLabel('名称').fill('确认新图片');
+  await page.unroute('**/api/background/remove',unavailable);await card.getByRole('button',{name:'编辑',exact:true}).click();await page.getByLabel('衣物照片（可选）').setInputFiles(sample); await confirmSingleTarget(page);await expect(page.getByAltText('照片预览')).toBeVisible({timeout:90000});await page.getByRole('button',{name:'改为手动填写并确认'}).click();await page.getByLabel('名称').fill('确认新图片');
   await page.evaluate(()=>{(window as unknown as {failRound5Update:boolean}).failRound5Update=true;});await page.getByRole('button',{name:'确认保存'}).click();await expect(page.getByRole('alert').filter({hasText:'保存失败'})).toBeVisible();await expect(page.getByLabel('名称')).toHaveValue('确认新图片');expect((await stored(page)).garments[0]).toEqual(old);expect((await stored(page)).media).toBe(1);
   await page.getByRole('button',{name:'确认保存'}).click();await expect(page.getByRole('dialog')).toHaveCount(0);await page.reload();const after=await stored(page);expect(after.garments[0]).toMatchObject({name:'确认新图片',styleTags:['学院风']});expect(after.garments[0].imageId).not.toBe(old.imageId);expect(after.media).toBe(1);
 });

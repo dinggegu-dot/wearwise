@@ -1,5 +1,8 @@
 // 改编自 Closet Kit 的浏览器 Canvas 图片处理；许可与来源见 THIRD_PARTY_NOTICES.md。
 
+// Coordinates are percentages of the orientation-corrected image.
+export type ImageCrop = { left: number; top: number; right: number; bottom: number };
+
 export interface PreparedImage { blob: Blob; width: number; height: number; mime: 'image/jpeg'; backgroundRemoval?: 'removed' | 'fallback' }
 const fail = () => { throw new Error('图片损坏或格式不受支持，请选择静态 JPEG、PNG 或 WebP 图片。'); };
 const stopped = (signal?: AbortSignal) => { if (signal?.aborted) throw new DOMException('已取消', 'AbortError'); };
@@ -56,7 +59,7 @@ async function jpegBlob(canvas: HTMLCanvasElement, signal?: AbortSignal): Promis
   throw new Error('图片处理后仍然过大，请选择其他图片。');
 }
 
-export async function prepareImage(file: File, signal?: AbortSignal, onValidatedImage?: (image: PreparedImage) => void, onlineRemover?: (image: Blob, signal?: AbortSignal) => Promise<Blob>): Promise<PreparedImage> {
+export async function prepareImage(file: File, signal?: AbortSignal, onValidatedImage?: (image: PreparedImage) => void, onlineRemover?: (image: Blob, signal?: AbortSignal) => Promise<Blob>, crop?: ImageCrop): Promise<PreparedImage> {
   stopped(signal);
   if (!file.size || file.size > 10 * 1024 * 1024) throw new Error('图片大小须在 10 MB 以内。');
   const metadata = inspectImage(new Uint8Array(await file.arrayBuffer())); stopped(signal);
@@ -69,13 +72,22 @@ export async function prepareImage(file: File, signal?: AbortSignal, onValidated
       const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error('图片无法解码。')); img.src = src;
     });
     stopped(signal);
-    const ratio = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
-    const width = Math.max(1, Math.round(image.naturalWidth * ratio));
-    const height = Math.max(1, Math.round(image.naturalHeight * ratio));
+    const { left, top, right, bottom } = crop ?? { left: 0, top: 0, right: 100, bottom: 100 };
+    if (![left, top, right, bottom].every(value => Number.isFinite(value) && value >= 0 && value <= 100) ||
+        right - left < 5 || bottom - top < 5) {
+      throw new Error('请框选一件完整衣物，框选范围太小。');
+    }
+    const x = image.naturalWidth * left / 100;
+    const y = image.naturalHeight * top / 100;
+    const sourceWidth = image.naturalWidth * (right - left) / 100;
+    const sourceHeight = image.naturalHeight * (bottom - top) / 100;
+    const ratio = Math.min(1, 1600 / Math.max(sourceWidth, sourceHeight));
+    const width = Math.max(1, Math.round(sourceWidth * ratio));
+    const height = Math.max(1, Math.round(sourceHeight * ratio));
     const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
     const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('图片处理不可用。');
-    ctx.drawImage(image, 0, 0, width, height);
-    // Recognition can start with the validated original while local background removal runs.
+    ctx.drawImage(image, x, y, sourceWidth, sourceHeight, 0, 0, width, height);
+    // Both operations get the same decoded, orientation-corrected selection.
     const validated = await jpegBlob(canvas, signal);
     if (onValidatedImage) onValidatedImage({ blob: validated, width, height, mime: 'image/jpeg' });
     if (onlineRemover) {
@@ -107,7 +119,7 @@ export async function prepareImage(file: File, signal?: AbortSignal, onValidated
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') throw error;
       // Keep the established image preparation path usable when the local model or GPU is unavailable.
-      ctx.fillStyle = '#f5f0e8'; ctx.fillRect(0, 0, width, height); ctx.drawImage(image, 0, 0, width, height);
+      ctx.fillStyle = '#f5f0e8'; ctx.fillRect(0, 0, width, height); ctx.drawImage(image, x, y, sourceWidth, sourceHeight, 0, 0, width, height);
     }
     return { blob: await jpegBlob(canvas, signal), width, height, mime: 'image/jpeg', backgroundRemoval };
   } finally { URL.revokeObjectURL(src); }

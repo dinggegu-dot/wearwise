@@ -1,4 +1,4 @@
-import { backgroundResult } from './helpers/background';
+import { backgroundResult, confirmSingleTarget } from './helpers/background';
 import { expect, test } from '@playwright/test';
 import path from 'node:path';
 
@@ -31,7 +31,7 @@ test('识别与白底处理并行，候选填入网页且用户修改后才保�
 
   await page.goto('/wardrobe');
   await page.getByRole('button', { name: '＋ 添加衣物' }).click();
-  await page.getByLabel('衣物照片（可选）').setInputFiles(path.resolve('tests/fixtures/synthetic-shirt.jpg'));
+  await page.getByLabel('衣物照片（可选）').setInputFiles(path.resolve('tests/fixtures/synthetic-shirt.jpg')); await confirmSingleTarget(page);
   await modelSeen;
   await recognitionSeen;
   // Recognition starts independently while the online image editing response is held back.

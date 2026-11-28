@@ -6,12 +6,12 @@ import { STYLE_TAGS, SCENE_TAGS, OTHER_TAG, resolveTags } from '@/shared/domain/
 
 const inspirationSchema = z.object({ name:z.string().trim().min(1).max(100), tags:z.array(z.object({text:z.string().trim().min(1).max(30),kind:z.enum(['color','style','fit','layering','scene'])}).strict()).max(30), analysis:z.string().trim().min(1).max(2000) }).strict();
 const preferenceDraftSchema = z.object({ text:z.string().trim().min(1).max(500), styleTags:z.array(z.string().trim().min(1).max(30)).max(12) });
-const recommendationSchema = z.object({ garmentIds:z.array(z.string().min(1)).min(1).max(20), reason:z.string().trim().min(1).max(1000) }).strict();
+const recommendationSchema = z.object({ garmentIds:z.array(z.string().min(1)).min(1).max(20), reason:z.string().trim().min(1).max(1000) });
 export type InspirationAnalysis = z.infer<typeof inspirationSchema>;
 export type StructuredRecommendation = z.infer<typeof recommendationSchema>;
 export type ModelTask = 'recognition'|'inspiration'|'recommendation'|'preference';
 
-export class AIError extends Error { constructor(readonly code:'AI_UNAVAILABLE'|'AI_TIMEOUT'|'AI_PROVIDER_ERROR'|'AI_INVALID_RESPONSE', message:string, readonly retryable=code==='AI_TIMEOUT'){super(message);} }
+export class AIError extends Error { constructor(readonly code:'AI_UNAVAILABLE'|'AI_TIMEOUT'|'AI_PROVIDER_ERROR'|'AI_INVALID_RESPONSE', message:string, readonly retryable=code==='AI_TIMEOUT', readonly detail?: string){super(message);} }
 export function aiAvailable(){return !!process.env.OPENROUTER_API_KEY&&!!process.env.AI_MODEL;}
 export interface VisionModelAdapter { complete(task:ModelTask, prompt:string, image?:Blob | readonly Blob[], signal?:AbortSignal):Promise<string> }
 
@@ -27,15 +27,15 @@ export class OpenRouterAdapter implements VisionModelAdapter {
       const content:Array<Record<string,unknown>>=[{type:'text',text:prompt}];
       for(const item of image ? Array.isArray(image) ? image : [image] : [])
         content.push({type:'image_url',image_url:{url:`data:${item.type||'image/jpeg'};base64,${Buffer.from(await item.arrayBuffer()).toString('base64')}`}});
-      const recognitionOptions=task==='recognition'
+      const structuredOptions=task==='recognition'||task==='recommendation'
         ? {response_format:{type:'json_object'},...(model==='qwen/qwen3.8-max-0902'?{reasoning:{effort:'minimal'}}:{})}
         : {};
-      const response=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',redirect:'error',signal:signal?AbortSignal.any([signal,timeout]):timeout,headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,temperature:0,...recognitionOptions,messages:[{role:'user',content}]})});
+      const response=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',redirect:'error',signal:signal?AbortSignal.any([signal,timeout]):timeout,headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,temperature:0,...structuredOptions,messages:[{role:'user',content}]})});
       if(!response.ok) throw new AIError('AI_PROVIDER_ERROR','视觉模型请求失败。',response.status===429||response.status>=500);
       const envelope=z.object({choices:z.array(z.object({message:z.object({content:z.union([z.string(),z.array(z.object({type:z.string(),text:z.string().optional()}))])})})).min(1)}).parse(await response.json());
       const body=envelope.choices[0].message.content;
       return typeof body==='string'?body:body.map(p=>p.text||'').join('\n');
-    } catch(e) { if(e instanceof AIError) throw e; if(timeout.aborted) throw new AIError('AI_TIMEOUT','AI 请求超时。'); if(signal?.aborted) throw e; if(e instanceof TypeError) throw new AIError('AI_PROVIDER_ERROR','视觉模型服务暂不可用。',true); throw new AIError('AI_INVALID_RESPONSE','AI 响应格式无效。'); }
+    } catch(e) { if(e instanceof AIError) throw e; if(timeout.aborted) throw new AIError('AI_TIMEOUT','AI 请求超时。'); if(signal?.aborted) throw e; if(e instanceof TypeError) throw new AIError('AI_PROVIDER_ERROR','视觉模型服务暂不可用。',true); throw new AIError('AI_INVALID_RESPONSE','AI 响应格式无效。',false,'provider-envelope'); }
   }
 }
 const adapter:VisionModelAdapter=new OpenRouterAdapter();
@@ -113,30 +113,28 @@ export async function recommend(
 4. feedback-swap：根据 conditions.feedback 中按顺序提供的有效反馈生成不同搭配，较晚的明确修正优先。
 5. 新选衣物必须来自 wardrobe。swap-item 的 keptGarments 是必须原样保留的位置快照（可能已删除或暂停），不属于可重新挑选的候选；只允许新替代单品来自 wardrobe。理由应结合保留位置描述整套搭配，不把保留衣物说成新候选。
 6. 不得返回重复 ID。
-7. 只输出 JSON，包含 garmentIds 和 reason。
+7. 只输出一个 JSON 对象，恰好包含 garmentIds（字符串数组，逐字复制输入 ID）和 reason（1–3 句中文说明）。不要添加代码块、分析过程或额外字段。
 
 以下是本次推荐输入：
 
 ${JSON.stringify(modelInput)}
 `;
 
+  const output = await adapter.complete('recommendation', prompt, referenceImages, signal);
+  let payload: unknown;
   try {
-    return recommendationSchema.parse(
-      json(
-        await adapter.complete(
-          'recommendation',
-          prompt,
-          referenceImages,
-          signal
-        )
-      )
-    );
-  } catch (e) {
-    if (e instanceof AIError) throw e;
-
-    throw new AIError(
-      'AI_INVALID_RESPONSE',
-      '推荐结果不符合数据格式。'
-    );
+    payload = json(output);
+  } catch {
+    throw new AIError('AI_INVALID_RESPONSE', '推荐结果无法读取，请用当前条件重试。', false, 'invalid-json');
   }
+  const result = recommendationSchema.safeParse(payload);
+  if (!result.success) {
+    // Keep only known schema field names. Provider content and error values stay out of logs.
+    const fields = new Set(result.error.issues.map(({ path }) => {
+      const field = path[0];
+      return field === 'garmentIds' || field === 'reason' ? field : 'root';
+    }));
+    throw new AIError('AI_INVALID_RESPONSE', '推荐结果不符合数据格式，请用当前条件重试。', false, [...fields].join(','));
+  }
+  return result.data;
 }

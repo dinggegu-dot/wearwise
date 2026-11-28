@@ -21,6 +21,7 @@ import type {
   FeedbackDraft
 } from '@/modules/session';
 
+import { AIRecommendationClientError } from '../ai-client';
 import { WeatherPanel } from '@/modules/weather/ui/weather-panel';
 import { ConditionsPanel } from './conditions-panel';
 import { OutfitFlatLay } from './outfit-flat-lay';
@@ -55,6 +56,7 @@ const OPERATION_LABELS: Record<PageOperation, string> = {
 
 export function RecommendationsPage() {
   const { mode } = useMode();
+  const staticPages = process.env.NEXT_PUBLIC_RUNTIME_TARGET === 'pages';
   const sharedWeather = useSharedWeather();
 
   const services = useMemo(
@@ -79,6 +81,9 @@ export function RecommendationsPage() {
     useState<PageOperation | null>(null);
 
   const [error, setError] = useState('');
+  const [operationStartedAt, setOperationStartedAt] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [requestId, setRequestId] = useState('');
 
   const [swappingGarmentId, setSwappingGarmentId] =
     useState<string | null>(null);
@@ -106,12 +111,19 @@ export function RecommendationsPage() {
     useRef<Promise<void>>(Promise.resolve());
 
   const busy = operation !== null;
+  useEffect(() => {
+    if (!busy) return;
+    const timer = window.setInterval(() => {
+      setElapsedSeconds(Math.floor((performance.now() - operationStartedAt) / 1000));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [busy, operationStartedAt]);
 
   const modalOpen =
     feedbackChoice !== null || feedbackSaved;
 
   const controlsDisabled =
-    !initialized || !sharedWeather.ready || sharedWeather.savingCity || busy || modalOpen;
+    staticPages || !initialized || !sharedWeather.ready || sharedWeather.savingCity || busy || modalOpen;
 
   // 修改条件：立即更新 UI，并顺序保存。
   const updateSettings = useCallback(
@@ -262,6 +274,7 @@ export function RecommendationsPage() {
 
     setInitialized(false);
     setOperation(null);
+    setRequestId('');
     setSwappingGarmentId(null);
     setFeedbackChoice(null);
     setFeedbackSaved(false);
@@ -363,6 +376,9 @@ export function RecommendationsPage() {
     };
 
     operationLock.current = task;
+    setOperationStartedAt(performance.now());
+    setElapsedSeconds(0);
+    setRequestId('');
     setOperation(kind);
 
     return task;
@@ -444,11 +460,8 @@ export function RecommendationsPage() {
     } catch (e) {
       if (!isCurrentOperation(task)) return;
 
-      setError(
-        e instanceof Error
-          ? e.message
-          : '生成失败，请重试。'
-      );
+      setError(e instanceof Error ? e.message : '生成失败，请重试。');
+      if (e instanceof AIRecommendationClientError && e.requestId) setRequestId(e.requestId);
     } finally {
       endOperation(task);
     }
@@ -770,6 +783,9 @@ export function RecommendationsPage() {
             根据已经应用的条件和当前可用衣物生成搭配。
           </p>
 
+          {staticPages && <p>生成穿搭需要启动带模型配置的 WearWise 服务。</p>}
+          {mode === 'demo' && !staticPages && <p>使用示例衣橱时，可关闭推荐条件里的天气开关后生成。</p>}
+
           <button
             type="button"
             className="primary-link"
@@ -782,7 +798,10 @@ export function RecommendationsPage() {
           </button>
 
           {error && (
-            <p role="alert">{error}</p>
+            <div role="alert">
+              <p>{error}</p>
+              {requestId && <small>请求编号 {requestId}</small>}
+            </div>
           )}
 
           {!current && !busy && (
@@ -796,9 +815,10 @@ export function RecommendationsPage() {
           )}
 
           {operation && (
-            <p role="status">
-              {OPERATION_LABELS[operation]}
-            </p>
+            <div>
+              <p role="status">{OPERATION_LABELS[operation]}</p>
+              {operation !== 'feedback-save' && <small role="timer">已等待 {elapsedSeconds} 秒</small>}
+            </div>
           )}
 
           {current && (

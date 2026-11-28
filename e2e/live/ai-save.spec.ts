@@ -1,3 +1,4 @@
+import { confirmSingleTarget } from '../helpers/background';
 import { expect, test } from '@playwright/test';
 import path from 'node:path';
 
@@ -24,7 +25,7 @@ test('真实识别候选经确认、失败重试后持久化且不重复', async
   await page.goto('/wardrobe');
   await page.getByRole('button', { name: '＋ 添加衣物' }).click();
   let responsePromise = page.waitForResponse(response => response.url().endsWith('/api/recognition'));
-  await page.getByLabel('衣物照片（可选）').setInputFiles(image);
+  await page.getByLabel('衣物照片（可选）').setInputFiles(image); await confirmSingleTarget(page);
   await expect(page.getByAltText('照片预览')).toBeVisible({ timeout: 90000 });
   let result: { ok: boolean; data?: { candidate: { name: string } }; error?: { code: string } } | undefined;
   let response = await responsePromise;
